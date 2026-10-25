@@ -6,6 +6,15 @@ test("pre-wired Blink starter runs from circuit graph and stops/resets", async (
   await page.goto("/");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await expect(page.getByText(/VALID.*Circuit looks valid/)).toBeVisible();
+  await page.locator(".monaco-editor").waitFor({ state: "visible" });
+  const sketchPanel = page.getByRole("complementary", { name: "Arduino Sketch editor" });
+  const fullWidth = (await sketchPanel.boundingBox())?.width;
+  await page.getByRole("button", { name: "Collapse code editor" }).click();
+  await expect(page.getByRole("button", { name: "Expand code editor" })).toBeVisible();
+  await expect(page.locator(".monaco-editor")).toBeHidden();
+  expect((await sketchPanel.boundingBox())?.width).toBeLessThan(fullWidth ?? 0);
+  await page.getByRole("button", { name: "Expand code editor" }).click();
+  await expect(page.locator(".monaco-editor")).toBeVisible();
 
   // Exercise the Monaco editor as a beginner would: edit the sketch, then run it.
   await page.locator(".monaco-editor .view-line").first().click();

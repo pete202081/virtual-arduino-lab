@@ -65,7 +65,7 @@ This is the canvas where you place and connect components. It has a grid, wire-c
 
 ### Right: Arduino Sketch
 
-The editor uses C++ syntax highlighting and shows diagnostics. It includes a Blink starter, Reset, Copy, and Expand controls. Red diagnostics are errors; amber diagnostics are warnings. The simulator applies a stricter supported-code subset when you click Run—see [Edit the Arduino sketch](#5-edit-the-arduino-sketch).
+The editor uses C++ syntax highlighting and shows diagnostics. It includes a Blink starter, Reset, Copy, a width toggle, and a collapse arrow; use the narrow right-side rail to expand it again. Collapsing the editor gives the circuit design area more room. Red diagnostics are errors; amber diagnostics are warnings. The simulator applies a stricter supported-code subset when you click Run—see [Edit the Arduino sketch](#5-edit-the-arduino-sketch).
 
 ### Bottom: Console
 

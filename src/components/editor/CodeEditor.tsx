@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Code2, RotateCcw, Check, AlertCircle, Copy, Maximize2, XCircle, AlertTriangle } from "lucide-react";
+import { Code2, RotateCcw, Check, AlertCircle, Copy, Maximize2, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import type { OnMount } from "@monaco-editor/react";
 import { validateSketch, CompileResult } from "@/simulation/interfaces/compileAdapter";
 
@@ -17,6 +17,7 @@ interface Props {
 
 export function CodeEditor({ code, onChange, onReset, compileResult }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [localErrors, setLocalErrors] = useState<CompileResult | null>(null);
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
@@ -59,7 +60,25 @@ export function CodeEditor({ code, onChange, onReset, compileResult }: Props) {
   }, [result]);
 
   return (
-    <div className={`bg-[#1E1E2E] flex flex-col border-l border-slate-800 shrink-0 ${isExpanded ? "w-[640px]" : "w-[460px]"}`}>
+    <aside
+      aria-label="Arduino Sketch editor"
+      className={`bg-[#1E1E2E] flex flex-col border-l border-slate-800 shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out ${isCollapsed ? "w-11" : isExpanded ? "w-[640px]" : "w-[460px]"}`}
+    >
+      {isCollapsed ? (
+        <div className="flex h-full flex-col items-center gap-4 py-3">
+          <button
+            onClick={() => setIsCollapsed(false)}
+            aria-label="Expand code editor"
+            aria-expanded={false}
+            title="Expand code editor"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#0E9A8B]"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-[10px] font-extrabold tracking-[0.16em] text-slate-400" style={{ writingMode: "vertical-rl" }}>ARDUINO SKETCH</span>
+        </div>
+      ) : (
+      <>
       {/* Header */}
       <div className="h-8 bg-[#0F2142] flex items-center px-2 gap-1.5 border-b border-slate-700 shrink-0">
         <Code2 className="w-3.5 h-3.5 text-[#7de3d8]" />
@@ -93,8 +112,11 @@ export function CodeEditor({ code, onChange, onReset, compileResult }: Props) {
           <button onClick={onReset} className="h-6 px-2 bg-white/10 hover:bg-white/15 rounded flex items-center gap-1 text-[11px] font-bold text-white border border-white/10">
             <RotateCcw className="w-3 h-3" /> Reset
           </button>
-          <button onClick={() => setIsExpanded((v) => !v)} className="w-6 h-6 bg-white/10 hover:bg-white/15 rounded flex items-center justify-center border border-white/10" title={isExpanded ? "Collapse" : "Expand"}>
+          <button onClick={() => setIsExpanded((v) => !v)} className="w-6 h-6 bg-white/10 hover:bg-white/15 rounded flex items-center justify-center border border-white/10" title={isExpanded ? "Narrow code editor" : "Widen code editor"} aria-label={isExpanded ? "Narrow code editor" : "Widen code editor"}>
             <Maximize2 className="w-3 h-3 text-white" />
+          </button>
+          <button onClick={() => setIsCollapsed(true)} className="w-6 h-6 bg-white/10 hover:bg-white/15 rounded flex items-center justify-center border border-white/10" title="Collapse code editor" aria-label="Collapse code editor" aria-expanded={true}>
+            <ChevronRight className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
       </div>
@@ -180,7 +202,9 @@ export function CodeEditor({ code, onChange, onReset, compileResult }: Props) {
         </div>
         <pre className="mt-1 bg-black/30 rounded p-1.5 text-[10px] font-mono text-slate-300 overflow-auto">{`D8 ──▶ 220Ω ──▶ LED Anode ──▶ LED Cathode ──▶ GND`}</pre>
       </div>
-    </div>
+      </>
+      )}
+    </aside>
   );
 }
 

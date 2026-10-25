@@ -10,10 +10,10 @@ export function Breadboard({ comp, isSelected, onSelect }: { comp: ComponentInst
     >
       <div className="w-full h-full bg-[#F5F0E6] rounded-[8px] border-[2px] border-[#D6CFC0] shadow-lg relative overflow-hidden">
         {/* Top label */}
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-          <span className="text-[8px] font-black tracking-widest text-[#6B5E4A]">MB-102</span>
-          <span className="text-[7px] font-bold px-1 py-0.5 bg-[#6B5E4A] text-white rounded">830 POINT</span>
-          <span className="text-[7px] text-[#6B5E4A]">Center trench not connected</span>
+        <div className="absolute top-0 left-1/2 z-10 h-[8px] -translate-x-1/2 flex items-center gap-1.5 pointer-events-none">
+          <span className="text-[7px] leading-[8px] font-black tracking-wide text-[#6B5E4A]">MB-102</span>
+          <span className="text-[6px] leading-[8px] font-bold px-1 bg-[#6B5E4A] text-white rounded">830 POINT</span>
+          <span className="text-[6px] leading-[8px] text-[#6B5E4A]">Center trench not connected</span>
         </div>
 
         {/* Power rails */}
