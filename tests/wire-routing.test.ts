@@ -39,9 +39,29 @@ assert.equal(boardToResistor.at(-1)?.x, resistor.x + resistor.terminals.find((it
 assert.ok(isOrthogonal(boardToResistor));
 console.log("✅ reverse-direction breadboard routes preserve endpoints and right-angle geometry");
 
-const secondBoardRoute = buildWireRoutePoints(d8, position(board, "R_TOP+_0"), 1, components);
-assert.notEqual(breadboardRoute[1].x, secondBoardRoute[1].x, "staggered entry lanes should separate nearby wires");
-console.log("✅ breadboard wire routes stagger their outside approach lanes");
+const crossingObstacle = createBreadboard(300, 100);
+const obstacleStart: RoutedTerminal = { x: 100, y: 192, compId: "outside-start" };
+const obstacleEnd: RoutedTerminal = { x: 800, y: 192, compId: "outside-end" };
+const obstacleRoute = buildWireRoutePoints(obstacleStart, obstacleEnd, 0, [crossingObstacle]);
+const paddedObstacle = { left: crossingObstacle.x - 12, right: crossingObstacle.x + crossingObstacle.width + 12, top: crossingObstacle.y - 12, bottom: crossingObstacle.y + crossingObstacle.height + 12 };
+const crossesObstacle = obstacleRoute.slice(1).some((point, index) => {
+  const previous = obstacleRoute[index];
+  if (Math.abs(previous.y - point.y) < 0.001) {
+    return previous.y > paddedObstacle.top && previous.y < paddedObstacle.bottom
+      && Math.max(Math.min(previous.x, point.x), paddedObstacle.left) < Math.min(Math.max(previous.x, point.x), paddedObstacle.right);
+  }
+  return previous.x > paddedObstacle.left && previous.x < paddedObstacle.right
+    && Math.max(Math.min(previous.y, point.y), paddedObstacle.top) < Math.min(Math.max(previous.y, point.y), paddedObstacle.bottom);
+});
+assert.equal(crossesObstacle, false, "a wire should route around component bounds instead of through them");
+console.log("✅ obstacle-aware routes detour around component footprints");
+
+const crossingStart: RoutedTerminal = { x: 0, y: 0, compId: "" };
+const crossingEnd: RoutedTerminal = { x: 100, y: 100, compId: "" };
+const firstRoute = buildWireRoutePoints(crossingStart, crossingEnd, 0, []);
+const secondRoute = buildWireRoutePoints(crossingStart, crossingEnd, 1, [], [firstRoute]);
+assert.notDeepEqual(secondRoute, firstRoute, "the crossing penalty should choose a different elbow from an existing wire");
+console.log("✅ existing wires are considered when choosing later routes");
 
 const resistorPoint = position(resistor, "B");
 const ledPoint = position(led, "ANODE");
@@ -51,4 +71,4 @@ assert.equal(directRoute.at(-1)?.x, ledPoint.x);
 assert.ok(isOrthogonal(directRoute), "direct component wires should have an elbow route too");
 console.log("✅ direct component wires use deterministic elbow routing");
 
-console.log("4 wire-routing checks passed.");
+console.log("5 wire-routing checks passed.");

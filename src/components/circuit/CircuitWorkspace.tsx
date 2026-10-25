@@ -23,6 +23,7 @@ import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
 import type { RGBLedState, SevenSegmentState, ServoState, DcMotorState } from "@/simulation/interfaces/simulationAdapter";
 import { ZoomIn, ZoomOut, Maximize2, Grid3x3, Trash2, Cable, MousePointer2 } from "lucide-react";
 import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
+import { buildWireRoutePoints, wireRouteToPath } from "./wireRouting";
 
 interface Props {
   components: ComponentInstance[];
@@ -375,17 +376,14 @@ export function CircuitWorkspace({
                 <circle cx="5" cy="5" r="3" fill="white" stroke={wireColor} strokeWidth="1" />
               </marker>
             </defs>
-            {wires.map((wire) => {
+            {wires.map((wire, index) => {
               const start = getTerminalPos(wire.startTerminalId);
               const end = getTerminalPos(wire.endTerminalId);
               if (!start || !end) return null;
               const isSelected = selectedId === wire.id;
               const isNetHighlighted = highlightedTerminalIds.has(wire.startTerminalId) || highlightedTerminalIds.has(wire.endTerminalId);
-              // Bezier curve
-              const midX = (start.x + end.x) / 2;
-              const dx = Math.abs(end.x - start.x);
-              const offset = Math.min(60, dx * 0.3);
-              const path = `M ${start.x} ${start.y} C ${midX} ${start.y - offset}, ${midX} ${end.y - offset}, ${end.x} ${end.y}`;
+              const routePoints = buildWireRoutePoints(start, end, index, components);
+              const path = wireRouteToPath(routePoints);
               return (
                 <g key={wire.id} data-wire-id={wire.id} className="pointer-events-auto" style={{ cursor: "pointer" }} onClick={() => onSelect(wire.id)}>
                   {/* Hit area */}
@@ -505,7 +503,7 @@ export function CircuitWorkspace({
                   className="absolute pointer-events-none overflow-hidden"
                   style={{ left: board.x, top: board.y, width: board.width, height: boardHeight, zIndex: 50 }}
                 >
-                  {wires.map((wire) => {
+                  {wires.map((wire, index) => {
                     const start = getTerminalPos(wire.startTerminalId);
                     const end = getTerminalPos(wire.endTerminalId);
                     if (!start || !end) return null;
@@ -515,9 +513,8 @@ export function CircuitWorkspace({
                     const endY = end.y - board.y;
                     const isSelected = selectedId === wire.id;
                     const isNetHighlighted = highlightedTerminalIds.has(wire.startTerminalId) || highlightedTerminalIds.has(wire.endTerminalId);
-                    const midX = (startX + endX) / 2;
-                    const offset = Math.min(60, Math.abs(endX - startX) * 0.3);
-                    const path = `M ${startX} ${startY} C ${midX} ${startY - offset}, ${midX} ${endY - offset}, ${endX} ${endY}`;
+                    const routePoints = buildWireRoutePoints(start, end, index, components);
+                    const path = wireRouteToPath(routePoints, { x: board.x, y: board.y });
                     return (
                       <g key={wire.id}>
                         <path

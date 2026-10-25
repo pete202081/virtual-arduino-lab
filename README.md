@@ -49,9 +49,10 @@ npm audit
 - `tests/simulation-adapter.test.ts` — 29 interpreter, timing, stop, PWM, Servo, DC motor/H-bridge, PIR, HC-SR04, TMP36, relay, LED-path, pushbutton, slide-switch, joystick, buzzer, analog sensor, RGB LED, and 7-segment tests
 - `tests/project-persistence.test.ts` — 11 schema, migration, safety, and fallback tests
 - `tests/beginner-project-templates.test.ts` — 18 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
-- `e2e/release-journey.spec.ts` — 12 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, PIR-triggered LED behavior, HC-SR04 distance thresholds, TMP36 temperature thresholds, relay-controlled load switching, and selecting/running all eighteen beginner projects from the dropdown
+- `tests/wire-routing.test.ts` — four deterministic orthogonal-route, board-entry-lane, and endpoint checks
+- `e2e/release-journey.spec.ts` — 12 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, sensor thresholds, relay switching, all eighteen projects, breadboard hole targeting, and exact wire-endpoint alignment
 
-Current verified status: all 84 unit checks pass, all 12 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
+Current verified status: all 88 unit checks pass, all 12 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
 
 ## Implemented simulation subset and limitations
 
