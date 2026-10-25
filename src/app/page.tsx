@@ -17,6 +17,7 @@ import { createStarterCircuit } from "@/circuit-engine/models/starterCircuit";
 import { createBeginnerProject } from "@/circuit-engine/models/beginnerProjectTemplates";
 import type { BeginnerProjectId } from "@/circuit-engine/models/beginnerProjectTemplates";
 import { createProjectFile, listSavedProjects, loadMostRecentProject, loadProjectById, makeProjectFilename, MAX_PROJECT_BYTES, parseProjectFile, ProjectFile, SavedProjectSummary, saveProjectFile } from "@/lib/projectPersistence";
+import { CircuitHistory, type CircuitHistorySnapshot } from "@/lib/circuitHistory";
 
 export default function Home() {
   const [projectName, setProjectName] = useState("Blink LED — Pin 8");
@@ -27,6 +28,8 @@ export default function Home() {
   const [components, setComponents] = useState<ComponentInstance[]>([]);
   const [wires, setWires] = useState<Wire[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [code, setCode] = useState(STARTER_CODE);
   const [simulationState, setSimulationState] = useState<SimulationState>("IDLE");
   const [logs, setLogs] = useState<SimulationEvent[]>([]);
@@ -53,6 +56,9 @@ export default function Home() {
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const componentsRef = useRef(components);
   const wiresRef = useRef(wires);
+  const historyRef = useRef(new CircuitHistory(100));
+  const historyGestureSnapshotRef = useRef<CircuitHistorySnapshot | null>(null);
+  const historyGestureChangedRef = useRef(false);
   const pressedButtonIdsRef = useRef<Set<string>>(new Set());
   const slideSwitchOnIdsRef = useRef<Set<string>>(new Set());
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -140,11 +146,91 @@ export default function Home() {
     pressedButtonIdsRef.current = new Set();
     setPressedButtonIds([]);
   }, []);
-  const syncSlideSwitches = (items: ComponentInstance[]) => {
+  const syncSlideSwitches = useCallback((items: ComponentInstance[]) => {
     const ids = items.filter((component) => component.type === "slide-switch" && component.properties.isOn === true).map((component) => component.id);
     slideSwitchOnIdsRef.current = new Set(ids);
     setSlideSwitchOnIds(ids);
+  }, []);
+
+  const captureCircuitSnapshot = useCallback((): CircuitHistorySnapshot => ({
+    components: structuredClone(componentsRef.current),
+    wires: structuredClone(wiresRef.current),
+  }), []);
+  const publishHistoryAvailability = useCallback(() => {
+    setCanUndo(historyRef.current.canUndo);
+    setCanRedo(historyRef.current.canRedo);
+  }, []);
+  const recordCircuitHistory = () => {
+    if (historyGestureSnapshotRef.current) return;
+    historyRef.current.push(captureCircuitSnapshot());
+    publishHistoryAvailability();
   };
+  const beginHistoryGesture = useCallback(() => {
+    if (historyGestureSnapshotRef.current) return;
+    historyGestureSnapshotRef.current = captureCircuitSnapshot();
+    historyGestureChangedRef.current = false;
+  }, [captureCircuitSnapshot]);
+  const markHistoryGestureChanged = useCallback(() => {
+    if (historyGestureSnapshotRef.current) historyGestureChangedRef.current = true;
+  }, []);
+  const endHistoryGesture = useCallback(() => {
+    const before = historyGestureSnapshotRef.current;
+    const changed = historyGestureChangedRef.current;
+    historyGestureSnapshotRef.current = null;
+    historyGestureChangedRef.current = false;
+    if (before && changed && JSON.stringify(before) !== JSON.stringify(captureCircuitSnapshot())) {
+      historyRef.current.push(before);
+    }
+    publishHistoryAvailability();
+  }, [captureCircuitSnapshot, publishHistoryAvailability]);
+  const clearCircuitHistory = useCallback(() => {
+    historyRef.current.clear();
+    historyGestureSnapshotRef.current = null;
+    historyGestureChangedRef.current = false;
+    publishHistoryAvailability();
+  }, [publishHistoryAvailability]);
+  const restoreCircuitSnapshot = useCallback((snapshot: CircuitHistorySnapshot) => {
+    componentsRef.current = snapshot.components;
+    wiresRef.current = snapshot.wires;
+    setComponents(snapshot.components);
+    setWires(snapshot.wires);
+    syncSlideSwitches(snapshot.components);
+    setSelectedId((current) => current && (snapshot.components.some((component) => component.id === current) || snapshot.wires.some((wire) => wire.id === current)) ? current : null);
+  }, [syncSlideSwitches]);
+  const handleUndo = useCallback(() => {
+    if (historyGestureSnapshotRef.current) return;
+    const snapshot = historyRef.current.undo(captureCircuitSnapshot());
+    if (!snapshot) return;
+    restoreCircuitSnapshot(snapshot);
+    publishHistoryAvailability();
+  }, [captureCircuitSnapshot, publishHistoryAvailability, restoreCircuitSnapshot]);
+  const handleRedo = useCallback(() => {
+    if (historyGestureSnapshotRef.current) return;
+    const snapshot = historyRef.current.redo(captureCircuitSnapshot());
+    if (!snapshot) return;
+    restoreCircuitSnapshot(snapshot);
+    publishHistoryAvailability();
+  }, [captureCircuitSnapshot, publishHistoryAvailability, restoreCircuitSnapshot]);
+
+  useEffect(() => {
+    const handleHistoryShortcut = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select, [contenteditable='true'], .monaco-editor"))) return;
+      const modifier = event.ctrlKey || event.metaKey;
+      if (!modifier) return;
+      const key = event.key.toLowerCase();
+      if (key === "z") {
+        event.preventDefault();
+        if (event.shiftKey) handleRedo();
+        else handleUndo();
+      } else if (key === "y") {
+        event.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener("keydown", handleHistoryShortcut);
+    return () => window.removeEventListener("keydown", handleHistoryShortcut);
+  }, [handleRedo, handleUndo]);
 
   const syncOutputVisuals = (snapshot: RuntimeSnapshot) => {
     const relayStates = getRelayStates(componentsRef.current, wiresRef.current, snapshot);
@@ -185,6 +271,7 @@ export default function Home() {
   };
 
   const applyProjectFile = useCallback((file: ProjectFile) => {
+    clearCircuitHistory();
     const project = file.project;
     setProjectId(project.id);
     setProjectCreatedAt(project.createdAt);
@@ -207,7 +294,7 @@ export default function Home() {
     setSerialBaud(9600);
     setCompileResult(null);
     setSimulationState("IDLE");
-  }, [releaseAllButtons, stopBuzzerAudio]);
+  }, [clearCircuitHistory, releaseAllButtons, stopBuzzerAudio, syncSlideSwitches]);
 
   // Load the latest IndexedDB project (localStorage/legacy fallback handled by persistence service).
   useEffect(() => {
@@ -343,6 +430,7 @@ export default function Home() {
 
   const handleResetStarter = () => {
     if (!confirm("Replace the current workspace with the pre-wired Blink starter?")) return;
+    clearCircuitHistory();
     runtimeRef.current?.stop();
     runtimeRef.current = null;
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
@@ -395,6 +483,7 @@ export default function Home() {
     if (type === "dc-motor") comp = createDcMotor(randX, randY);
     if (type === "h-bridge") comp = createHBridgeDriver(randX, randY);
     if (comp) {
+      recordCircuitHistory();
       setComponents((c) => [...c, comp!]);
       setSelectedId(comp!.id);
       setLogs((l) => [...l, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Added ${comp!.label} at (${Math.round(comp!.x)}, ${Math.round(comp!.y)})` }]);
@@ -407,6 +496,7 @@ export default function Home() {
   };
 
   const handleDeleteComponent = (id: string) => {
+    recordCircuitHistory();
     if (components.some((component) => component.id === id && component.type === "buzzer")) stopBuzzerAudio();
     const nextSwitches = new Set(slideSwitchOnIdsRef.current);
     nextSwitches.delete(id);
@@ -421,6 +511,7 @@ export default function Home() {
   };
 
   const handleDeleteWire = (id: string) => {
+    recordCircuitHistory();
     setWires((ws) => ws.filter((w) => w.id !== id));
     setSelectedId(null);
     setLogs((l) => [...l, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Deleted wire ${id.slice(0, 12)}` }]);
@@ -439,6 +530,7 @@ export default function Home() {
   };
 
   const handleUpdateComponent = (id: string, updates: Partial<ComponentInstance>) => {
+    recordCircuitHistory();
     setComponents((cs) => cs.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   };
 
@@ -479,10 +571,12 @@ export default function Home() {
   };
 
   const handleUpdateWire = (id: string, updates: Partial<Wire>) => {
+    recordCircuitHistory();
     setWires((ws) => ws.map((w) => (w.id === id ? { ...w, ...updates } : w)));
   };
 
   const handleRotate = (id: string) => {
+    recordCircuitHistory();
     setComponents((cs) => cs.map((c) => (c.id === id ? { ...c, rotation: (c.rotation + 90) % 360 } : c)));
   };
 
@@ -518,6 +612,7 @@ export default function Home() {
       endComponentId: compId,
       color: wireColor,
     };
+    recordCircuitHistory();
     setWires((ws) => [...ws, newWire]);
     // Mark terminals as connected
     setComponents((cs) =>
@@ -669,6 +764,7 @@ export default function Home() {
   };
 
   const handleLoadBeginnerProject = (id: BeginnerProjectId) => {
+    clearCircuitHistory();
     const template = createBeginnerProject(id);
     runtimeRef.current?.stop();
     runtimeRef.current = null;
@@ -703,6 +799,7 @@ export default function Home() {
 
   const handleNew = () => {
     if (confirm("Create a blank project? Unsaved changes will be lost.")) {
+      clearCircuitHistory();
       runtimeRef.current?.stop();
       runtimeRef.current = null;
       if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
@@ -815,6 +912,10 @@ export default function Home() {
         activeBeginnerProjectId={activeBeginnerProjectId}
         onLoadBeginnerProject={handleLoadBeginnerProject}
         onAddComponent={(type) => handleAddComponent(type)}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -828,6 +929,9 @@ export default function Home() {
             selectedId={selectedId}
             onSelect={handleSelect}
             onMoveComponent={handleMove}
+            onHistoryGestureStart={beginHistoryGesture}
+            onHistoryGestureChange={markHistoryGestureChanged}
+            onHistoryGestureEnd={endHistoryGesture}
             onDeleteComponent={handleDeleteComponent}
             onDeleteWire={handleDeleteWire}
             onUpdateWireRoute={handleUpdateWire}

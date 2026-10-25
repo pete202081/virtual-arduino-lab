@@ -86,6 +86,8 @@ test("selected wire bend handles stay orthogonal, persist on save/open, and rese
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Redo" })).toBeDisabled();
 
   await page.locator("g[data-wire-id]").first().dispatchEvent("click");
   const handle = page.getByTestId("wire-route-handle");
@@ -120,7 +122,34 @@ test("selected wire bend handles stay orthogonal, persist on save/open, and rese
   await page.getByTestId("reset-wire-route").click();
   await expect(page.getByTestId("wire-route-properties")).toContainText("Auto-routed");
   await expect(page.getByTestId("reset-wire-route")).toBeDisabled();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByTestId("wire-route-properties")).toContainText("Manual route");
+  await page.getByRole("button", { name: "Redo" }).click();
+  await expect(page.getByTestId("wire-route-properties")).toContainText("Auto-routed");
+  await page.keyboard.press("Control+z");
+  await expect(page.getByTestId("wire-route-properties")).toContainText("Manual route");
+  await page.keyboard.press("Control+Shift+z");
+  await expect(page.getByTestId("wire-route-properties")).toContainText("Auto-routed");
   expect(errors).toEqual([]);
+});
+
+test("undo and redo component additions with toolbar buttons and keyboard shortcuts", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText("Arduino Sketch")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Redo" })).toBeDisabled();
+
+  await page.getByRole("button", { name: /Potentiometer 10kΩ.*Analog/ }).click();
+  await expect(page.getByText("5 components • 3 wires").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Undo" })).toBeEnabled();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByText("4 components • 3 wires").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Redo" })).toBeEnabled();
+
+  await page.keyboard.press("Control+Shift+z");
+  await expect(page.getByText("5 components • 3 wires").first()).toBeVisible();
+  await page.keyboard.press("Control+z");
+  await expect(page.getByText("4 components • 3 wires").first()).toBeVisible();
 });
 
 test("interactive pushbutton can be pressed and released on the canvas", async ({ page }) => {

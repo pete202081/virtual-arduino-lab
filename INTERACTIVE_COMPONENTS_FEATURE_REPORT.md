@@ -104,8 +104,8 @@
 
 ## Verification
 
-- 91 unit checks pass, including obstacle-aware and manual orthogonal wire routing, route-coordinate persistence/validation, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all eighteen template compile/wiring-reference/fresh-ID checks.
-- 13 Playwright end-to-end tests pass, including manual wire-route dragging, save/open persistence, route reset, analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus relay-controlled lamp switching and all eighteen ready-made projects.
+- 92 unit checks pass, including obstacle-aware and manual orthogonal wire routing, route-coordinate persistence/validation, bounded circuit undo/redo history, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all eighteen template compile/wiring-reference/fresh-ID checks.
+- 14 Playwright end-to-end tests pass, including manual wire-route dragging, save/open persistence, route reset and undo/redo, toolbar/keyboard history controls, analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, sensor behaviors, relay switching, and all eighteen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits

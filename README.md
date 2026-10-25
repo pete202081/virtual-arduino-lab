@@ -50,9 +50,10 @@ npm audit
 - `tests/project-persistence.test.ts` — 12 schema, migration, safety, route-coordinate, and fallback tests
 - `tests/beginner-project-templates.test.ts` — 18 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
 - `tests/wire-routing.test.ts` — six endpoint, obstacle-detour, right-angle, crossing-penalty, and manual-bend checks
-- `e2e/release-journey.spec.ts` — 13 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, sensor thresholds, relay switching, all eighteen projects, breadboard hole targeting, exact wire-endpoint alignment, and manual wire-route editing/save/reset
+- `tests/circuit-history.test.ts` — bounded undo/redo, route snapshot, branch invalidation, and clearing checks
+- `e2e/release-journey.spec.ts` — 14 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, sensor thresholds, relay switching, all eighteen projects, breadboard alignment, manual wire-route editing, and undo/redo
 
-Current verified status: all 91 unit checks pass, all 13 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
+Current verified status: all 92 unit checks pass, all 14 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
 
 ## Implemented simulation subset and limitations
 

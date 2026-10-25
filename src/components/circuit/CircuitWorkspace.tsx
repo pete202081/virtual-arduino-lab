@@ -34,6 +34,9 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onMoveComponent: (id: string, x: number, y: number) => void;
+  onHistoryGestureStart: () => void;
+  onHistoryGestureChange: () => void;
+  onHistoryGestureEnd: () => void;
   onDeleteComponent: (id: string) => void;
   onDeleteWire: (id: string) => void;
   onUpdateWireRoute: (id: string, updates: Partial<Wire>) => void;
@@ -70,6 +73,9 @@ export function CircuitWorkspace({
   selectedId,
   onSelect,
   onMoveComponent,
+  onHistoryGestureStart,
+  onHistoryGestureChange,
+  onHistoryGestureEnd,
   onDeleteComponent,
   onDeleteWire,
   onUpdateWireRoute,
@@ -135,6 +141,7 @@ export function CircuitWorkspace({
     const moveRoutePoint = (event: MouseEvent) => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
+      onHistoryGestureChange();
       onUpdateWireRoute(draggingWireRouteId, {
         routePoint: {
           x: clampRouteCoordinate((event.clientX - rect.left - pan.x) / zoom),
@@ -142,14 +149,17 @@ export function CircuitWorkspace({
         },
       });
     };
-    const stopRoutePointDrag = () => setDraggingWireRouteId(null);
+    const stopRoutePointDrag = () => {
+      setDraggingWireRouteId(null);
+      onHistoryGestureEnd();
+    };
     window.addEventListener("mousemove", moveRoutePoint);
     window.addEventListener("mouseup", stopRoutePointDrag);
     return () => {
       window.removeEventListener("mousemove", moveRoutePoint);
       window.removeEventListener("mouseup", stopRoutePointDrag);
     };
-  }, [draggingWireRouteId, onUpdateWireRoute, pan.x, pan.y, zoom]);
+  }, [draggingWireRouteId, onHistoryGestureChange, onHistoryGestureEnd, onUpdateWireRoute, pan.x, pan.y, zoom]);
 
   useEffect(() => {
     if (!fitToComponents || components.length === 0) return;
@@ -201,17 +211,18 @@ export function CircuitWorkspace({
     if (!rect) return;
     const x = (e.clientX - rect.left - pan.x) / zoom;
     const y = (e.clientY - rect.top - pan.y) / zoom;
+    onHistoryGestureStart();
     setDragging({ id: compId, offsetX: x - comp.x, offsetY: y - comp.y });
     onSelect(compId);
     e.stopPropagation();
   };
 
-  const handleRouteHandleMouseDown = (event: React.MouseEvent<SVGCircleElement>, wire: Wire, routePoint: WireRoutePoint) => {
+  const handleRouteHandleMouseDown = (event: React.MouseEvent<SVGCircleElement>, wire: Wire) => {
     event.preventDefault();
     event.stopPropagation();
     onSelect(wire.id);
+    onHistoryGestureStart();
     setDraggingWireRouteId(wire.id);
-    if (!wire.routePoint) onUpdateWireRoute(wire.id, { routePoint });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -219,6 +230,7 @@ export function CircuitWorkspace({
     if (!rect) return;
 
     if (draggingWireRouteId) {
+      onHistoryGestureChange();
       const x = (e.clientX - rect.left - pan.x) / zoom;
       const y = (e.clientY - rect.top - pan.y) / zoom;
       onUpdateWireRoute(draggingWireRouteId, { routePoint: { x: clampRouteCoordinate(x), y: clampRouteCoordinate(y) } });
@@ -226,6 +238,7 @@ export function CircuitWorkspace({
     }
 
     if (dragging) {
+      onHistoryGestureChange();
       const x = (e.clientX - rect.left - pan.x) / zoom;
       const y = (e.clientY - rect.top - pan.y) / zoom;
       onMoveComponent(dragging.id, x - dragging.offsetX, y - dragging.offsetY);
@@ -241,6 +254,7 @@ export function CircuitWorkspace({
   const handleMouseUp = () => {
     setDragging(null);
     setDraggingWireRouteId(null);
+    onHistoryGestureEnd();
     setIsPanning(false);
     pressedButtonIds.forEach(onButtonPressEnd);
   };
@@ -416,7 +430,7 @@ export function CircuitWorkspace({
         className="flex-1 relative overflow-hidden select-none"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={() => { if (!draggingWireRouteId) handleMouseUp(); }}
         onMouseDown={handleWorkspaceMouseDown}
         onWheel={handleWheel}
         style={{ cursor: dragging ? "grabbing" : isPanning ? "grabbing" : pendingWire ? "crosshair" : "default" }}
@@ -666,7 +680,7 @@ export function CircuitWorkspace({
                   strokeWidth="3"
                   className={`pointer-events-auto cursor-grab ${draggingWireRouteId === wire.id ? "cursor-grabbing" : ""}`}
                   style={{ pointerEvents: "all" }}
-                  onMouseDown={(event) => handleRouteHandleMouseDown(event, wire, routePoint)}
+                  onMouseDown={(event) => handleRouteHandleMouseDown(event, wire)}
                   onClick={(event) => { event.stopPropagation(); onSelect(wire.id); }}
                   onKeyDown={(event) => {
                     const step = event.shiftKey ? 20 : 8;

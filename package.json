@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx tests/circuit-graph.test.ts && tsx tests/sketch-validator.test.ts && tsx tests/simulation-adapter.test.ts && tsx tests/project-persistence.test.ts && tsx tests/beginner-project-templates.test.ts && tsx tests/wire-routing.test.ts",
+    "test": "tsx tests/circuit-graph.test.ts && tsx tests/sketch-validator.test.ts && tsx tests/simulation-adapter.test.ts && tsx tests/project-persistence.test.ts && tsx tests/beginner-project-templates.test.ts && tsx tests/wire-routing.test.ts && tsx tests/circuit-history.test.ts",
     "test:e2e": "npm run build && playwright test"
   },
   "dependencies": {

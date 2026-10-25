@@ -639,6 +639,10 @@ Projects are stored in the browser, not in a cloud account. Browser cleanup can 
 - **Grid:** toggle the grid button in the canvas toolbar.
 - **Wire color:** choose a color before beginning a wire; new wires use that color.
 
+### Undo and Redo
+
+Use the top-bar **Undo** and **Redo** buttons, or press **Ctrl+Z / Cmd+Z** and **Ctrl+Shift+Z / Cmd+Shift+Z**. **Ctrl+Y** also redoes an action on Windows/Linux. History covers circuit edits such as adding, moving, rotating, and deleting components; adding or deleting wires; and changing component or wire properties, including manual wire routes. Dragging a component or wire bend is grouped as one action. The editor’s own undo handles sketch changes separately, and sensor/simulation input adjustments are not included in circuit history. History keeps up to 100 edits and clears when you open, import, duplicate, create, or load a different project.
+
 ---
 
 ## 10. Fix common problems

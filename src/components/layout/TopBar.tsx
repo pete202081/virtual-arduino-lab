@@ -23,9 +23,13 @@ interface TopBarProps {
   activeBeginnerProjectId: BeginnerProjectId | "";
   onLoadBeginnerProject: (id: BeginnerProjectId) => void;
   onAddComponent: (type: ComponentType) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
 }
 
-export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExport, onImport, onResetStarter, simulationState, onRun, onStop, onReset, onRename, activeBeginnerProjectId, onLoadBeginnerProject, onAddComponent }: TopBarProps) {
+export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExport, onImport, onResetStarter, simulationState, onRun, onStop, onReset, onRename, activeBeginnerProjectId, onLoadBeginnerProject, onAddComponent, canUndo, canRedo, onUndo, onRedo }: TopBarProps) {
   const [editing, setEditing] = useState(false);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -184,10 +188,22 @@ export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExpo
           )}
         </div>
         <div className="w-px h-6 bg-white/10 mx-1" />
-        <button className="w-8 h-8 bg-white/10 hover:bg-white/15 rounded-md flex items-center justify-center border border-white/10 opacity-50 cursor-not-allowed" title="Undo (coming)">
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          aria-label="Undo"
+          title="Undo (Ctrl/Cmd+Z)"
+          className="w-8 h-8 bg-white/10 hover:bg-white/15 disabled:hover:bg-white/10 rounded-md flex items-center justify-center border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
           <Undo className="w-3.5 h-3.5" />
         </button>
-        <button className="w-8 h-8 bg-white/10 hover:bg-white/15 rounded-md flex items-center justify-center border border-white/10 opacity-50 cursor-not-allowed" title="Redo (coming)">
+        <button
+          onClick={onRedo}
+          disabled={!canRedo}
+          aria-label="Redo"
+          title="Redo (Ctrl/Cmd+Shift+Z)"
+          className="w-8 h-8 bg-white/10 hover:bg-white/15 disabled:hover:bg-white/10 rounded-md flex items-center justify-center border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
           <Redo className="w-3.5 h-3.5" />
         </button>
       </div>
