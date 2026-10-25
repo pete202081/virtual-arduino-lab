@@ -1,6 +1,6 @@
 "use client";
 import { ComponentInstance, Wire } from "@/types/circuit";
-import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2, Radio } from "lucide-react";
+import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2, Radio, Waves } from "lucide-react";
 
 interface Props {
   selectedComponent: ComponentInstance | null;
@@ -118,6 +118,7 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
   const isPotentiometer = comp.type === "potentiometer";
   const isLdr = comp.type === "ldr";
   const isPir = comp.type === "pir";
+  const isHcSr04 = comp.type === "hc-sr04";
 
   return (
     <div className="w-[300px] shrink-0 bg-white border-l border-slate-200 flex flex-col h-full overflow-hidden">
@@ -138,6 +139,7 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
           {isPotentiometer && <SlidersHorizontal className="w-3.5 h-3.5 text-teal-600" />}
           {isLdr && <Sun className="w-3.5 h-3.5 text-amber-600" />}
           {isPir && <Radio className="w-3.5 h-3.5 text-violet-700" />}
+          {isHcSr04 && <Waves className="w-3.5 h-3.5 text-sky-700" />}
           PROPERTIES
         </div>
         <div className="text-xs font-bold text-[#0F2142] mt-1">{comp.label}</div>
@@ -385,6 +387,31 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
               <p>Connect M+ and M− to the H-bridge OUT1 and OUT2 terminals. The motor animates only when a powered driver has a valid direction input and nonzero ENA duty.</p>
               <p className="p-2 bg-blue-50 border border-blue-200 rounded">The displayed speed percentage is the ENA PWM duty. Reversing the two motor leads reverses the displayed direction.</p>
               <p className="p-2 bg-amber-50 border border-amber-200 rounded">Use an H-bridge or motor driver in real circuits; a GPIO pin cannot safely supply motor current.</p>
+            </div>
+          </div>
+        )}
+
+        {isHcSr04 && (
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="px-2.5 py-1.5 bg-sky-50 border-b border-sky-100 flex items-center gap-1.5">
+              <Waves className="w-3 h-3 text-sky-700" /> <span className="text-[11px] font-bold text-sky-800">HC-SR04 ULTRASONIC RANGE</span>
+            </div>
+            <div className="p-2.5 space-y-2 text-[11px]">
+              <label htmlFor="ultrasonic-distance" className="font-bold text-slate-600">Target distance: {Number(comp.properties.distanceCm ?? 100)} cm · echo {Number(comp.properties.distanceCm ?? 100) * 58} µs</label>
+              <input
+                id="ultrasonic-distance"
+                aria-label="Ultrasonic simulated distance (cm)"
+                type="range"
+                min={2}
+                max={400}
+                step={1}
+                value={Math.max(2, Math.min(400, Number(comp.properties.distanceCm ?? 100)))}
+                onChange={(event) => onUpdateComponent(comp.id, { properties: { ...comp.properties, distanceCm: Number(event.target.value) } })}
+                className="w-full accent-sky-600"
+              />
+              <div className="flex justify-between text-[10px] text-slate-500"><span>2 cm · 116 µs</span><span>400 cm · 23,200 µs</span></div>
+              <p className="p-2 bg-blue-50 border border-blue-200 rounded">Wire VCC→5V, GND→GND, TRIG→a digital output (D3), and ECHO→a digital input (D2). Send a short TRIG pulse, then compare `pulseIn(echoPin, HIGH[, timeout])` against a constant inside an `if` condition. The model uses about 58 µs per centimeter.</p>
+              <p className="p-2 bg-amber-50 border border-amber-200 rounded">Only bounded `pulseIn()` threshold conditions are simulated. The lab does not calculate propagation, beam angle, reflections, temperature effects, or real-time echo waveforms; no trigger pulse produces the modeled timeout value.</p>
             </div>
           </div>
         )}

@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { STARTER_CODE, SERIAL_DEMO_CODE } from "../src/types/circuit";
 import { validateSketch } from "../src/simulation/interfaces/compileAdapter";
+import { compileSimulationProgram } from "../src/simulation/interfaces/simulationAdapter";
 
 let passed = 0;
 function test(name: string, run: () => void) {
@@ -56,6 +57,13 @@ test("bounded Servo attach/write methods are recognized without enabling arbitra
   assert.equal(unsupported.success, false);
 });
 
+test("bounded pulseIn threshold conditions are recognized without allowing generic pulseIn statements", () => {
+  const supported = validateSketch("const int echoPin = 2;\nvoid setup() {}\nvoid loop() { if (pulseIn(echoPin, HIGH, 30000) < 1160) { digitalWrite(8, HIGH); } delay(20); }");
+  assert.equal(supported.success, true, JSON.stringify(supported.errors));
+  assert.ok(supported.usedApis.includes("pulseIn"));
+  const unsupportedStatement = compileSimulationProgram("void setup() {}\nvoid loop() { pulseIn(2, HIGH); delay(20); }");
+  assert.equal(unsupportedStatement.success, false);
+});
 test("unbalanced braces are caught", () => {
   const result = validateSketch("void setup() {\nvoid loop() {}\n");
   assert.equal(result.success, false);

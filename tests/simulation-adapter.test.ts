@@ -1,8 +1,8 @@
 /** M4 simulation adapter tests. Run: npx tsx tests/simulation-adapter.test.ts */
 import assert from "node:assert/strict";
-import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor } from "../src/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor, createHcSr04Sensor } from "../src/circuit-engine/models/componentTemplates";
 import { STARTER_CODE } from "../src/types/circuit";
-import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, getDcMotorStates, readDigitalPin, readAnalogPin, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
+import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, getDcMotorStates, readDigitalPin, readAnalogPin, readUltrasonicPulseDuration, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
 import { buildCircuitGraph } from "../src/circuit-engine/graph/netGraph";
 
 let passed = 0;
@@ -251,6 +251,46 @@ test("pushbutton opens and closes its circuit, and INPUT_PULLUP reads LOW only w
   assert.equal(readDigitalPin(2, modes, components, wires), "HIGH");
   assert.equal(buildCircuitGraph(components, wires, new Set([button.id])).hasConnection(d2.id, gnd.id), true);
   assert.equal(readDigitalPin(2, modes, components, wires, new Set([button.id])), "LOW");
+});
+
+test("HC-SR04 pulseIn threshold control models one triggered echo and responds to distance", () => {
+  const board = createArduinoUno(0, 0);
+  const sensor = createHcSr04Sensor(420, 200);
+  sensor.properties.distanceCm = 10;
+  const trigBoard = board.terminals.find((terminal) => terminal.label === "D3")!;
+  const echoBoard = board.terminals.find((terminal) => terminal.label === "D2")!;
+  const fiveVolt = board.terminals.find((terminal) => terminal.label === "5V")!;
+  const ground = board.terminals.find((terminal) => terminal.label === "GND-1")!;
+  const trig = sensor.terminals.find((terminal) => terminal.label === "TRIG")!;
+  const echo = sensor.terminals.find((terminal) => terminal.label === "ECHO")!;
+  const vcc = sensor.terminals.find((terminal) => terminal.label === "VCC")!;
+  const sensorGround = sensor.terminals.find((terminal) => terminal.label === "GND")!;
+  const components = [board, sensor];
+  const wire = (id: string, a: typeof trigBoard, b: typeof trigBoard) => ({ id, startTerminalId: a.id, endTerminalId: b.id, startComponentId: a.componentId, endComponentId: b.componentId, color: "#0284C7" });
+  const wires = [wire("trig", trig, trigBoard), wire("echo", echo, echoBoard), wire("vcc", vcc, fiveVolt), wire("gnd", sensorGround, ground)];
+  const program = compileSimulationProgram(`const int trigPin = 3; const int echoPin = 2; const int lampPin = 8; void setup() { pinMode(trigPin, OUTPUT); pinMode(echoPin, INPUT); pinMode(lampPin, OUTPUT); } void loop() { digitalWrite(trigPin, LOW); delayMicroseconds(2); digitalWrite(trigPin, HIGH); delayMicroseconds(10); digitalWrite(trigPin, LOW); if (pulseIn(echoPin, HIGH, 30000) < 1160) { digitalWrite(lampPin, HIGH); } else { digitalWrite(lampPin, LOW); } delay(50); }`);
+  assert.equal(program.success, true, JSON.stringify(program.errors));
+  const clock = new FakeClock();
+  const pinChanges: string[] = [];
+  const runtime = new SimulationRuntime(program.program!, {
+    onPinChange: (pin, level) => pinChanges.push(`${pin}:${level}`),
+    onDigitalRead: () => "LOW",
+    onPulseIn: (pin, timeout, snapshot) => readUltrasonicPulseDuration(pin, timeout, components, wires, snapshot),
+    onAnalogRead: () => 0,
+    onToneChange: () => undefined,
+    onSerial: () => undefined,
+    onBaud: () => undefined,
+    onError: (message) => { throw new Error(message); },
+  }, clock.schedule, clock.cancel);
+  runtime.start();
+  clock.advance(1);
+  assert.ok(pinChanges.includes("8:HIGH"), "10 cm distance should fall below the ~20 cm threshold");
+  assert.equal(readUltrasonicPulseDuration(2, 30_000, components, wires, { modes: new Map([[2, "INPUT"], [3, "OUTPUT"]]), levels: new Map([[3, "LOW"]]), triggeredPins: new Set([3]) }), 580);
+  sensor.properties.distanceCm = 100;
+  clock.advance(60);
+  assert.ok(pinChanges.includes("8:LOW"), "100 cm distance should exceed the threshold");
+  runtime.stop();
+  assert.equal(readUltrasonicPulseDuration(2, 30_000, components, wires, { modes: new Map([[2, "INPUT"], [3, "OUTPUT"]]), levels: new Map([[3, "LOW"]]), triggeredPins: new Set() }), 30_000, "an untriggered sensor produces the bounded timeout duration");
 });
 
 test("PIR digital output follows simulated motion only when wired and powered", () => {

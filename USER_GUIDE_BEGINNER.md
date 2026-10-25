@@ -1,6 +1,6 @@
 # Virtual Arduino Lab — Beginner’s User Guide
 
-Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. For hands-on practice after the Blink walkthrough, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md), a fourteen-project path with wiring maps, copy-ready sketches, and challenges.
+Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. For hands-on practice after the Blink walkthrough, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md), a fifteen-project path with wiring maps, copy-ready sketches, and challenges.
 
 > **What this is:** a local, browser-based learning simulator. It does not connect to a physical Arduino and does not compile a real AVR binary.
 
@@ -44,7 +44,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 ### Top bar
 
 - **Project title:** click its name to rename it; press Enter or click elsewhere to finish.
-- **Beginner projects…:** loads any of fourteen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
+- **Beginner projects…:** loads any of fifteen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
 - **New:** creates a blank project after confirmation. It starts with the Blink sketch but no circuit components.
 - **Open:** opens a picker for projects saved in this browser.
 - **Save:** saves the current project locally.
@@ -54,7 +54,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 
 ### Left: Component Library
 
-Browse or search for components, choose a category, or use **Quick Add**. Interactive items include Arduino Uno R3, breadboard, single LED, RGB LED, 7-segment display, 220 Ω resistor, pushbutton, latched slide switch, joystick module, servo motor, DC motor, H-bridge driver, potentiometer, LDR sensor, PIR motion sensor, buzzer, and jumper-wire tool.
+Browse or search for components, choose a category, or use **Quick Add**. Interactive items include Arduino Uno R3, breadboard, single LED, RGB LED, 7-segment display, 220 Ω resistor, pushbutton, latched slide switch, joystick module, servo motor, DC motor, H-bridge driver, potentiometer, LDR sensor, PIR motion sensor, HC-SR04 ultrasonic sensor, buzzer, and jumper-wire tool.
 
 Clicking an available component adds it to the canvas; supported component cards can also be dragged onto the workspace.
 
@@ -316,6 +316,40 @@ void loop() {
 ```
 
 When the model is powered and wired, **MOTION DETECTED** produces HIGH and **MOTION CLEAR** produces LOW. This is a binary learning model only; it does not simulate range, field of view, warm-up time, retrigger/hold timing, ambient conditions, or real PIR electronics. Real sensor modules may have different timing/voltage requirements; check the module datasheet before building hardware.
+
+### Try an HC-SR04 ultrasonic sensor
+
+1. Add **HC-SR04 Ultrasonic Sensor** from Sensors or Quick Add. Its target-distance slider represents a simulated object from 2 to 400 cm; the component also shows the modeled echo pulse duration.
+2. Wire **VCC→5V**, **GND→GND**, **TRIG→D3**, and **ECHO→D2**. Connect a yellow LED and 220 Ω resistor from D8 to GND, or load **15 · Ultrasonic Distance Alarm** for the full circuit.
+3. The bounded interpreter supports a numeric `pulseIn()` threshold condition. This example lights the LED when the object is closer than about 20 cm (20 cm × 58 µs/cm ≈ 1,160 µs):
+
+```cpp
+const int trigPin = 3;
+const int echoPin = 2;
+const int lampPin = 8;
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(lampPin, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  if (pulseIn(echoPin, HIGH, 30000) < 1160) {
+    digitalWrite(lampPin, HIGH);
+  } else {
+    digitalWrite(lampPin, LOW);
+  }
+  delay(50);
+}
+```
+
+Try moving the distance slider while the sketch runs: 2 cm produces an echo duration near 116 µs, 20 cm near 1,160 µs, and 400 cm near 23,200 µs. The model uses roughly 58 µs per centimeter and requires a HIGH-to-LOW TRIG pulse, powered sensor, and both signal wires. `pulseIn()` is supported only as a bounded numeric threshold inside `if`; variable assignments, arithmetic distance calculations, and arbitrary code remain unsupported. This is not acoustic physics: beam width, propagation, reflections, temperature, sensor tolerance, and real-time echo waveforms are not simulated. Check the hardware datasheet and voltage compatibility before connecting a physical module.
 
 ### Try the active and passive buzzers
 
@@ -615,7 +649,7 @@ Check that the component is set to the right type and is wired with **+** to the
 
 The lab is designed for learning basic circuit connectivity and the Blink experiment. It uses a graph model for wires and breadboard holes and a limited interpreter for supported code.
 
-It is not a native compiler, full Arduino board emulator, or SPICE engine. Delays use browser timers and can be approximate, especially in background tabs. The graph treats resistors as conductive pass-throughs; it does not calculate resistance, current, voltage drops, heat, or LED damage. Pushbuttons and joystick SW support momentary inputs, while the slide switch latches open/closed; all can be read with the documented bounded `digitalRead` conditions. Potentiometer, LDR, and joystick axes provide idealized analogRead values for threshold conditions, not physical analog voltage/current analysis. Active/passive buzzers use a simple browser-generated square-wave audio model; this is not a physical sound-pressure or waveform simulation. PWM duty is shown as average visual LED brightness; the H-bridge motor is an idealized direction/speed animation only, with no current, torque, stall, voltage-drop, thermal, or real supply model. Never drive a physical motor from an Uno GPIO. The PIR sensor is a user-toggleable binary HIGH/LOW input, not a physical sensing or timing simulation. Servo angles are mapped to a 1,000–2,000 µs pulse display at 50 Hz, but actual waveform timing and electrical behavior are not simulated. Interrupts are not simulated. Use the simulator as a learning aid, not as a substitute for checking a real physical circuit safely.
+It is not a native compiler, full Arduino board emulator, or SPICE engine. Delays use browser timers and can be approximate, especially in background tabs. The graph treats resistors as conductive pass-throughs; it does not calculate resistance, current, voltage drops, heat, or LED damage. Pushbuttons and joystick SW support momentary inputs, while the slide switch latches open/closed; all can be read with the documented bounded `digitalRead` conditions. Potentiometer, LDR, and joystick axes provide idealized analogRead values for threshold conditions, not physical analog voltage/current analysis. Active/passive buzzers use a simple browser-generated square-wave audio model; this is not a physical sound-pressure or waveform simulation. PWM duty is shown as average visual LED brightness; the H-bridge motor is an idealized direction/speed animation only, with no current, torque, stall, voltage-drop, thermal, or real supply model. Never drive a physical motor from an Uno GPIO. The PIR sensor is a user-toggleable binary HIGH/LOW input, not a physical sensing or timing simulation. The HC-SR04 model maps the 2–400 cm slider to an approximate 58 µs/cm echo and recognizes a bounded `pulseIn()` threshold only after a trigger pulse; it does not simulate acoustic propagation, echoes, beam shape, temperature, tolerances, or waveforms. Servo angles are mapped to a 1,000–2,000 µs pulse display at 50 Hz, but actual waveform timing and electrical behavior are not simulated. Interrupts are not simulated. Use the simulator as a learning aid, not as a substitute for checking a real physical circuit safely.
 
 ---
 

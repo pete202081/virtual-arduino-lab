@@ -13,7 +13,7 @@ export interface CompileResult {
 }
 
 export const SUPPORTED_APIS = [
-  "pinMode", "digitalWrite", "analogWrite", "digitalRead", "analogRead", "delay", "delayMicroseconds", "tone", "noTone",
+  "pinMode", "digitalWrite", "analogWrite", "digitalRead", "analogRead", "pulseIn", "delay", "delayMicroseconds", "tone", "noTone",
   "Serial.begin", "Serial.println", "Serial.print", "Serial.available", "Serial.read", "Servo.attach", "Servo.write",
 ];
 
@@ -22,7 +22,6 @@ const unsupported: Record<string, string> = {
   noInterrupts: "noInterrupts() is not supported in the MVP adapter.",
   attachInterrupt: "attachInterrupt() is not supported in the MVP adapter.",
   detachInterrupt: "detachInterrupt() is not supported in the MVP adapter.",
-  pulseIn: "pulseIn() is not supported in the MVP adapter.",
   shiftIn: "shiftIn() is not supported in the MVP adapter.",
   shiftOut: "shiftOut() is not supported in the MVP adapter.",
 };

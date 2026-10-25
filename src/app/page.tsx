@@ -7,12 +7,12 @@ import { PropertiesPanel } from "@/components/layout/PropertiesPanel";
 import { Console } from "@/components/layout/Console";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { ComponentInstance, ComponentType, Wire, ConsoleTab, SimulationState, SimulationEvent, STARTER_CODE } from "@/types/circuit";
-import { createArduinoUno, createBreadboard, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createPirSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "@/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createBreadboard, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createPirSensor, createHcSr04Sensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "@/circuit-engine/models/componentTemplates";
 import { generateId, formatTime } from "@/lib/utils";
 import { validateCircuit } from "@/circuit-engine/validation/validator";
 import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
 import { validateSketch, CompileResult } from "@/simulation/interfaces/compileAdapter";
-import { compileSimulationProgram, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, getDcMotorStates, readDigitalPin, readAnalogPin, RuntimeSnapshot, RGBLedState, SevenSegmentState, ServoState, DcMotorState, SimulationRuntime } from "@/simulation/interfaces/simulationAdapter";
+import { compileSimulationProgram, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, getDcMotorStates, readDigitalPin, readAnalogPin, readUltrasonicPulseDuration, RuntimeSnapshot, RGBLedState, SevenSegmentState, ServoState, DcMotorState, SimulationRuntime } from "@/simulation/interfaces/simulationAdapter";
 import { createStarterCircuit } from "@/circuit-engine/models/starterCircuit";
 import { createBeginnerProject } from "@/circuit-engine/models/beginnerProjectTemplates";
 import type { BeginnerProjectId } from "@/circuit-engine/models/beginnerProjectTemplates";
@@ -350,8 +350,8 @@ export default function Home() {
 
   const handleAddComponent = (type: ComponentType, extra?: string) => {
     let comp: ComponentInstance | null = null;
-    const randX = type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "potentiometer" || type === "ldr" || type === "pir" || type === "joystick" || type === "servo" || type === "dc-motor" || type === "h-bridge" || type === "rgb-led" || type === "seven-segment" ? 440 + Math.random() * 60 : 80 + Math.random() * 200;
-    const randY = type === "potentiometer" || type === "ldr" || type === "pir" || type === "joystick" ? 250 + Math.random() * 60 : type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "servo" || type === "dc-motor" || type === "h-bridge" ? 130 + Math.random() * 100 : 80 + Math.random() * 120;
+    const randX = type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "potentiometer" || type === "ldr" || type === "pir" || type === "hc-sr04" || type === "joystick" || type === "servo" || type === "dc-motor" || type === "h-bridge" || type === "rgb-led" || type === "seven-segment" ? 440 + Math.random() * 60 : 80 + Math.random() * 200;
+    const randY = type === "potentiometer" || type === "ldr" || type === "pir" || type === "hc-sr04" || type === "joystick" ? 250 + Math.random() * 60 : type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "servo" || type === "dc-motor" || type === "h-bridge" ? 130 + Math.random() * 100 : 80 + Math.random() * 120;
     if (type === "arduino-uno") comp = createArduinoUno(randX, randY);
     if (type === "breadboard") comp = createBreadboard(randX, randY + 80);
     if (type === "led") comp = createLED(randX, randY, extra || "red");
@@ -364,6 +364,7 @@ export default function Home() {
     if (type === "potentiometer") comp = createPotentiometer(randX, randY);
     if (type === "ldr") comp = createLdrSensor(randX, randY);
     if (type === "pir") comp = createPirSensor(randX, randY);
+    if (type === "hc-sr04") comp = createHcSr04Sensor(randX, randY);
     if (type === "joystick") comp = createJoystickModule(randX, randY);
     if (type === "servo") comp = createServoMotor(randX, randY);
     if (type === "dc-motor") comp = createDcMotor(randX, randY);
@@ -425,6 +426,12 @@ export default function Home() {
   const handleLdrLightLevelChange = (id: string, level: number) => {
     setComponents((current) => current.map((component) => component.id === id
       ? { ...component, properties: { ...component.properties, lightLevel: Math.max(0, Math.min(100, Math.round(level))) } }
+      : component));
+  };
+
+  const handleUltrasonicDistanceChange = (id: string, distance: number) => {
+    setComponents((current) => current.map((component) => component.id === id
+      ? { ...component, properties: { ...component.properties, distanceCm: Math.max(2, Math.min(400, Math.round(distance))) } }
       : component));
   };
 
@@ -578,6 +585,7 @@ export default function Home() {
             setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "pin-change", message: `D${pin} servo → ${angle}° (${Math.round(1000 + (angle / 180) * 1000)} µs @ 50 Hz)` }]);
           },
           onDigitalRead: (pin, runtimeSnapshot) => readDigitalPin(pin, runtimeSnapshot.modes, componentsRef.current, wiresRef.current, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current),
+          onPulseIn: (pin, timeout, runtimeSnapshot) => readUltrasonicPulseDuration(pin, timeout, componentsRef.current, wiresRef.current, runtimeSnapshot),
           onAnalogRead: (pin) => readAnalogPin(pin, componentsRef.current, wiresRef.current),
           onToneChange: (_pin, _frequency, runtimeSnapshot) => syncBuzzerAudio(getBuzzerSignals(componentsRef.current, wiresRef.current, runtimeSnapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current)),
           onSerial: (text) => setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "serial", message: text }]),
@@ -803,6 +811,7 @@ export default function Home() {
             onPotentiometerChange={handlePotentiometerChange}
             onLdrLightLevelChange={handleLdrLightLevelChange}
             onPirMotionToggle={handlePirMotionToggle}
+            onUltrasonicDistanceChange={handleUltrasonicDistanceChange}
             onJoystickAxisChange={handleJoystickAxisChange}
             rgbLedStates={simulationState === "RUNNING" ? rgbLedStates : {}}
             sevenSegmentStates={simulationState === "RUNNING" ? sevenSegmentStates : {}}

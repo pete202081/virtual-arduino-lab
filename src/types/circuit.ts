@@ -16,6 +16,7 @@ export type ComponentType =
   | "potentiometer"
   | "ldr"
   | "pir"
+  | "hc-sr04"
   | "buzzer"
   | "wire";
 

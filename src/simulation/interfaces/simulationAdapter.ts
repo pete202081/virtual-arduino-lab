@@ -19,7 +19,7 @@ export type Instruction =
   | { kind: "tone"; pin: number; frequency: number; duration?: number; line: number }
   | { kind: "noTone"; pin: number; line: number }
   | { kind: "conditional"; sensor: "digital"; pin: number; operator: "==" | "!="; value: PinLevel; whenTrue: Instruction[]; whenFalse: Instruction[]; line: number }
-  | { kind: "conditional"; sensor: "analog"; pin: number; operator: "==" | "!=" | ">" | "<" | ">=" | "<="; value: number; whenTrue: Instruction[]; whenFalse: Instruction[]; line: number };
+  | { kind: "conditional"; sensor: "analog" | "pulse"; pin: number; operator: "==" | "!=" | ">" | "<" | ">=" | "<="; value: number; timeoutMicroseconds?: number; whenTrue: Instruction[]; whenFalse: Instruction[]; line: number };
 
 export interface SimulationProgram {
   setup: Instruction[];
@@ -222,13 +222,16 @@ function parseFunctionBody(
       while (/\s/.test(body[index] ?? "")) index++;
       if (body[index] === "}") return { instructions, index: nested ? index + 1 : index };
       if (index >= body.length) break;
-      const conditional = /^if\s*\(\s*(digitalRead|analogRead)\s*\(\s*([A-Za-z_]\w*|\d+)\s*\)\s*(==|!=|>=|<=|>|<)\s*(HIGH|LOW|\d+)\s*\)\s*\{/.exec(body.slice(index));
+      const pulseConditional = /^if\s*\(\s*pulseIn\s*\(\s*([A-Za-z_]\w*|\d+)\s*,\s*HIGH(?:\s*,\s*([A-Za-z_]\w*|\d+))?\s*\)\s*(==|!=|>=|<=|>|<)\s*([A-Za-z_]\w*|\d+)\s*\)\s*\{/.exec(body.slice(index));
+      const readConditional = /^if\s*\(\s*(digitalRead|analogRead)\s*\(\s*([A-Za-z_]\w*|\d+)\s*\)\s*(==|!=|>=|<=|>|<)\s*(HIGH|LOW|\d+)\s*\)\s*\{/.exec(body.slice(index));
+      const conditional = pulseConditional ?? readConditional;
       if (conditional) {
         const line = lineAt(source, bodyStart + index);
-        const sensor = conditional[1] === "analogRead" ? "analog" : "digital";
-        const pin = resolveValue(conditional[2], constants);
-        const operator = conditional[3] as "==" | "!=" | ">" | "<" | ">=" | "<=";
-        const rawValue = conditional[4];
+        const sensor = pulseConditional ? "pulse" : readConditional![1] === "analogRead" ? "analog" : "digital";
+        const pin = resolveValue(conditional[pulseConditional ? 1 : 2], constants);
+        const operator = conditional[pulseConditional ? 3 : 3] as "==" | "!=" | ">" | "<" | ">=" | "<=";
+        const rawValue = conditional[pulseConditional ? 4 : 4];
+        const timeoutMicroseconds = pulseConditional ? resolveValue(pulseConditional[2] ?? "30000", constants) : undefined;
         const open = index + conditional[0].length - 1;
         const thenBlock = parseBlock(open + 1, true, depth + 1);
         index = thenBlock.index;
@@ -250,10 +253,20 @@ function parseFunctionBody(
           } else {
             instructions.push({ kind: "conditional", sensor, pin, operator: operator as "==" | "!=", value: rawValue as PinLevel, whenTrue: thenBlock.instructions, whenFalse: elseInstructions, line });
           }
-        } else if (pin === undefined || pin < 0 || pin > 5 || !/^\d+$/.test(rawValue) || Number(rawValue) > 1023) {
-          errors.push({ line, message: "analogRead() conditions support analog pins A0–A5 compared with a numeric threshold from 0 to 1023." });
+        } else if (sensor === "analog") {
+          const value = resolveValue(rawValue, constants);
+          if (pin === undefined || pin < 0 || pin > 5 || value === undefined || value < 0 || value > 1023) {
+            errors.push({ line, message: "analogRead() conditions support analog pins A0–A5 compared with a numeric threshold from 0 to 1023." });
+          } else {
+            instructions.push({ kind: "conditional", sensor, pin, operator, value, whenTrue: thenBlock.instructions, whenFalse: elseInstructions, line });
+          }
         } else {
-          instructions.push({ kind: "conditional", sensor, pin, operator, value: Number(rawValue), whenTrue: thenBlock.instructions, whenFalse: elseInstructions, line });
+          const value = resolveValue(rawValue, constants);
+          if (pin === undefined || pin < 0 || pin > 13 || value === undefined || value < 0 || value > 30_000 || timeoutMicroseconds === undefined || timeoutMicroseconds < 1 || timeoutMicroseconds > 30_000) {
+            errors.push({ line, message: "pulseIn() conditions support a digital echo pin, HIGH pulse, and numeric threshold/optional timeout from 1 to 30000 microseconds." });
+          } else {
+            instructions.push({ kind: "conditional", sensor, pin, operator, value, timeoutMicroseconds, whenTrue: thenBlock.instructions, whenFalse: elseInstructions, line });
+          }
         }
         statementCount++;
         continue;
@@ -328,12 +341,14 @@ export interface RuntimeSnapshot {
   pwmLevels?: ReadonlyMap<number, number>;
   servoAngles?: ReadonlyMap<number, number>;
   tones?: ReadonlyMap<number, number>;
+  triggeredPins?: ReadonlySet<number>;
 }
 export interface RuntimeCallbacks {
   onPinChange: (pin: number, level: PinLevel, snapshot: RuntimeSnapshot) => void;
   onPwmChange?: (pin: number, value: number, snapshot: RuntimeSnapshot) => void;
   onServoChange?: (pin: number, angle: number, snapshot: RuntimeSnapshot) => void;
   onDigitalRead: (pin: number, snapshot: RuntimeSnapshot) => PinLevel;
+  onPulseIn?: (pin: number, timeoutMicroseconds: number, snapshot: RuntimeSnapshot) => number;
   onAnalogRead: (pin: number, snapshot: RuntimeSnapshot) => number;
   onToneChange: (pin: number, frequency: number | null, snapshot: RuntimeSnapshot) => void;
   onSerial: (text: string) => void;
@@ -357,6 +372,8 @@ export class SimulationRuntime {
   private readonly servoAttachments = new Map<string, number>();
   private readonly servoAngles = new Map<number, number>();
   private readonly tones = new Map<number, number>();
+  private readonly highPinsSinceLow = new Set<number>();
+  private readonly triggeredPins = new Set<number>();
   private readonly toneTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
   constructor(
@@ -389,7 +406,7 @@ export class SimulationRuntime {
   get isRunning(): boolean { return this.active; }
 
   private snapshot(): RuntimeSnapshot {
-    return { modes: new Map(this.modes), levels: new Map(this.levels), pwmLevels: new Map(this.pwmLevels), servoAngles: new Map(this.servoAngles), tones: new Map(this.tones) };
+    return { modes: new Map(this.modes), levels: new Map(this.levels), pwmLevels: new Map(this.pwmLevels), servoAngles: new Map(this.servoAngles), tones: new Map(this.tones), triggeredPins: new Set(this.triggeredPins) };
   }
 
   private step = (): void => {
@@ -411,6 +428,12 @@ export class SimulationRuntime {
       this.modes.set(instruction.pin, instruction.mode);
     } else if (instruction.kind === "digitalWrite") {
       this.pwmLevels.delete(instruction.pin);
+      if (instruction.level === "HIGH") {
+        this.highPinsSinceLow.add(instruction.pin);
+        this.triggeredPins.delete(instruction.pin);
+      } else if (this.highPinsSinceLow.delete(instruction.pin)) {
+        this.triggeredPins.add(instruction.pin);
+      }
       this.levels.set(instruction.pin, instruction.level);
       this.callbacks.onPinChange(instruction.pin, instruction.level, this.snapshot());
     } else if (instruction.kind === "analogWrite") {
@@ -470,7 +493,12 @@ export class SimulationRuntime {
         const actual = this.callbacks.onDigitalRead(instruction.pin, snapshot);
         matches = instruction.operator === "==" ? actual === instruction.value : actual !== instruction.value;
       } else {
-        const actual = this.callbacks.onAnalogRead(instruction.pin, snapshot);
+        let actual: number;
+        if (instruction.sensor === "analog") actual = this.callbacks.onAnalogRead(instruction.pin, snapshot);
+        else {
+          actual = this.callbacks.onPulseIn?.(instruction.pin, instruction.timeoutMicroseconds ?? 30_000, snapshot) ?? (instruction.timeoutMicroseconds ?? 30_000);
+          this.triggeredPins.clear();
+        }
         switch (instruction.operator) {
           case "==": matches = actual === instruction.value; break;
           case "!=": matches = actual !== instruction.value; break;
@@ -572,6 +600,36 @@ export function readAnalogPin(pin: number, components: ComponentInstance[], wire
     }
   }
   return 0;
+}
+
+/** Resolve an HC-SR04-style echo duration from powered wiring and a fresh modeled TRIG pulse. */
+export function readUltrasonicPulseDuration(pin: number, timeoutMicroseconds: number, components: ComponentInstance[], wires: Wire[], snapshot: RuntimeSnapshot): number {
+  const timeout = Math.max(1, Math.min(30_000, Math.round(timeoutMicroseconds)));
+  if (!Number.isInteger(pin) || pin < 0 || pin > 13) return timeout;
+  if (snapshot.modes.get(pin) !== "INPUT" && snapshot.modes.get(pin) !== "INPUT_PULLUP") return timeout;
+  const graph = buildCircuitGraph(components, wires);
+  for (const board of components.filter((component) => component.type === "arduino-uno")) {
+    const echoPin = board.terminals.find((terminal) => terminal.label === `D${pin}`);
+    const fiveVolt = board.terminals.find((terminal) => terminal.label === "5V");
+    const grounds = board.terminals.filter((terminal) => terminal.type === "gnd");
+    if (!echoPin || !fiveVolt) continue;
+    for (const sensor of components.filter((component) => component.type === "hc-sr04")) {
+      const vcc = sensor.terminals.find((terminal) => terminal.label === "VCC");
+      const trig = sensor.terminals.find((terminal) => terminal.label === "TRIG");
+      const echo = sensor.terminals.find((terminal) => terminal.label === "ECHO");
+      const ground = sensor.terminals.find((terminal) => terminal.label === "GND");
+      if (!vcc || !trig || !echo || !ground || !graph.hasConnection(echo.id, echoPin.id)) continue;
+      const powered = graph.hasConnection(vcc.id, fiveVolt.id) && grounds.some((terminal) => graph.hasConnection(ground.id, terminal.id));
+      if (!powered) continue;
+      const triggerPin = board.terminals.find((terminal) => /^D\d+$/.test(terminal.label) && graph.hasConnection(trig.id, terminal.id));
+      const triggerNumber = triggerPin ? Number(triggerPin.label.slice(1)) : -1;
+      if (triggerNumber < 0 || snapshot.modes.get(triggerNumber) !== "OUTPUT" || !snapshot.triggeredPins?.has(triggerNumber)) continue;
+      const rawDistance = Number(sensor.properties.distanceCm ?? 100);
+      const distance = Math.max(2, Math.min(400, Number.isFinite(rawDistance) ? rawDistance : 100));
+      return Math.min(timeout, Math.round(distance * 58));
+    }
+  }
+  return timeout;
 }
 
 export interface BuzzerSignal { componentId: string; frequency: number }

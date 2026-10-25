@@ -391,6 +391,27 @@ export function createPirSensor(x = 420, y = 260): ComponentInstance {
   };
 }
 
+export function createHcSr04Sensor(x = 400, y = 230): ComponentInstance {
+  const id = generateId("hcsr04");
+  return {
+    id,
+    type: "hc-sr04",
+    x,
+    y,
+    rotation: 0,
+    width: 132,
+    height: 132,
+    label: "HC-SR04 Ultrasonic Sensor",
+    terminals: [
+      t(id, "VCC", "power", 20, 124),
+      t(id, "TRIG", "digital", 50, 124),
+      t(id, "ECHO", "digital", 82, 124),
+      t(id, "GND", "gnd", 112, 124),
+    ],
+    properties: { distanceCm: 100 },
+  };
+}
+
 export function createBuzzer(x = 200, y = 300, buzzerType: BuzzerType = "active"): ComponentInstance {
   const id = generateId("buzzer");
   const label = `${buzzerType === "active" ? "Active" : "Passive"} Buzzer`;
@@ -424,6 +445,7 @@ export const COMPONENT_META = {
   potentiometer: { name: "Potentiometer 10kΩ", category: "Basic Components", color: "#0E9A8B", icon: "🎛️" },
   ldr: { name: "LDR Light Sensor", category: "Sensors", color: "#D97706", icon: "☀️" },
   pir: { name: "PIR Motion Sensor", category: "Sensors", color: "#7C3AED", icon: "📡" },
+  "hc-sr04": { name: "HC-SR04 Ultrasonic Sensor", category: "Sensors", color: "#0284C7", icon: "📏" },
   buzzer: { name: "Buzzer", category: "Basic Components", color: "#4B5563", icon: "🔊" },
   wire: { name: "Jumper Wire", category: "Wiring", color: "#3B82F6", icon: "〰" },
 };

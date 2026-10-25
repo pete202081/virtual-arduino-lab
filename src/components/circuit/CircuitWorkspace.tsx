@@ -15,6 +15,7 @@ import { Buzzer } from "./Buzzer";
 import { Potentiometer } from "./Potentiometer";
 import { LdrSensor } from "./LdrSensor";
 import { PirSensor } from "./PirSensor";
+import { HcSr04Sensor } from "./HcSr04Sensor";
 import { RGBLED } from "./RGBLED";
 import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
 import type { RGBLedState, SevenSegmentState, ServoState, DcMotorState } from "@/simulation/interfaces/simulationAdapter";
@@ -45,6 +46,7 @@ interface Props {
   onPotentiometerChange: (id: string, value: number) => void;
   onLdrLightLevelChange: (id: string, level: number) => void;
   onPirMotionToggle: (id: string) => void;
+  onUltrasonicDistanceChange: (id: string, distance: number) => void;
   onJoystickAxisChange: (id: string, axis: "xValue" | "yValue", value: number) => void;
   rgbLedStates: Record<string, RGBLedState>;
   sevenSegmentStates: Record<string, SevenSegmentState>;
@@ -78,6 +80,7 @@ export function CircuitWorkspace({
   onPotentiometerChange,
   onLdrLightLevelChange,
   onPirMotionToggle,
+  onUltrasonicDistanceChange,
   onJoystickAxisChange,
   rgbLedStates,
   sevenSegmentStates,
@@ -416,6 +419,9 @@ export function CircuitWorkspace({
                 )}
                 {comp.type === "pir" && (
                   <PirSensor {...common} onMotionToggle={() => onPirMotionToggle(comp.id)} />
+                )}
+                {comp.type === "hc-sr04" && (
+                  <HcSr04Sensor {...common} onDistanceChange={(distance) => onUltrasonicDistanceChange(comp.id, distance)} />
                 )}
                 {comp.type === "joystick" && (
                   <JoystickModule
