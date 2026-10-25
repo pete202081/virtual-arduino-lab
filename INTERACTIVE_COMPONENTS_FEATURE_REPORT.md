@@ -52,18 +52,25 @@
 - For hardware, tie COM1/COM2 to GND and use a current-limiting resistor for every segment used.
 - This models on/off segments only; PWM, multiplexing, and decoder chips are not simulated.
 
+## DC motor and H-bridge driver
+
+- Added separate two-terminal DC motor and eight-terminal L298N-style H-bridge components.
+- Motor state requires modeled driver power/ground, connected Arduino direction/PWM controls, and both motor leads connected to OUT1/OUT2. IN1/IN2 select clockwise/counterclockwise; both LOW coast, both HIGH brake; ENA PWM duty sets the displayed speed, and swapping motor leads reverses direction.
+- Added a ready-to-run DC Motor Speed + Direction Control project using ENA D3, IN1 D4, and IN2 D5.
+- This is a visual model only: no current, torque, stall, voltage drop, heat, or realistic external-supply behavior is calculated. A physical motor must not be driven directly from an Uno GPIO pin.
+
 ## Beginner project selector
 
-- Added a top-bar dropdown with twelve ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, and Joystick Servo Controller.
+- Added a top-bar dropdown with thirteen ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, and DC Motor Speed + Direction Control.
 - Selecting one replaces the current screen with its prewired component layout, working wires, project sketch, title, and a relevant selected component in Properties. The canvas auto-fits the loaded circuit; the user can then edit, duplicate, and save it.
-- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all twelve projects, checking the code, properties, and circuit counts.
+- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all thirteen projects, checking the code, properties, and circuit counts.
 
 ## Verification
 
-- 72 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence, and all twelve template compile/wiring-reference/fresh-ID checks, including the joystick servo project.
-- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, and running all twelve ready-made projects.
+- 74 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver components, and all thirteen template compile/wiring-reference/fresh-ID checks.
+- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, and the DC motor clockwise/counterclockwise states in all thirteen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits
 
-The interpreter remains bounded and safe, not a general C++/AVR compiler. It supports documented digital inputs from momentary buttons, joystick SW, and the latched slide switch; analog threshold conditions from modeled sensors; `tone`/`noTone`; bounded 0–255 PWM duty on the six Uno PWM pins for LEDs; and on/off-only 7-segment outputs. PWM waveform generation, Servo-library features beyond the restricted attach/write visual model, general `for`/`while`, arbitrary code execution, physical analog/SPICE voltage/current analysis, and interrupts are not modeled. Resistors remain ideal conductive pass-throughs in the graph model.
+The interpreter remains bounded and safe, not a general C++/AVR compiler. It supports documented digital inputs from momentary buttons, joystick SW, and the latched slide switch; analog threshold conditions from modeled sensors; `tone`/`noTone`; bounded 0–255 PWM duty on the six Uno PWM pins for LEDs; and on/off-only 7-segment outputs. PWM waveform generation, Servo-library features beyond the restricted attach/write visual model, general `for`/`while`, arbitrary code execution, physical analog/SPICE voltage/current analysis, H-bridge motor current/torque/stall/thermal behavior, and interrupts are not modeled. Never connect a physical motor directly to an Uno GPIO. Resistors remain ideal conductive pass-throughs in the graph model.

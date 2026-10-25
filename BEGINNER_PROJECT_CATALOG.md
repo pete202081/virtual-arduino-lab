@@ -4,14 +4,14 @@ A step-by-step project path using the components already available in Virtual Ar
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the twelve entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the thirteen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
 
 ### Important simulator and hardware notes
 
-- This lab uses a bounded, safe Arduino-like interpreter; it does not run arbitrary C++. The examples intentionally use only supported calls and braced `if` conditions. `for`/`while` loops, arrays, variables that change at runtime, and general C++ are not supported. Bounded `analogWrite(pin, value)` is supported only for Uno PWM pins D3, D5, D6, D9, D10, and D11 with constant duty values from 0 to 255. The limited Servo API supports declared Servo objects, `attach()` on D2–D13, and fixed `write()` angles from 0° to 180°; it renders position/pulse metadata but not a physical waveform.
+- This lab uses a bounded, safe Arduino-like interpreter; it does not run arbitrary C++. The examples intentionally use only supported calls and braced `if` conditions. `for`/`while` loops, arrays, variables that change at runtime, and general C++ are not supported. Bounded `analogWrite(pin, value)` is supported only for Uno PWM pins D3, D5, D6, D9, D10, and D11 with constant duty values from 0 to 255. The H-bridge motor example models direction and PWM speed visually only; it does not calculate motor current, torque, stall, voltage drop, heating, or external-supply behavior. Never drive a physical motor from an Uno GPIO. The limited Servo API supports declared Servo objects, `attach()` on D2–D13, and fixed `write()` angles from 0° to 180°; it renders position/pulse metadata but not a physical waveform.
 - The circuit view models digital HIGH/LOW paths, not electrical current or voltage. Resistors are ideal conductive connections in the simulator; **use real current-limiting resistors in physical circuits**.
 - Every ordinary LED needs a series resistor. For an RGB LED, use one resistor per color channel. For a 7-segment display, use one resistor per used segment.
 - The RGB LED and 7-segment display in the lab are common-cathode. RGB COMMON goes to GND; for the 7-segment display, connect both COM1 and COM2 to GND.
@@ -515,7 +515,42 @@ void loop() {
 
 **Try it:** Select this project and press Run. Move X right/left for 180°/0°; when X is centered, move Y up/down for 135°/45°. Return both axes near center for 90°, or hold SW to center immediately. The canvas displays the mapped pulse width and 50 Hz model. In a physical setup, supply servo power appropriately and share grounds; the simulator does not model current draw or generate a physical pulse waveform.
 
-## Bonus exercise (not in the twelve-project dropdown): joystick-controlled LED
+## 13. DC Motor Speed + Direction Control
+
+**Learn:** Use a motor driver to set brushed DC motor direction with two digital outputs and modeled speed with PWM.
+
+**Parts:** Arduino Uno, DC motor, L298N-style H-Bridge Driver.
+
+**Wire:** Driver VCC→Uno 5V, VM→Uno 5V (for this idealized example), GND→Uno GND, ENA→D3, IN1→D4, IN2→D5; OUT1→motor M+, OUT2→motor M−. The model requires power, ground, both control signals, and both motor leads to be wired.
+
+```cpp
+const int enablePin = 3;
+const int in1Pin = 4;
+const int in2Pin = 5;
+
+void setup() {
+  pinMode(in1Pin, OUTPUT);
+  pinMode(in2Pin, OUTPUT);
+}
+
+void loop() {
+  analogWrite(enablePin, 128);
+  digitalWrite(in1Pin, HIGH);
+  digitalWrite(in2Pin, LOW);
+  delay(1000);
+  digitalWrite(in1Pin, LOW);
+  digitalWrite(in2Pin, HIGH);
+  delay(1000);
+  analogWrite(enablePin, 0);
+  digitalWrite(in1Pin, LOW);
+  digitalWrite(in2Pin, LOW);
+  delay(500);
+}
+```
+
+**Try it:** Load the project and press Run. The motor rotates clockwise, reverses, then stops; `analogWrite(3, 0..255)` controls the displayed speed. IN1/IN2 both LOW model coasting and both HIGH model braking; reversing M+/M− wiring reverses displayed direction. This is an animation, not electrical or mechanical simulation: current, torque, stall, voltage drop, thermal effects, and realistic external motor-supply behavior are absent. In real hardware, choose a motor driver and suitable motor supply, share grounds, and never connect a motor directly to an Uno GPIO.
+
+## Bonus exercise (not in the thirteen-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 
@@ -543,4 +578,4 @@ Drag the joystick pad or change its X-axis slider. To use SW in a sketch, set D2
 
 ## Where to go from here
 
-After you can rebuild these projects, choose your own input (momentary button, latched slide switch, potentiometer, or LDR), define the condition that matters, and connect one or more outputs (LED, RGB channel, 7-segment segment, or buzzer). Start by changing one thing at a time: a pin, threshold, output pattern, or delay. Save each working version under a new project name so you can return to it.
+After you can rebuild these projects, choose your own input (momentary button, latched slide switch, potentiometer, or LDR), define the condition that matters, and connect one or more outputs (LED, RGB channel, 7-segment segment, buzzer, or a motor through an H-bridge). Start by changing one thing at a time: a pin, threshold, output pattern, or delay. Save each working version under a new project name so you can return to it.

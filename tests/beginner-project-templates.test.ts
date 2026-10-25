@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BEGINNER_PROJECTS, createBeginnerProject } from "../src/circuit-engine/models/beginnerProjectTemplates";
 import { compileSimulationProgram } from "../src/simulation/interfaces/simulationAdapter";
 
-assert.equal(BEGINNER_PROJECTS.length, 12, "the dropdown should offer all twelve catalog projects");
+assert.equal(BEGINNER_PROJECTS.length, 13, "the dropdown should offer all thirteen catalog projects");
 for (const item of BEGINNER_PROJECTS) {
   const project = createBeginnerProject(item.id);
   const compiled = compileSimulationProgram(project.code);

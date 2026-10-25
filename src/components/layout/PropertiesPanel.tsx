@@ -112,6 +112,8 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
   const isSlideSwitch = comp.type === "slide-switch";
   const isJoystick = comp.type === "joystick";
   const isServo = comp.type === "servo";
+  const isDcMotor = comp.type === "dc-motor";
+  const isHBridge = comp.type === "h-bridge";
   const isBuzzer = comp.type === "buzzer";
   const isPotentiometer = comp.type === "potentiometer";
   const isLdr = comp.type === "ldr";
@@ -129,6 +131,8 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
           {isSlideSwitch && <ToggleRight className="w-3.5 h-3.5 text-cyan-700" />}
           {isJoystick && <Gamepad2 className="w-3.5 h-3.5 text-blue-700" />}
           {isServo && <RotateCw className="w-3.5 h-3.5 text-cyan-700" />}
+          {isDcMotor && <RotateCw className="w-3.5 h-3.5 text-slate-700" />}
+          {isHBridge && <Cpu className="w-3.5 h-3.5 text-slate-700" />}
           {isBuzzer && <Volume2 className="w-3.5 h-3.5 text-amber-600" />}
           {isPotentiometer && <SlidersHorizontal className="w-3.5 h-3.5 text-teal-600" />}
           {isLdr && <Sun className="w-3.5 h-3.5 text-amber-600" />}
@@ -351,6 +355,34 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
               <pre className="p-2 bg-slate-900 text-cyan-100 rounded text-[10px] leading-relaxed overflow-x-auto">{`#include <Servo.h>\nServo arm;\n\nvoid setup() {\n  arm.attach(9);\n}\n\nvoid loop() {\n  arm.write(90);\n  delay(20);\n}`}</pre>
               <p className="p-2 bg-blue-50 border border-blue-200 rounded">Wire VCC→5V, GND→GND, and SIG→D9. The model maps 0°–180° to a 1,000–2,000 µs command pulse repeated at 50 Hz. This is a bounded visual model, not an AVR pulse waveform.</p>
               <p className="p-2 bg-amber-50 border border-amber-200 rounded">For a physical servo, use a suitable external supply when needed and share its ground with the Uno. Do not power a loaded motor directly from a GPIO pin.</p>
+            </div>
+          </div>
+        )}
+
+        {isHBridge && (
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="px-2.5 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center gap-1.5">
+              <Cpu className="w-3 h-3 text-slate-700" /> <span className="text-[11px] font-bold text-slate-800">L298N H-BRIDGE · CHANNEL A</span>
+            </div>
+            <div className="p-2.5 space-y-2 text-[11px]">
+              <p>Connect VCC and VM to the modeled 5V supply, GND to common ground, OUT1/OUT2 to the motor, and ENA to a PWM pin (D3 recommended).</p>
+              <div className="grid grid-cols-2 gap-1 text-[10px]"><span className="rounded bg-emerald-50 p-1">IN1 HIGH · IN2 LOW → CW</span><span className="rounded bg-blue-50 p-1">IN1 LOW · IN2 HIGH → CCW</span><span className="rounded bg-slate-50 p-1">IN1 LOW · IN2 LOW → coast</span><span className="rounded bg-amber-50 p-1">IN1 HIGH · IN2 HIGH → brake</span></div>
+              <p>Use `analogWrite(3, 0..255)` on ENA to set modeled speed. Direction inputs use `digitalWrite()`.</p>
+              <pre className="p-2 bg-slate-900 text-cyan-100 rounded text-[10px] leading-relaxed overflow-x-auto">{`const int enA = 3;\nconst int in1 = 4;\nconst int in2 = 5;\nvoid setup() { pinMode(in1, OUTPUT); pinMode(in2, OUTPUT); }\nvoid loop() {\n  analogWrite(enA, 128);\n  digitalWrite(in1, HIGH);\n  digitalWrite(in2, LOW);\n  delay(20);\n}`}</pre>
+              <p className="p-2 bg-amber-50 border border-amber-200 rounded">The lab models direction and duty visually, not motor current, torque, stall, voltage drop, or driver heating. For physical motors, use a suitable motor supply and common ground; never drive a motor directly from an Uno GPIO.</p>
+            </div>
+          </div>
+        )}
+
+        {isDcMotor && (
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="px-2.5 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center gap-1.5">
+              <RotateCw className="w-3 h-3 text-slate-700" /> <span className="text-[11px] font-bold text-slate-800">BRUSHED DC MOTOR</span>
+            </div>
+            <div className="p-2.5 space-y-2 text-[11px]">
+              <p>Connect M+ and M− to the H-bridge OUT1 and OUT2 terminals. The motor animates only when a powered driver has a valid direction input and nonzero ENA duty.</p>
+              <p className="p-2 bg-blue-50 border border-blue-200 rounded">The displayed speed percentage is the ENA PWM duty. Reversing the two motor leads reverses the displayed direction.</p>
+              <p className="p-2 bg-amber-50 border border-amber-200 rounded">Use an H-bridge or motor driver in real circuits; a GPIO pin cannot safely supply motor current.</p>
             </div>
           </div>
         )}

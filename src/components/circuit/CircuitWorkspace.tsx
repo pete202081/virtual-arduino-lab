@@ -9,12 +9,14 @@ import { Pushbutton } from "./Pushbutton";
 import { SlideSwitch } from "./SlideSwitch";
 import { JoystickModule } from "./JoystickModule";
 import { ServoMotor } from "./ServoMotor";
+import { DcMotor } from "./DcMotor";
+import { HBridgeDriver } from "./HBridgeDriver";
 import { Buzzer } from "./Buzzer";
 import { Potentiometer } from "./Potentiometer";
 import { LdrSensor } from "./LdrSensor";
 import { RGBLED } from "./RGBLED";
 import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
-import type { RGBLedState, SevenSegmentState, ServoState } from "@/simulation/interfaces/simulationAdapter";
+import type { RGBLedState, SevenSegmentState, ServoState, DcMotorState } from "@/simulation/interfaces/simulationAdapter";
 import { ZoomIn, ZoomOut, Maximize2, Grid3x3, Trash2, Cable, MousePointer2 } from "lucide-react";
 
 interface Props {
@@ -45,6 +47,7 @@ interface Props {
   rgbLedStates: Record<string, RGBLedState>;
   sevenSegmentStates: Record<string, SevenSegmentState>;
   servoStates: Record<string, ServoState>;
+  motorStates: Record<string, DcMotorState>;
   fitToComponents: boolean;
 }
 
@@ -76,6 +79,7 @@ export function CircuitWorkspace({
   rgbLedStates,
   sevenSegmentStates,
   servoStates,
+  motorStates,
   fitToComponents,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -417,6 +421,8 @@ export function CircuitWorkspace({
                   />
                 )}
                 {comp.type === "servo" && <ServoMotor {...common} state={servoStates[comp.id] ?? { componentId: comp.id, angle: Number(comp.properties.angle ?? 90), pulseMicroseconds: Number(comp.properties.pulseMicroseconds ?? 1500), refreshHz: 50 }} />}
+                {comp.type === "dc-motor" && <DcMotor {...common} state={motorStates[comp.id] ?? { componentId: comp.id, driverId: "", direction: "STOPPED", duty: 0, speedPercent: 0 }} />}
+                {comp.type === "h-bridge" && <HBridgeDriver {...common} state={Object.values(motorStates).find((state) => state.driverId === comp.id)} />}
                 {comp.type === "pushbutton" && (
                   <Pushbutton
                     {...common}

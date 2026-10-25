@@ -11,6 +11,8 @@ export type ComponentType =
   | "slide-switch"
   | "joystick"
   | "servo"
+  | "dc-motor"
+  | "h-bridge"
   | "potentiometer"
   | "ldr"
   | "buzzer"

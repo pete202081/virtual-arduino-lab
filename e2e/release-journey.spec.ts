@@ -269,7 +269,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
   await page.goto("/");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
-  await expect(selector.locator("option")).toHaveCount(13); // placeholder plus twelve projects
+  await expect(selector.locator("option")).toHaveCount(14); // placeholder plus thirteen projects
   const projects = [
     { id: "blink-led", name: "01 · Blink one LED", focus: "RED LED", code: "const int ledPin = 8;" },
     { id: "traffic-light", name: "02 · Traffic-light sequence", focus: "RED LED", code: "const int redPin = 8;" },
@@ -283,6 +283,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
     { id: "room-status", name: "10 · Room-status indicator", focus: "LDR Light Sensor", code: "const int lightPin = A0;" },
     { id: "switch-joystick-pwm", name: "11 · Switch + joystick PWM color mixer", focus: "XY Joystick Module", code: "const int enablePin = 3;" },
     { id: "joystick-servo", name: "12 · Joystick Servo Controller", focus: "Micro Servo Motor", code: "#include <Servo.h>" },
+    { id: "dc-motor-hbridge", name: "13 · DC Motor Speed + Direction Control", focus: "L298N H-Bridge Driver", code: "const int enablePin = 3;" },
   ];
 
   for (const project of projects) {
@@ -322,6 +323,10 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
       await page.mouse.down();
       await expect(page.getByTitle("Servo motor: 90 degrees, 1500 microseconds at 50 Hz")).toBeVisible();
       await page.mouse.up();
+    }
+    if (project.id === "dc-motor-hbridge") {
+      await expect(page.getByTitle("DC motor: clockwise at 50% PWM")).toBeVisible();
+      await expect(page.getByTitle("DC motor: counterclockwise at 50% PWM")).toBeVisible({ timeout: 2_500 });
     }
     await page.getByRole("button", { name: "Stop", exact: true }).click();
   }

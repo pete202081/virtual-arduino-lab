@@ -27,6 +27,8 @@ const ITEMS: PaletteItem[] = [
   { type: "ldr", name: "LDR Light Sensor", category: "Sensors", description: "3-pin • light level • analog output", color: "#D97706", available: true, badge: "Sensor" },
   { type: "joystick", name: "Joystick Module", category: "Sensors", description: "X/Y analog axes • momentary button", color: "#2563EB", available: true, badge: "3 inputs" },
   { type: "servo", name: "Servo Motor", category: "Actuators", description: "0–180° • pulse-width position control", color: "#0E7490", available: true, badge: "Servo" },
+  { type: "h-bridge", name: "H-Bridge Driver", category: "Actuators", description: "L298N • direction inputs • PWM enable", color: "#334155", available: true, badge: "Driver" },
+  { type: "dc-motor", name: "DC Motor", category: "Actuators", description: "Direction and speed from a motor driver", color: "#475569", available: true, badge: "Motor" },
   { type: "buzzer", name: "Buzzer", category: "Basic Components", description: "Active or passive • audible output", color: "#4B5563", available: true, badge: "Audio" },
   { type: "wire", name: "Jumper Wire", category: "Wiring", description: "Click terminals to connect", color: "#2563EB", available: true, badge: "Wire Tool" },
 ];
@@ -129,6 +131,8 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
                           {it.type === "ldr" && <Sun className="w-4 h-4" />}
                           {it.type === "joystick" && <Gamepad2 className="w-4 h-4" />}
                           {it.type === "servo" && <RotateCw className="w-4 h-4" />}
+                          {it.type === "dc-motor" && <RotateCw className="w-4 h-4" />}
+                          {it.type === "h-bridge" && <Cpu className="w-4 h-4" />}
                           {it.type === "buzzer" && <Volume2 className="w-4 h-4" />}
                           {it.type === "wire" && <Cable className="w-4 h-4" />}
                         </div>
@@ -152,7 +156,7 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-[11px] leading-tight">
             <div className="font-bold text-amber-800">MVP Scope</div>
-            <div className="text-amber-700">Arduino, Breadboard, LED, RGB LED, 7-segment display, resistor, pushbutton, slide switch, potentiometer, LDR, joystick module, servo motor, buzzer & wires are interactive.</div>
+            <div className="text-amber-700">Arduino, Breadboard, LED, RGB LED, 7-segment display, resistor, pushbutton, slide switch, potentiometer, LDR, joystick module, servo motor, DC motor, H-bridge driver, buzzer & wires are interactive.</div>
           </div>
         </div>
       </div>
@@ -173,7 +177,9 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
             { t: "potentiometer" as ComponentType, label: "POT", col: "#0E9A8B" },
             { t: "ldr" as ComponentType, label: "LDR", col: "#D97706" },
             { t: "joystick" as ComponentType, label: "JOY", col: "#2563EB" },
-            { t: "servo" as ComponentType, label: "SERVO", col: "#0E7490" }
+            { t: "servo" as ComponentType, label: "SERVO", col: "#0E7490" },
+            { t: "h-bridge" as ComponentType, label: "H-BRIDGE", col: "#334155" },
+            { t: "dc-motor" as ComponentType, label: "MOTOR", col: "#475569" }
           ].map((q) => (
             <button key={q.t} onClick={() => onAddComponent(q.t)} className="h-14 rounded-lg border border-slate-200 bg-white hover:border-[#0E9A8B] flex flex-col items-center justify-center gap-1">
               <div className="w-6 h-6 rounded text-white flex items-center justify-center text-[10px] font-bold" style={{ background: q.col }}>

@@ -7,12 +7,12 @@ import { PropertiesPanel } from "@/components/layout/PropertiesPanel";
 import { Console } from "@/components/layout/Console";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { ComponentInstance, ComponentType, Wire, ConsoleTab, SimulationState, SimulationEvent, STARTER_CODE } from "@/types/circuit";
-import { createArduinoUno, createBreadboard, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor } from "@/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createBreadboard, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "@/circuit-engine/models/componentTemplates";
 import { generateId, formatTime } from "@/lib/utils";
 import { validateCircuit } from "@/circuit-engine/validation/validator";
 import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
 import { validateSketch, CompileResult } from "@/simulation/interfaces/compileAdapter";
-import { compileSimulationProgram, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, readDigitalPin, readAnalogPin, RuntimeSnapshot, RGBLedState, SevenSegmentState, ServoState, SimulationRuntime } from "@/simulation/interfaces/simulationAdapter";
+import { compileSimulationProgram, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, getDcMotorStates, readDigitalPin, readAnalogPin, RuntimeSnapshot, RGBLedState, SevenSegmentState, ServoState, DcMotorState, SimulationRuntime } from "@/simulation/interfaces/simulationAdapter";
 import { createStarterCircuit } from "@/circuit-engine/models/starterCircuit";
 import { createBeginnerProject } from "@/circuit-engine/models/beginnerProjectTemplates";
 import type { BeginnerProjectId } from "@/circuit-engine/models/beginnerProjectTemplates";
@@ -42,6 +42,7 @@ export default function Home() {
   const [rgbLedStates, setRgbLedStates] = useState<Record<string, RGBLedState>>({});
   const [sevenSegmentStates, setSevenSegmentStates] = useState<Record<string, SevenSegmentState>>({});
   const [servoStates, setServoStates] = useState<Record<string, ServoState>>({});
+  const [motorStates, setMotorStates] = useState<Record<string, DcMotorState>>({});
   const [serialBaud, setSerialBaud] = useState(9600);
   const [showGuide, setShowGuide] = useState(false);
   const [openProjectsDialog, setOpenProjectsDialog] = useState(false);
@@ -155,6 +156,8 @@ export default function Home() {
     setSevenSegmentStates(Object.fromEntries(displayStates.map((state) => [state.componentId, state])));
     const servoOutputStates = getServoStates(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current);
     setServoStates(Object.fromEntries(servoOutputStates.map((state) => [state.componentId, state])));
+    const motorOutputStates = getDcMotorStates(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current);
+    setMotorStates(Object.fromEntries(motorOutputStates.map((state) => [state.componentId, state])));
     return lit;
   };
 
@@ -175,6 +178,7 @@ export default function Home() {
     setRgbLedStates({});
     setSevenSegmentStates({});
     setServoStates({});
+    setMotorStates({});
     releaseAllButtons();
     stopBuzzerAudio();
     setSerialBaud(9600);
@@ -335,6 +339,7 @@ export default function Home() {
     setRgbLedStates({});
     setSevenSegmentStates({});
     setServoStates({});
+    setMotorStates({});
     releaseAllButtons();
     stopBuzzerAudio();
     setCompileResult(null);
@@ -345,8 +350,8 @@ export default function Home() {
 
   const handleAddComponent = (type: ComponentType, extra?: string) => {
     let comp: ComponentInstance | null = null;
-    const randX = type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "potentiometer" || type === "ldr" || type === "joystick" || type === "servo" || type === "rgb-led" || type === "seven-segment" ? 440 + Math.random() * 60 : 80 + Math.random() * 200;
-    const randY = type === "potentiometer" || type === "ldr" || type === "joystick" ? 250 + Math.random() * 60 : type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "servo" ? 130 + Math.random() * 100 : 80 + Math.random() * 120;
+    const randX = type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "potentiometer" || type === "ldr" || type === "joystick" || type === "servo" || type === "dc-motor" || type === "h-bridge" || type === "rgb-led" || type === "seven-segment" ? 440 + Math.random() * 60 : 80 + Math.random() * 200;
+    const randY = type === "potentiometer" || type === "ldr" || type === "joystick" ? 250 + Math.random() * 60 : type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "servo" || type === "dc-motor" || type === "h-bridge" ? 130 + Math.random() * 100 : 80 + Math.random() * 120;
     if (type === "arduino-uno") comp = createArduinoUno(randX, randY);
     if (type === "breadboard") comp = createBreadboard(randX, randY + 80);
     if (type === "led") comp = createLED(randX, randY, extra || "red");
@@ -360,6 +365,8 @@ export default function Home() {
     if (type === "ldr") comp = createLdrSensor(randX, randY);
     if (type === "joystick") comp = createJoystickModule(randX, randY);
     if (type === "servo") comp = createServoMotor(randX, randY);
+    if (type === "dc-motor") comp = createDcMotor(randX, randY);
+    if (type === "h-bridge") comp = createHBridgeDriver(randX, randY);
     if (comp) {
       setComponents((c) => [...c, comp!]);
       setSelectedId(comp!.id);
@@ -496,6 +503,7 @@ export default function Home() {
     setRgbLedStates({});
     setSevenSegmentStates({});
     setServoStates({});
+    setMotorStates({});
     releaseAllButtons();
     stopBuzzerAudio();
     const sketchCheck = validateSketch(code);
@@ -588,6 +596,7 @@ export default function Home() {
     setRgbLedStates({});
     setSevenSegmentStates({});
     setServoStates({});
+    setMotorStates({});
     releaseAllButtons();
     stopBuzzerAudio();
     setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Simulation stopped; timers cancelled, buttons released, and LEDs turned off." }]);
@@ -603,6 +612,7 @@ export default function Home() {
     setRgbLedStates({});
     setSevenSegmentStates({});
     setServoStates({});
+    setMotorStates({});
     releaseAllButtons();
     stopBuzzerAudio();
     setSerialBaud(9600);
@@ -622,6 +632,7 @@ export default function Home() {
     setRgbLedStates({});
     setSevenSegmentStates({});
     setServoStates({});
+    setMotorStates({});
     setSimulationState("IDLE");
     setProjectId(generateId("project"));
     const now = new Date().toISOString();
@@ -655,6 +666,7 @@ export default function Home() {
       setRgbLedStates({});
       setSevenSegmentStates({});
       setServoStates({});
+      setMotorStates({});
       releaseAllButtons();
       stopBuzzerAudio();
       setSimulationState("IDLE");
@@ -689,6 +701,7 @@ export default function Home() {
     setRgbLedStates({});
     setSevenSegmentStates({});
     setServoStates({});
+    setMotorStates({});
     setSimulationState("IDLE");
     const result = await loadProjectById(id).catch(() => null);
     if (!result?.success) {
@@ -786,6 +799,7 @@ export default function Home() {
             rgbLedStates={simulationState === "RUNNING" ? rgbLedStates : {}}
             sevenSegmentStates={simulationState === "RUNNING" ? sevenSegmentStates : {}}
             servoStates={simulationState === "RUNNING" ? servoStates : {}}
+            motorStates={simulationState === "RUNNING" ? motorStates : {}}
             fitToComponents={Boolean(activeBeginnerProjectId)}
             onButtonPressStart={(id) => setButtonPressed(id, true)}
             onButtonPressEnd={(id) => setButtonPressed(id, false)}

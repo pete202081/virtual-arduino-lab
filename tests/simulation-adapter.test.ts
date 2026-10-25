@@ -1,8 +1,8 @@
 /** M4 simulation adapter tests. Run: npx tsx tests/simulation-adapter.test.ts */
 import assert from "node:assert/strict";
-import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor } from "../src/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "../src/circuit-engine/models/componentTemplates";
 import { STARTER_CODE } from "../src/types/circuit";
-import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, readDigitalPin, readAnalogPin, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
+import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, getDcMotorStates, readDigitalPin, readAnalogPin, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
 import { buildCircuitGraph } from "../src/circuit-engine/graph/netGraph";
 
 let passed = 0;
@@ -175,6 +175,42 @@ test("servo module only animates from an attached signal on a powered, grounded 
   assert.deepEqual(getServoStates(components, wires, snapshot), [{ componentId: servo.id, signalPin: 9, angle: 135, pulseMicroseconds: 1750, refreshHz: 50 }]);
   assert.deepEqual(getServoStates(components, wires.slice(0, 2), snapshot), []);
   assert.deepEqual(getServoStates(components, wires.slice(1), snapshot), []);
+});
+
+test("H-bridge maps PWM enable and IN1/IN2 direction to a connected DC motor", () => {
+  const board = createArduinoUno(0, 0);
+  const driver = createHBridgeDriver(350, 200);
+  const motor = createDcMotor(600, 220);
+  const components = [board, driver, motor];
+  const terminal = (component: typeof board, label: string) => component.terminals.find((item) => item.label === label)!;
+  const wire = (id: string, startComponent: typeof board, startLabel: string, endComponent: typeof board, endLabel: string) => ({
+    id,
+    startTerminalId: terminal(startComponent, startLabel).id,
+    endTerminalId: terminal(endComponent, endLabel).id,
+    startComponentId: startComponent.id,
+    endComponentId: endComponent.id,
+    color: "#2563EB",
+  });
+  const wires = [
+    wire("logic-power", board, "5V", driver, "VCC"),
+    wire("motor-power", board, "5V", driver, "VM"),
+    wire("ground", board, "GND-1", driver, "GND"),
+    wire("enable", board, "D3", driver, "ENA"),
+    wire("input-1", board, "D4", driver, "IN1"),
+    wire("input-2", board, "D5", driver, "IN2"),
+    wire("output-1", driver, "OUT1", motor, "M+"),
+    wire("output-2", driver, "OUT2", motor, "M-"),
+  ];
+  const modes = new Map([[3, "OUTPUT" as const], [4, "OUTPUT" as const], [5, "OUTPUT" as const]]);
+  const clockwise: RuntimeSnapshot = { modes, levels: new Map([[4, "HIGH"], [5, "LOW"]]), pwmLevels: new Map([[3, 128]]) };
+  assert.deepEqual(getDcMotorStates(components, wires, clockwise), [{ componentId: motor.id, driverId: driver.id, direction: "CLOCKWISE", duty: 128, speedPercent: 50 }]);
+  const counterclockwise: RuntimeSnapshot = { ...clockwise, levels: new Map([[4, "LOW"], [5, "HIGH"]]) };
+  assert.equal(getDcMotorStates(components, wires, counterclockwise)[0].direction, "COUNTERCLOCKWISE");
+  const stopped: RuntimeSnapshot = { ...clockwise, pwmLevels: new Map([[3, 0]]) };
+  assert.equal(getDcMotorStates(components, wires, stopped)[0].direction, "STOPPED");
+  const braked: RuntimeSnapshot = { ...clockwise, levels: new Map([[4, "HIGH"], [5, "HIGH"]]) };
+  assert.equal(getDcMotorStates(components, wires, braked)[0].direction, "BRAKED");
+  assert.deepEqual(getDcMotorStates(components, wires.slice(0, 6), clockwise), []);
 });
 
 test("LED lights only on a connected, forward-biased output path", () => {

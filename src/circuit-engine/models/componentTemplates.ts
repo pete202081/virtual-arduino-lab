@@ -287,6 +287,50 @@ export function createServoMotor(x = 420, y = 300): ComponentInstance {
   };
 }
 
+export function createDcMotor(x = 500, y = 300): ComponentInstance {
+  const id = generateId("motor");
+  return {
+    id,
+    type: "dc-motor",
+    x,
+    y,
+    rotation: 0,
+    width: 104,
+    height: 92,
+    label: "DC Motor",
+    terminals: [
+      t(id, "M+", "generic", 30, 82),
+      t(id, "M-", "generic", 74, 82),
+    ],
+    properties: { nominalSpeedRpm: 3000 },
+  };
+}
+
+export function createHBridgeDriver(x = 330, y = 250): ComponentInstance {
+  const id = generateId("hbridge");
+  return {
+    id,
+    type: "h-bridge",
+    x,
+    y,
+    rotation: 0,
+    width: 168,
+    height: 116,
+    label: "L298N H-Bridge Driver",
+    terminals: [
+      t(id, "VCC", "power", 8, 20),
+      t(id, "VM", "power", 8, 42),
+      t(id, "GND", "gnd", 8, 68),
+      t(id, "ENA", "digital", 60, 8),
+      t(id, "IN1", "digital", 84, 8),
+      t(id, "IN2", "digital", 108, 8),
+      t(id, "OUT1", "generic", 160, 38),
+      t(id, "OUT2", "generic", 160, 68),
+    ],
+    properties: { driverModel: "L298N", channel: "A", enablePinSupportsPwm: true },
+  };
+}
+
 export function createPotentiometer(x = 200, y = 360): ComponentInstance {
   const id = generateId("pot");
   return {

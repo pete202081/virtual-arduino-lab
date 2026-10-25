@@ -741,6 +741,79 @@ export function getServoStates(components: ComponentInstance[], wires: Wire[], s
   return results;
 }
 
+export type MotorDirection = "CLOCKWISE" | "COUNTERCLOCKWISE" | "STOPPED" | "BRAKED";
+
+export interface DcMotorState {
+  componentId: string;
+  driverId: string;
+  direction: MotorDirection;
+  duty: number;
+  speedPercent: number;
+}
+
+/** Resolve an H-bridge's modeled direction and PWM enable to a wired DC motor. */
+export function getDcMotorStates(components: ComponentInstance[], wires: Wire[], snapshot: RuntimeSnapshot, pressedButtonIds: ReadonlySet<string> = new Set(), closedSwitchIds: ReadonlySet<string> = new Set()): DcMotorState[] {
+  const graph = buildCircuitGraph(components, wires, pressedButtonIds, closedSwitchIds);
+  const boards = components.filter((component) => component.type === "arduino-uno");
+  const results: DcMotorState[] = [];
+  for (const driver of components.filter((component) => component.type === "h-bridge")) {
+    const vcc = driver.terminals.find((terminal) => terminal.label === "VCC");
+    const motorSupply = driver.terminals.find((terminal) => terminal.label === "VM");
+    const ground = driver.terminals.find((terminal) => terminal.label === "GND");
+    const enable = driver.terminals.find((terminal) => terminal.label === "ENA");
+    const in1 = driver.terminals.find((terminal) => terminal.label === "IN1");
+    const in2 = driver.terminals.find((terminal) => terminal.label === "IN2");
+    const out1 = driver.terminals.find((terminal) => terminal.label === "OUT1");
+    const out2 = driver.terminals.find((terminal) => terminal.label === "OUT2");
+    if (!vcc || !motorSupply || !ground || !enable || !in1 || !in2 || !out1 || !out2) continue;
+
+    for (const motor of components.filter((component) => component.type === "dc-motor")) {
+      const positive = motor.terminals.find((terminal) => terminal.label === "M+");
+      const negative = motor.terminals.find((terminal) => terminal.label === "M-");
+      if (!positive || !negative) continue;
+      const outputOrder = graph.hasConnection(out1.id, positive.id) && graph.hasConnection(out2.id, negative.id)
+        ? 1
+        : graph.hasConnection(out1.id, negative.id) && graph.hasConnection(out2.id, positive.id) ? -1 : 0;
+      if (!outputOrder) continue;
+
+      for (const board of boards) {
+        const fiveVolt = board.terminals.find((terminal) => terminal.label === "5V");
+        const grounds = board.terminals.filter((terminal) => terminal.type === "gnd");
+        if (!fiveVolt || !graph.hasConnection(vcc.id, fiveVolt.id) || !graph.hasConnection(motorSupply.id, fiveVolt.id) || !grounds.some((terminal) => graph.hasConnection(ground.id, terminal.id))) continue;
+        const readOutputPin = (moduleTerminalId: string) => {
+          for (const boardPin of board.terminals) {
+            const match = /^D(\d+)$/.exec(boardPin.label);
+            if (!match || !graph.hasConnection(moduleTerminalId, boardPin.id)) continue;
+            const pin = Number(match[1]);
+            if (snapshot.modes.get(pin) !== "OUTPUT") return null;
+            return {
+              pin,
+              duty: snapshot.pwmLevels?.get(pin) ?? (snapshot.levels.get(pin) === "HIGH" ? 255 : 0),
+              high: snapshot.pwmLevels?.has(pin) ? (snapshot.pwmLevels.get(pin) ?? 0) >= 128 : snapshot.levels.get(pin) === "HIGH",
+            };
+          }
+          return null;
+        };
+        const enableOutput = readOutputPin(enable.id);
+        const input1 = readOutputPin(in1.id);
+        const input2 = readOutputPin(in2.id);
+        if (!enableOutput || !input1 || !input2) continue;
+        const duty = Math.max(0, Math.min(255, enableOutput.duty));
+        let direction: MotorDirection = "STOPPED";
+        if (duty > 0) {
+          if (input1.high && input2.high) direction = "BRAKED";
+          else if (input1.high !== input2.high) {
+            const clockwise = input1.high && !input2.high;
+            direction = (clockwise === (outputOrder === 1)) ? "CLOCKWISE" : "COUNTERCLOCKWISE";
+          }
+        }
+        results.push({ componentId: motor.id, driverId: driver.id, direction, duty, speedPercent: Math.round((duty / 255) * 100) });
+      }
+    }
+  }
+  return results;
+}
+
 export interface SevenSegmentChannels {
   A: boolean;
   B: boolean;
