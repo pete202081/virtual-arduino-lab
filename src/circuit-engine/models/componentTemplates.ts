@@ -69,27 +69,33 @@ export function createBreadboard(x = 100, y = 320): ComponentInstance {
   // We'll create terminals for each hole for visual wiring, but logically grouped in strips
   // For M1 visual, we expose each hole as terminal
   const cols = 30;
-  const holeSpacing = 10;
-  const offsetX = 18;
-  const offsetYT1 = 26;
-  const offsetYT2 = 86; // second half after trench
+  // Match the rendered board's 30-column CSS grid, inner padding, and actual row spacing.
+  const stripColumnPitch = 32 / 3;
+  const stripOffsetX = 76 / 3;
+  const stripRowPitch = 6.25;
+  const offsetYT1 = 54.5;
+  const offsetYT2 = 112.5; // second half after trench
+  // The power rails use 30 flex-spaced 6px holes rather than the terminal-strip grid.
+  const railPitch = 326 / 30;
+  const railOffsetX = 673 / 30;
 
   for (let col = 0; col < cols; col++) {
     for (let row = 0; row < 5; row++) {
       // Top half
       const label = `T-${col}-${row}`;
-      terminals.push(t(id, label, "breadboard-hole", offsetX + col * holeSpacing, offsetYT1 + row * holeSpacing));
+      terminals.push(t(id, label, "breadboard-hole", stripOffsetX + col * stripColumnPitch, offsetYT1 + row * stripRowPitch));
       // Bottom half
       const label2 = `B-${col}-${row}`;
-      terminals.push(t(id, label2, "breadboard-hole", offsetX + col * holeSpacing, offsetYT2 + row * holeSpacing));
+      terminals.push(t(id, label2, "breadboard-hole", stripOffsetX + col * stripColumnPitch, offsetYT2 + row * stripRowPitch));
     }
   }
   // Power rails top and bottom: 2 rails each with 30 holes
   for (let col = 0; col < 30; col++) {
-    terminals.push(t(id, `R_TOP+_${col}`, "breadboard-hole", offsetX + col * holeSpacing, 8));
-    terminals.push(t(id, `R_TOP-_${col}`, "breadboard-hole", offsetX + col * holeSpacing, 18));
-    terminals.push(t(id, `R_BOT+_${col}`, "breadboard-hole", offsetX + col * holeSpacing, h - 18));
-    terminals.push(t(id, `R_BOT-_${col}`, "breadboard-hole", offsetX + col * holeSpacing, h - 8));
+    const x = railOffsetX + col * railPitch;
+    terminals.push(t(id, `R_TOP+_${col}`, "breadboard-hole", x, 19));
+    terminals.push(t(id, `R_TOP-_${col}`, "breadboard-hole", x, 33));
+    terminals.push(t(id, `R_BOT+_${col}`, "breadboard-hole", x, 155));
+    terminals.push(t(id, `R_BOT-_${col}`, "breadboard-hole", x, 169));
   }
 
   return {

@@ -109,7 +109,7 @@ You can also click the **Jumper Wire** card under Wiring to highlight the wiring
 
 ### Use the breadboard
 
-You can wire directly between components, or connect them through breadboard holes. To route through the breadboard, make wires from component terminals to holes; the graph then applies the board’s internal connectivity rules. Hover over a terminal or hole to highlight its full connected net.
+You can wire directly between components, or connect them through breadboard holes. To route through the breadboard, make wires from component terminals to holes; the wire is drawn on the board’s front surface and its endpoint is centered on the selected hole. This is only a visual layer—the graph still applies the board’s internal connectivity rules. Hover over a terminal or hole to highlight its full connected net.
 
 ---
 

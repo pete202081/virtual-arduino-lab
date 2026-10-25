@@ -92,7 +92,7 @@
 ## Breadboard learning and connected-net highlight
 
 - Added the Breadboard Basics: Blink an LED project, with D8 and resistor terminals sharing one five-hole strip and explicit Uno 5V/GND connections to separate breadboard rails.
-- The selected breadboard Properties panel now provides a concise wiring walkthrough. Hovering any terminal or breadboard hole highlights every terminal on its connected net, including holes bridged by breadboard strips and attached jumper wires; connected wires glow as well.
+- The selected breadboard Properties panel now provides a concise wiring walkthrough. Wire traces are rendered on the board’s front surface and endpoints are centered precisely on the visible hole heads. Hovering any terminal or breadboard hole highlights every terminal on its connected net, including holes bridged by breadboard strips and attached jumper wires; connected wires glow as well.
 - This teaching aid reflects the graph model: five-hole strips and continuous rails connect internally, the trench isolates the two fields, and rails remain isolated until explicitly wired. It does not calculate voltage or current.
 
 ## Beginner project selector

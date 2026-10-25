@@ -125,12 +125,12 @@ export function CircuitWorkspace({
     });
   }, [fitToComponents]); // eslint-disable-line react-hooks/exhaustive-deps -- fit once per keyed project template mount
 
-  // Find terminal world position
+  // Terminal coordinates are generated to match the rendered breadboard hole centers.
   const getTerminalPos = useCallback(
     (terminalId: string) => {
       for (const comp of components) {
-        const t = comp.terminals.find((tt) => tt.id === terminalId);
-        if (t) return { x: comp.x + t.dx, y: comp.y + t.dy, compId: comp.id, label: t.label, type: t.type };
+        const terminal = comp.terminals.find((item) => item.id === terminalId);
+        if (terminal) return { x: comp.x + terminal.dx, y: comp.y + terminal.dy, compId: comp.id, label: terminal.label, type: terminal.type };
       }
       return null;
     },
@@ -488,6 +488,56 @@ export function CircuitWorkspace({
               </div>
             );
           })}
+
+          {/* Draw a local overlay for each breadboard so wire-to-hole destinations sit visibly on its face. */}
+          {components
+            .filter((component) => component.type === "breadboard")
+            .map((board) => {
+              const boardHeight = Math.max(board.height, 184);
+              return (
+                <svg
+                  key={`breadboard-wire-overlay-${board.id}`}
+                  data-testid="breadboard-wire-overlay"
+                  aria-hidden="true"
+                  width={board.width}
+                  height={boardHeight}
+                  viewBox={`0 0 ${board.width} ${boardHeight}`}
+                  className="absolute pointer-events-none overflow-hidden"
+                  style={{ left: board.x, top: board.y, width: board.width, height: boardHeight, zIndex: 50 }}
+                >
+                  {wires.map((wire) => {
+                    const start = getTerminalPos(wire.startTerminalId);
+                    const end = getTerminalPos(wire.endTerminalId);
+                    if (!start || !end) return null;
+                    const startX = start.x - board.x;
+                    const startY = start.y - board.y;
+                    const endX = end.x - board.x;
+                    const endY = end.y - board.y;
+                    const isSelected = selectedId === wire.id;
+                    const isNetHighlighted = highlightedTerminalIds.has(wire.startTerminalId) || highlightedTerminalIds.has(wire.endTerminalId);
+                    const midX = (startX + endX) / 2;
+                    const offset = Math.min(60, Math.abs(endX - startX) * 0.3);
+                    const path = `M ${startX} ${startY} C ${midX} ${startY - offset}, ${midX} ${endY - offset}, ${endX} ${endY}`;
+                    return (
+                      <g key={wire.id}>
+                        <path
+                          data-wire-id={wire.id}
+                          className={isNetHighlighted ? "net-highlighted-wire" : undefined}
+                          d={path}
+                          stroke={isSelected ? "#0E9A8B" : wire.color}
+                          strokeWidth={isSelected || isNetHighlighted ? 4 : 3}
+                          fill="none"
+                          strokeLinecap="round"
+                          style={{ filter: isSelected || isNetHighlighted ? "drop-shadow(0 0 4px #0E9A8B)" : undefined }}
+                        />
+                        <circle data-wire-endpoint={wire.startTerminalId} cx={startX} cy={startY} r="3.5" fill={isSelected ? "#0E9A8B" : wire.color} stroke="white" strokeWidth="1.25" />
+                        <circle data-wire-endpoint={wire.endTerminalId} cx={endX} cy={endY} r="3.5" fill={isSelected ? "#0E9A8B" : wire.color} stroke="white" strokeWidth="1.25" />
+                      </g>
+                    );
+                  })}
+                </svg>
+              );
+            })}
         </div>
 
         {/* Empty state */}

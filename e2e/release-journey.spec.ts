@@ -378,7 +378,25 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
       await expect(firstHole).toHaveClass(/net-highlighted-terminal/);
       await expect(sameStripHole).toHaveClass(/net-highlighted-terminal/);
       await expect(separateStripHole).not.toHaveClass(/net-highlighted-terminal/);
-      await expect(page.locator("svg .net-highlighted-wire").first()).toBeVisible();
+      await expect(page.locator('[data-testid="breadboard-wire-overlay"] .net-highlighted-wire').first()).toBeVisible();
+      const boardId = (await firstHole.getAttribute("data-terminal-id"))!.replace(/-T-4-0$/, "");
+      const endpointOffsets = await page
+        .getByTestId("breadboard-wire-overlay")
+        .locator(`circle[data-wire-endpoint^="${boardId}-"]`)
+        .evaluateAll((markers) => markers.map((marker) => {
+          const terminalId = (marker as SVGCircleElement).dataset.wireEndpoint;
+          const hole = Array.from(document.querySelectorAll<HTMLElement>("[data-terminal-id]"))
+            .find((element) => element.dataset.terminalId === terminalId);
+          if (!hole) return Number.POSITIVE_INFINITY;
+          const markerBox = marker.getBoundingClientRect();
+          const holeBox = hole.getBoundingClientRect();
+          return Math.hypot(
+            markerBox.x + markerBox.width / 2 - holeBox.x - holeBox.width / 2,
+            markerBox.y + markerBox.height / 2 - holeBox.y - holeBox.height / 2,
+          );
+        }));
+      expect(endpointOffsets.length).toBeGreaterThan(0);
+      expect(Math.max(...endpointOffsets), JSON.stringify(endpointOffsets)).toBeLessThan(1);
       await expect(page.getByText(/connected points/)).toBeVisible();
       await expect(page.getByTitle("RED LED: 0% brightness")).toBeVisible();
       await expect(page.getByTitle("RED LED: 100% brightness")).toBeVisible({ timeout: 2_000 });
