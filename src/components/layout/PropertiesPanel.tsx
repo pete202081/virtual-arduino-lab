@@ -572,7 +572,17 @@ void loop() {
               <div className="flex justify-between"><span className="text-slate-500">Rails</span><span className="font-bold">{comp.properties.rails}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Trench</span><span className="font-bold text-red-600">{comp.properties.trench}</span></div>
               <div className="mt-2 p-2 bg-slate-50 border rounded text-[11px]">
-                Each 5-hole column is connected. Opposite side of trench is <b>not</b> connected. Power rails are isolated from strips.
+                Each 5-hole column is connected. Opposite side of trench is <b>not</b> connected. Power rails are isolated from strips. Hover a terminal to highlight its connected net.
+              </div>
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded text-[11px]">
+                <div className="font-bold text-blue-900">Breadboard LED walkthrough</div>
+                <ol className="mt-1 list-decimal list-inside space-y-0.5 text-blue-900">
+                  <li>Connect Arduino 5V and GND to separate power rails.</li>
+                  <li>Connect D8 to one hole in a five-hole strip.</li>
+                  <li>Put the resistor’s A terminal on another hole in that same strip.</li>
+                  <li>Connect resistor B to LED ANODE; connect LED CATHODE to the GND rail.</li>
+                </ol>
+                <div className="mt-1 text-blue-800">Try project 18, Breadboard Basics: Blink an LED, to see this path already wired.</div>
               </div>
             </div>
           </div>

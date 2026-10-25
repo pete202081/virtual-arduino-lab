@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { ComponentInstance, Wire } from "@/types/circuit";
 import { ArduinoUno } from "./ArduinoUno";
 import { Breadboard } from "./Breadboard";
@@ -22,6 +22,7 @@ import { RGBLED } from "./RGBLED";
 import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
 import type { RGBLedState, SevenSegmentState, ServoState, DcMotorState } from "@/simulation/interfaces/simulationAdapter";
 import { ZoomIn, ZoomOut, Maximize2, Grid3x3, Trash2, Cable, MousePointer2 } from "lucide-react";
+import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
 
 interface Props {
   components: ComponentInstance[];
@@ -100,6 +101,11 @@ export function CircuitWorkspace({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [hoverTerminal, setHoverTerminal] = useState<string | null>(null);
   const [showGrid, setShowGrid] = useState(true);
+  const circuitGraph = useMemo(() => buildCircuitGraph(components, wires), [components, wires]);
+  const highlightedTerminalIds = useMemo(() => {
+    const net = hoverTerminal ? circuitGraph.getNetForTerminal(hoverTerminal) : undefined;
+    return new Set(net?.terminals ?? []);
+  }, [circuitGraph, hoverTerminal]);
 
   useEffect(() => {
     if (!fitToComponents || components.length === 0) return;
@@ -168,14 +174,18 @@ export function CircuitWorkspace({
   };
 
   const handleWorkspaceMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+    const target = e.target as HTMLElement;
+    const startedOnEmptyCanvas = target === e.currentTarget || target.dataset.canvasBackground === "true";
+    const shouldPan = e.button === 1 || (e.button === 0 && (e.altKey || startedOnEmptyCanvas));
+    if (shouldPan) {
+      if (e.button === 0 && startedOnEmptyCanvas) onSelect(null);
       setIsPanning(true);
       setPanStart({ x: e.clientX, y: e.clientY });
       e.preventDefault();
       return;
     }
     // Click on empty space clears selection and cancels wire
-    if (e.target === e.currentTarget) {
+    if (startedOnEmptyCanvas) {
       onSelect(null);
       // don't auto cancel wire, let user explicitly cancel
     }
@@ -230,6 +240,16 @@ export function CircuitWorkspace({
       el.removeEventListener("mouseover", handleOver);
     };
   }, [components, pendingWire, onWireStart, onWireEnd, onCancelWire]);
+
+  useEffect(() => {
+    const canvas = containerRef.current;
+    if (!canvas) return;
+    const terminalElements = canvas.querySelectorAll<HTMLElement>("[data-terminal-id]");
+    terminalElements.forEach((element) => {
+      element.classList.toggle("net-highlighted-terminal", highlightedTerminalIds.has(element.dataset.terminalId ?? ""));
+    });
+    return () => terminalElements.forEach((element) => element.classList.remove("net-highlighted-terminal"));
+  }, [highlightedTerminalIds]);
 
   const resetView = () => {
     setPan({ x: 0, y: 0 });
@@ -313,13 +333,14 @@ export function CircuitWorkspace({
           <span className="w-2 h-2 bg-emerald-400 rounded-full" /> {components.length} components • {wires.length} wires
         </span>
         <span className="opacity-50">|</span>
-        <span>Drag to move • Click terminals to wire • Scroll + Ctrl to zoom • Alt+Drag to pan</span>
-        {hoverTerminal && <span className="ml-auto bg-white/10 px-2 py-0.5 rounded font-mono">Hover: {hoverTerminal}</span>}
+        <span>Drag components • Drag empty canvas to pan • Ctrl+Scroll to zoom</span>
+        {hoverTerminal && <span className="ml-auto bg-white/10 px-2 py-0.5 rounded font-mono">Hover: {getTerminalPos(hoverTerminal)?.label ?? hoverTerminal} · {highlightedTerminalIds.size} connected points</span>}
       </div>
 
       {/* Canvas */}
       <div
         ref={containerRef}
+        data-testid="circuit-canvas-viewport"
         className="flex-1 relative overflow-hidden select-none"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -331,6 +352,7 @@ export function CircuitWorkspace({
         {/* Grid */}
         {showGrid && (
           <div
+            data-canvas-background="true"
             className="absolute inset-0"
             style={{
               backgroundImage: `radial-gradient(circle, #CBD5E1 1px, transparent 1px)`,
@@ -341,6 +363,8 @@ export function CircuitWorkspace({
         )}
         {/* Pan/Zoom container */}
         <div
+          data-canvas-background="true"
+          data-testid="canvas-scene"
           className="absolute inset-0"
           style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}
         >
@@ -356,22 +380,24 @@ export function CircuitWorkspace({
               const end = getTerminalPos(wire.endTerminalId);
               if (!start || !end) return null;
               const isSelected = selectedId === wire.id;
+              const isNetHighlighted = highlightedTerminalIds.has(wire.startTerminalId) || highlightedTerminalIds.has(wire.endTerminalId);
               // Bezier curve
               const midX = (start.x + end.x) / 2;
               const dx = Math.abs(end.x - start.x);
               const offset = Math.min(60, dx * 0.3);
               const path = `M ${start.x} ${start.y} C ${midX} ${start.y - offset}, ${midX} ${end.y - offset}, ${end.x} ${end.y}`;
               return (
-                <g key={wire.id} className="pointer-events-auto" style={{ cursor: "pointer" }} onClick={() => onSelect(wire.id)}>
+                <g key={wire.id} data-wire-id={wire.id} className="pointer-events-auto" style={{ cursor: "pointer" }} onClick={() => onSelect(wire.id)}>
                   {/* Hit area */}
                   <path d={path} stroke="transparent" strokeWidth="12" fill="none" />
                   <path
                     d={path}
+                    className={isNetHighlighted ? "net-highlighted-wire" : undefined}
                     stroke={isSelected ? "#0E9A8B" : wire.color}
-                    strokeWidth={isSelected ? 4 : 3}
+                    strokeWidth={isSelected || isNetHighlighted ? 4 : 3}
                     fill="none"
                     strokeLinecap="round"
-                    style={{ filter: isSelected ? "drop-shadow(0 0 4px #0E9A8B)" : undefined }}
+                    style={{ filter: isSelected || isNetHighlighted ? "drop-shadow(0 0 4px #0E9A8B)" : undefined }}
                   />
                   {/* Dots at ends */}
                   <circle cx={start.x} cy={start.y} r="4" fill={isSelected ? "#0E9A8B" : wire.color} stroke="white" strokeWidth="1.5" />

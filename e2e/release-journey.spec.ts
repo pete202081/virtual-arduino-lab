@@ -16,6 +16,17 @@ test("pre-wired Blink starter runs from circuit graph and stops/resets", async (
   await page.getByRole("button", { name: "Expand code editor" }).click();
   await expect(page.locator(".monaco-editor")).toBeVisible();
 
+  // Drag an empty part of the canvas to pan the entire circuit in any direction.
+  const scene = page.getByTestId("canvas-scene");
+  const initialSceneStyle = await scene.getAttribute("style");
+  const viewportBox = await page.getByTestId("circuit-canvas-viewport").boundingBox();
+  expect(viewportBox).not.toBeNull();
+  await page.mouse.move(viewportBox!.x + 8, viewportBox!.y + 8);
+  await page.mouse.down();
+  await page.mouse.move(viewportBox!.x + 38, viewportBox!.y + 28, { steps: 4 });
+  await page.mouse.up();
+  expect(await scene.getAttribute("style")).not.toBe(initialSceneStyle);
+
   // Exercise the Monaco editor as a beginner would: edit the sketch, then run it.
   await page.locator(".monaco-editor .view-line").first().click();
   await page.keyboard.press("Control+A");
@@ -278,7 +289,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
   await page.goto("/");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
-  await expect(selector.locator("option")).toHaveCount(18); // placeholder plus seventeen projects
+  await expect(selector.locator("option")).toHaveCount(19); // placeholder plus eighteen projects
   await page.getByRole("button", { name: "Quick Add" }).click();
   await page.getByRole("button", { name: "Quick add LED" }).click();
   await expect(page.getByText("5 components • 3 wires").first()).toBeVisible();
@@ -309,6 +320,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
     { id: "ultrasonic-distance-alarm", name: "15 · Ultrasonic Distance Alarm", focus: "HC-SR04 Ultrasonic Sensor", code: "const int trigPin = 3;" },
     { id: "tmp36-temperature-alarm", name: "16 · TMP36 Temperature Alarm", focus: "TMP36 Temperature Sensor", code: "const int tempPin = A0;" },
     { id: "relay-controlled-lamp", name: "17 · Relay-Controlled Lamp", focus: "5V Single-Channel Relay Module", code: "const int relayPin = 7;" },
+    { id: "breadboard-blink", name: "18 · Breadboard Basics: Blink an LED", focus: "830-Point Breadboard", code: "const int ledPin = 8;" },
   ];
 
   for (const project of projects) {
@@ -356,6 +368,20 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
       await expect(page.getByTitle("GREEN LED: 100% brightness")).toBeVisible();
       await expect(page.getByTitle("Relay module released; COM is connected to NC")).toBeVisible({ timeout: 2_000 });
       await expect(page.getByTitle("GREEN LED: 0% brightness")).toBeVisible();
+    }
+    if (project.id === "breadboard-blink") {
+      await expect(page.getByText("Breadboard LED walkthrough", { exact: true })).toBeVisible();
+      const firstHole = page.locator('[data-terminal-id$="-T-4-0"]');
+      const sameStripHole = page.locator('[data-terminal-id$="-T-4-4"]');
+      const separateStripHole = page.locator('[data-terminal-id$="-T-5-0"]');
+      await firstHole.hover();
+      await expect(firstHole).toHaveClass(/net-highlighted-terminal/);
+      await expect(sameStripHole).toHaveClass(/net-highlighted-terminal/);
+      await expect(separateStripHole).not.toHaveClass(/net-highlighted-terminal/);
+      await expect(page.locator("svg .net-highlighted-wire").first()).toBeVisible();
+      await expect(page.getByText(/connected points/)).toBeVisible();
+      await expect(page.getByTitle("RED LED: 0% brightness")).toBeVisible();
+      await expect(page.getByTitle("RED LED: 100% brightness")).toBeVisible({ timeout: 2_000 });
     }
     if (project.id === "tmp36-temperature-alarm") {
       const temperature = page.getByRole("slider", { name: "TMP36 simulated temperature (°C)" });

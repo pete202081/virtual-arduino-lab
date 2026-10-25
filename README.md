@@ -1,8 +1,8 @@
 # Virtual Arduino Lab
 
-A local-first beginner circuit workspace built with Next.js, TypeScript, Tailwind CSS, and Monaco. The default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of seventeen complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches. Collapse the left component library whenever you want more room for circuit design.
+A local-first beginner circuit workspace built with Next.js, TypeScript, Tailwind CSS, and Monaco. The default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of eighteen complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches. Collapse the left component library whenever you want more room for circuit design.
 
-**New to the lab?** Follow the [Beginner User Guide](USER_GUIDE_BEGINNER.md) for workspace and wiring basics, then build the sequenced projects in the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md). The catalog includes components, wiring maps, copy-ready sketches, and extension challenges for all seventeen projects.
+**New to the lab?** Follow the [Beginner User Guide](USER_GUIDE_BEGINNER.md) for workspace and wiring basics, then build the sequenced projects in the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md). The catalog includes components, wiring maps, copy-ready sketches, and extension challenges for all eighteen projects.
 
 ## Requirements
 
@@ -32,7 +32,7 @@ npm run test:e2e
 npm audit
 ```
 
-`npm run test:e2e` builds the production app, starts it on port 3100, and runs Playwright Chromium journeys for project management, components, sensors, inputs, and all seventeen beginner presets, including the component-library collapse/expand control. On Linux CI machines, install Playwright’s OS libraries with `npx playwright install-deps chromium` before the first run. The app itself does not require Chromium specifically.
+`npm run test:e2e` builds the production app, starts it on port 3100, and runs Playwright Chromium journeys for project management, components, sensors, inputs, and all eighteen beginner presets, including component-library/editor collapse, canvas panning, and connected-net highlighting. On Linux CI machines, install Playwright’s OS libraries with `npx playwright install-deps chromium` before the first run. The app itself does not require Chromium specifically.
 
 ## Project actions
 
@@ -48,10 +48,10 @@ npm audit
 - `tests/sketch-validator.test.ts` — 12 editor/compile-diagnostic tests
 - `tests/simulation-adapter.test.ts` — 29 interpreter, timing, stop, PWM, Servo, DC motor/H-bridge, PIR, HC-SR04, TMP36, relay, LED-path, pushbutton, slide-switch, joystick, buzzer, analog sensor, RGB LED, and 7-segment tests
 - `tests/project-persistence.test.ts` — 11 schema, migration, safety, and fallback tests
-- `tests/beginner-project-templates.test.ts` — 17 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
-- `e2e/release-journey.spec.ts` — 12 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, PIR-triggered LED behavior, HC-SR04 distance thresholds, TMP36 temperature thresholds, relay-controlled load switching, and selecting/running all seventeen beginner projects from the dropdown
+- `tests/beginner-project-templates.test.ts` — 18 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
+- `e2e/release-journey.spec.ts` — 12 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, PIR-triggered LED behavior, HC-SR04 distance thresholds, TMP36 temperature thresholds, relay-controlled load switching, and selecting/running all eighteen beginner projects from the dropdown
 
-Current verified status: all 83 unit checks pass, all 12 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, or TMP36 and relay features.
+Current verified status: all 84 unit checks pass, all 12 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
 
 ## Implemented simulation subset and limitations
 

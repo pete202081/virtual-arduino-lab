@@ -88,16 +88,23 @@
 - Added project 17, Relay-Controlled Lamp, demonstrating an ideal low-voltage 5V-to-COM, NO-to-resistor/LED, LED-to-GND load.
 - Only contact logic is represented: no coil current, isolation quality, real contact ratings, arcing, inductive transients, or realistic timing are simulated. The simulator is not for mains design or safety assessment.
 
+
+## Breadboard learning and connected-net highlight
+
+- Added the Breadboard Basics: Blink an LED project, with D8 and resistor terminals sharing one five-hole strip and explicit Uno 5V/GND connections to separate breadboard rails.
+- The selected breadboard Properties panel now provides a concise wiring walkthrough. Hovering any terminal or breadboard hole highlights every terminal on its connected net, including holes bridged by breadboard strips and attached jumper wires; connected wires glow as well.
+- This teaching aid reflects the graph model: five-hole strips and continuous rails connect internally, the trench isolates the two fields, and rails remain isolated until explicitly wired. It does not calculate voltage or current.
+
 ## Beginner project selector
 
-- Added a top-bar dropdown with seventeen ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, Ultrasonic Distance Alarm, TMP36 Temperature Alarm, and Relay-Controlled Lamp.
+- Added a top-bar dropdown with eighteen ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, Ultrasonic Distance Alarm, TMP36 Temperature Alarm, Relay-Controlled Lamp, and Breadboard Basics: Blink an LED.
 - Selecting one replaces the current screen with its prewired component layout, working wires, project sketch, title, and a relevant selected component in Properties. The canvas auto-fits the loaded circuit; the user can then edit, duplicate, and save it.
-- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all seventeen projects, checking the code, properties, and circuit counts.
+- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all eighteen projects, checking the code, properties, and circuit counts.
 
 ## Verification
 
-- 83 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all seventeen template compile/wiring-reference/fresh-ID checks.
-- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus relay-controlled lamp switching and all seventeen ready-made projects.
+- 84 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all eighteen template compile/wiring-reference/fresh-ID checks.
+- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus relay-controlled lamp switching and all eighteen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits

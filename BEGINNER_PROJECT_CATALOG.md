@@ -4,7 +4,7 @@ A step-by-step project path using the components already available in Virtual Ar
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the seventeen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the eighteen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
@@ -33,6 +33,12 @@ A step-by-step project path using the components already available in Virtual Ar
 | 10 | Room-status indicator | Combine an LDR, RGB LED, and buzzer | Uno, LDR, RGB LED, passive buzzer, 4 resistors |
 | 11 | Switch + joystick PWM color mixer | Combine a latched enable, X/Y thresholds, momentary SW, and PWM color levels | Uno, slide switch, joystick, RGB LED, 3 resistors |
 | 12 | Joystick Servo Controller | Use axis thresholds and SW to select servo positions | Uno, joystick, hobby servo |
+| 13 | DC Motor Speed + Direction Control | Use PWM and an H-bridge to control a motor | Uno, H-bridge, DC motor |
+| 14 | PIR Motion-Triggered Light | Read simulated motion as a digital input | Uno, PIR sensor, LED, resistor |
+| 15 | Ultrasonic Distance Alarm | Compare an echo duration to a threshold | Uno, HC-SR04, LED, resistor |
+| 16 | TMP36 Temperature Alarm | Compare a modeled temperature reading | Uno, TMP36, LED, resistor |
+| 17 | Relay-Controlled Lamp | Switch a low-voltage load through relay contacts | Uno, relay, LED, resistor |
+| 18 | Breadboard Basics: Blink an LED | Trace shared strips and explicit power rails | Uno, breadboard, LED, resistor |
 
 ---
 
@@ -670,7 +676,38 @@ void loop() {
 
 **Try it:** Load the project and run it. The LED on the modeled low-voltage load should turn on while the relay indicator says energized, then turn off when it releases. The graph treats the contact as an ideal switch and the resistor as a conductive connection; it does not calculate voltage, current, isolation, coil current, contact ratings, arcing, inductive transients, or switching delays. This is **not** a mains-voltage or electrical-safety simulator: do not use it to design or assess mains circuits. Follow hardware datasheets and qualified safety guidance for real relays.
 
-## Bonus exercise (not in the seventeen-project dropdown): joystick-controlled LED
+## 18. Breadboard Basics: Blink an LED
+
+**Learn:** A five-hole strip shares one electrical node, power rails distribute a common connection, and the center trench keeps the two terminal fields isolated.
+
+**Parts:** Arduino Uno, 830-point breadboard, red LED, 220 Ω resistor.
+
+**Trace the ready-wired circuit:**
+
+1. Uno **5V→breadboard R_TOP+_0** and **GND→R_BOT-_0**. The rails are separate until wired.
+2. Uno **D8→T-4-0**. The five holes **T-4-0 through T-4-4** form one strip, so the resistor can start from **T-4-4**.
+3. Wire **T-4-4→resistor A**, then **resistor B→LED ANODE**.
+4. Wire **LED CATHODE→R_BOT-_15**. The bottom ground rail connects that point back to Uno GND.
+5. Hover a hole or terminal to highlight its connected net. Confirm T-4-0 and T-4-4 highlight together, while a hole in another column does not.
+
+```cpp
+const int ledPin = 8;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(ledPin, HIGH);
+  delay(1000);
+  digitalWrite(ledPin, LOW);
+  delay(1000);
+}
+```
+
+**Try it:** Load **18 · Breadboard Basics: Blink an LED**, select the breadboard, and trace each wire against the checklist above. Run the sketch to see the LED blink. The lab models five-hole strips, isolated rails, and the center trench; it does not calculate resistance, voltage drop, or current. The 220 Ω resistor is still essential in a real circuit.
+
+## Bonus exercise (not in the eighteen-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 

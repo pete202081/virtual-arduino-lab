@@ -1,6 +1,7 @@
 import type { ComponentInstance, Wire } from "@/types/circuit";
 import {
   createArduinoUno,
+  createBreadboard,
   createLED,
   createPushButton,
   createBuzzer,
@@ -39,6 +40,7 @@ export const BEGINNER_PROJECTS = [
   { id: "ultrasonic-distance-alarm", name: "15 · Ultrasonic Distance Alarm", description: "Use an HC-SR04-style echo duration threshold to warn when an object is nearby." },
   { id: "tmp36-temperature-alarm", name: "16 · TMP36 Temperature Alarm", description: "Read an analog TMP36 model and turn on an LED above a warm-temperature threshold." },
   { id: "relay-controlled-lamp", name: "17 · Relay-Controlled Lamp", description: "Switch a low-voltage LED load through the modeled relay COM/NO contacts." },
+  { id: "breadboard-blink", name: "18 · Breadboard Basics: Blink an LED", description: "Trace a blinking LED through a shared 5-hole strip and explicitly wired power rails." },
 ] as const;
 
 export type BeginnerProjectId = (typeof BEGINNER_PROJECTS)[number]["id"];
@@ -69,6 +71,7 @@ const SKETCHES: Record<BeginnerProjectId, string> = {
   "joystick-servo": `#include <Servo.h>\nServo arm;\nconst int joyX = A0;\nconst int joyY = A1;\nconst int joyButtonPin = 2;\nconst int servoPin = 9;\n\nvoid setup() {\n  pinMode(joyButtonPin, INPUT_PULLUP);\n  arm.attach(servoPin);\n}\n\nvoid loop() {\n  if (digitalRead(joyButtonPin) == LOW) {\n    arm.write(90);\n  } else {\n    if (analogRead(joyX) > 700) {\n      arm.write(180);\n    } else {\n      if (analogRead(joyX) < 300) {\n        arm.write(0);\n      } else {\n        if (analogRead(joyY) > 700) {\n          arm.write(135);\n        } else {\n          if (analogRead(joyY) < 300) {\n            arm.write(45);\n          } else {\n            arm.write(90);\n          }\n        }\n      }\n    }\n  }\n  delay(20);\n}`,
 
   "relay-controlled-lamp": `const int relayPin = 7;\n\nvoid setup() {\n  pinMode(relayPin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(relayPin, LOW);\n  delay(1000);\n  digitalWrite(relayPin, HIGH);\n  delay(1000);\n}`,
+  "breadboard-blink": `const int ledPin = 8;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(ledPin, HIGH);\n  delay(1000);\n  digitalWrite(ledPin, LOW);\n  delay(1000);\n}`,
   "tmp36-temperature-alarm": `const int tempPin = A0;\nconst int lampPin = 8;\n\nvoid setup() {\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (analogRead(tempPin) > 164) {\n    digitalWrite(lampPin, HIGH);\n  } else {\n    digitalWrite(lampPin, LOW);\n  }\n  delay(100);\n}`,
   "ultrasonic-distance-alarm": `const int trigPin = 3;\nconst int echoPin = 2;\nconst int lampPin = 8;\n\nvoid setup() {\n  pinMode(trigPin, OUTPUT);\n  pinMode(echoPin, INPUT);\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(trigPin, LOW);\n  delayMicroseconds(2);\n  digitalWrite(trigPin, HIGH);\n  delayMicroseconds(10);\n  digitalWrite(trigPin, LOW);\n  if (pulseIn(echoPin, HIGH, 30000) < 1160) {\n    digitalWrite(lampPin, HIGH);\n  } else {\n    digitalWrite(lampPin, LOW);\n  }\n  delay(50);\n}`,
   "pir-motion-light": `const int motionPin = 2;\nconst int lampPin = 8;\n\nvoid setup() {\n  pinMode(motionPin, INPUT);\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(motionPin) == HIGH) {\n    digitalWrite(lampPin, HIGH);\n  } else {\n    digitalWrite(lampPin, LOW);\n  }\n  delay(20);\n}`,
@@ -124,6 +127,18 @@ export function createBeginnerProject(id: BeginnerProjectId): BeginnerProjectTem
     components.push(branch.resistor, branch.led);
     wires.push(...branch.wires);
     focusComponentId = branch.led.id;
+  } else if (id === "breadboard-blink") {
+    const breadboard = createBreadboard(35, 265);
+    const resistor = createResistor(430, 320, 220);
+    const led = createLED(520, 310, "red");
+    components.push(breadboard, resistor, led);
+    createWire(wires, board, "5V", breadboard, "R_TOP+_0", "#EF4444");
+    createWire(wires, board, "GND-1", breadboard, "R_BOT-_0", "#1F2937");
+    createWire(wires, board, "D8", breadboard, "T-4-0", "#EF4444");
+    createWire(wires, breadboard, "T-4-4", resistor, "A", "#F59E0B");
+    createWire(wires, resistor, "B", led, "ANODE", "#10B981");
+    createWire(wires, led, "CATHODE", breadboard, "R_BOT-_15", "#1F2937");
+    focusComponentId = breadboard.id;
   } else if (id === "traffic-light") {
     for (const [index, item] of [[8, "red"], [9, "yellow"], [10, "green"]] as const) {
       const branch = createLedBranch(board, index, item, item === "red" ? 0 : item === "yellow" ? 1 : 2);

@@ -1,6 +1,6 @@
 # Virtual Arduino Lab — Beginner’s User Guide
 
-Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. For hands-on practice after the Blink walkthrough, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md), a seventeen-project path with wiring maps, copy-ready sketches, and challenges.
+Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. For hands-on practice after the Blink walkthrough, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md), an eighteen-project path with wiring maps, copy-ready sketches, and challenges.
 
 > **What this is:** a local, browser-based learning simulator. It does not connect to a physical Arduino and does not compile a real AVR binary.
 
@@ -44,7 +44,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 ### Top bar
 
 - **Project title:** click its name to rename it; press Enter or click elsewhere to finish.
-- **Beginner projects…:** loads any of seventeen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
+- **Beginner projects…:** loads any of eighteen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
 - **Quick Add:** opens a compact top-bar picker for frequently used parts. Selecting an item adds it directly to the canvas.
 - **New:** creates a blank project after confirmation. It starts with the Blink sketch but no circuit components.
 - **Open:** opens a picker for projects saved in this browser.
@@ -109,7 +109,7 @@ You can also click the **Jumper Wire** card under Wiring to highlight the wiring
 
 ### Use the breadboard
 
-You can wire directly between components, or connect them through breadboard holes. To route through the breadboard, make wires from component terminals to holes; the graph then applies the board’s internal connectivity rules.
+You can wire directly between components, or connect them through breadboard holes. To route through the breadboard, make wires from component terminals to holes; the graph then applies the board’s internal connectivity rules. Hover over a terminal or hole to highlight its full connected net.
 
 ---
 
@@ -630,7 +630,7 @@ Projects are stored in the browser, not in a cloud account. Browser cleanup can 
 - **Delete:** select an item, then use the canvas **Delete** button or the Properties panel’s delete action. Deleting a component also removes its attached wires.
 - **Rotate:** select a component and use **Rotate 90°** in Properties where available.
 - **Zoom:** use the plus/minus controls or hold **Ctrl** while scrolling.
-- **Pan:** hold **Alt** and drag the canvas.
+- **Pan:** drag an empty part of the canvas with the left mouse button to move the whole workspace in any direction. You can also use **Alt+drag** or the middle mouse button.
 - **Reset view:** use the fit/reset-view canvas button to restore the default pan and zoom.
 - **Grid:** toggle the grid button in the canvas toolbar.
 - **Wire color:** choose a color before beginning a wire; new wires use that color.
