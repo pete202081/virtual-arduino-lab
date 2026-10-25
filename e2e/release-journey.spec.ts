@@ -6,7 +6,7 @@ test("default landing page explains the lab and opens the simulator", async ({ p
   await expect(page.getByRole("heading", { name: "From first wire to working idea" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How the lab works" })).toBeVisible();
   await expect(page.getByText(/never executes arbitrary user code/)).toBeVisible();
-  await expect(page.getByText("21", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("22", { exact: true }).first()).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("link", { name: /Start building/ })).toBeVisible();
@@ -19,20 +19,23 @@ test("default landing page explains the lab and opens the simulator", async ({ p
 test("project gallery filters by concept and difficulty, then opens the selected build", async ({ page }) => {
   await page.goto("/projects");
   await expect(page.getByRole("heading", { name: /A project for every next step/ })).toBeVisible();
-  await expect(page.getByText("21 of 21")).toBeVisible();
+  await expect(page.getByText("22 of 22")).toBeVisible();
   const search = page.getByRole("textbox", { name: "Search projects" });
   await search.fill("Two-Branch Breadboard Challenge");
-  await expect(page.getByText("1 of 21")).toBeVisible();
+  await expect(page.getByText("1 of 22")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Two-Branch Breadboard Challenge" })).toBeVisible();
   await search.fill("Armed PIR Alarm");
-  await expect(page.getByText("1 of 21")).toBeVisible();
+  await expect(page.getByText("1 of 22")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Armed PIR Alarm" })).toBeVisible();
+  await search.fill("Distance-Zone Parking Assistant");
+  await expect(page.getByText("1 of 22")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Distance-Zone Parking Assistant" })).toBeVisible();
   await search.fill("");
   await page.getByRole("button", { name: "Sensors", exact: true }).click();
   await page.getByRole("button", { name: "Builder", exact: true }).click();
-  await expect(page.getByText("4 of 21")).toBeVisible();
+  await expect(page.getByText("5 of 22")).toBeVisible();
   await search.fill("TMP36");
-  await expect(page.getByText("1 of 21")).toBeVisible();
+  await expect(page.getByText("1 of 22")).toBeVisible();
   await expect(page.getByRole("heading", { name: "TMP36 Temperature Alarm" })).toBeVisible();
   await page.getByRole("link", { name: "Open", exact: true }).click();
   await expect(page).toHaveURL(/\/lab$/);
@@ -401,7 +404,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
   await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
-  await expect(selector.locator("option")).toHaveCount(22); // placeholder plus twenty-one projects
+  await expect(selector.locator("option")).toHaveCount(23); // placeholder plus twenty-two projects
   await page.getByRole("button", { name: "Quick Add" }).click();
   await page.getByRole("button", { name: "Quick add LED" }).click();
   await expect(page.getByText("5 components • 3 wires").first()).toBeVisible();
@@ -436,6 +439,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
     { id: "pwm-dimmer", name: "19 · Three-Level LED Dimmer", focus: "10kΩ Potentiometer", code: "const int ledPin = 9;" },
     { id: "two-branch-breadboard", name: "20 · Two-Branch Breadboard Challenge", focus: "830-Point Breadboard", code: "const int blinkLedPin = 8;" },
     { id: "armed-pir-alarm", name: "21 · Armed PIR Alarm", focus: "PIR Motion Sensor", code: "const int armPin = 2;" },
+    { id: "distance-zone-parking", name: "22 · Distance-Zone Parking Assistant", focus: "HC-SR04 Ultrasonic Sensor", code: "const int trigPin = 3;" },
   ];
 
   for (const project of projects) {
@@ -597,6 +601,23 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
       await distance.press("End");
       await expect(page.getByText(/Target distance: 400 cm/)).toBeVisible();
       await expect(page.getByTitle("YELLOW LED: 0% brightness")).toBeVisible({ timeout: 2_000 });
+    }
+    if (project.id === "distance-zone-parking") {
+      const distance = page.getByRole("slider", { name: "Ultrasonic simulated distance (cm)" });
+      await expect(page.getByTitle("RGB LED: G")).toBeVisible();
+      await expect(page.getByTitle("Passive buzzer", { exact: true })).toBeVisible();
+      await distance.press("Home");
+      await expect(page.getByText(/Target distance: 2 cm/)).toBeVisible();
+      await expect(page.getByTitle("RGB LED: R")).toBeVisible({ timeout: 2_000 });
+      await expect(page.getByTitle("Passive buzzer sounding at 880 Hz")).toBeVisible({ timeout: 2_000 });
+      for (let step = 0; step < 23; step += 1) await distance.press("ArrowRight");
+      await expect(page.getByText(/Target distance: 25 cm/)).toBeVisible();
+      await expect(page.getByTitle("RGB LED: R+G")).toBeVisible({ timeout: 2_000 });
+      await expect(page.getByTitle("Passive buzzer sounding at 440 Hz")).toBeVisible({ timeout: 2_000 });
+      await distance.press("End");
+      await expect(page.getByText(/Target distance: 400 cm/)).toBeVisible();
+      await expect(page.getByTitle("RGB LED: G")).toBeVisible({ timeout: 2_000 });
+      await expect(page.getByTitle("Passive buzzer", { exact: true })).toBeVisible();
     }
     if (project.id === "pir-motion-light") {
       await expect(page.getByTitle("GREEN LED: 0% brightness")).toBeVisible();

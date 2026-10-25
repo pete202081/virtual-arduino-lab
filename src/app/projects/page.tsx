@@ -104,10 +104,10 @@ export default function ProjectGalleryPage() {
             <Link href="/" className="mb-7 inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 transition hover:text-teal-700"><ArrowLeft className="h-3.5 w-3.5" /> Back to overview</Link>
             <div className="mb-3 flex items-center gap-2 text-[10px] font-extrabold tracking-[.19em] text-teal-700"><BookOpen className="h-4 w-4" /> FIND YOUR NEXT BUILD</div>
             <h1 className="text-4xl font-black leading-[1.04] tracking-[-.055em] text-[#102142] sm:text-5xl lg:text-6xl">A project for every<br className="hidden sm:block" /> next step.</h1>
-            <p className="mt-5 max-w-[630px] text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">Browse the 21 guided circuits by concept and difficulty. Start with the basics, explore inputs and sensors, then combine modules in a bigger build.</p>
+            <p className="mt-5 max-w-[630px] text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">Browse the 22 guided circuits by concept and difficulty. Start with the basics, explore inputs and sensors, then combine modules in a bigger build.</p>
           </div>
           <div className="flex gap-3 md:pb-1">
-            <div className="rounded-2xl border border-slate-200 bg-[#F8FAFC] px-5 py-4"><div className="text-2xl font-black tracking-tight">21</div><div className="mt-1 text-[9px] font-extrabold uppercase tracking-[.16em] text-slate-500">ready-to-run</div></div>
+            <div className="rounded-2xl border border-slate-200 bg-[#F8FAFC] px-5 py-4"><div className="text-2xl font-black tracking-tight">22</div><div className="mt-1 text-[9px] font-extrabold uppercase tracking-[.16em] text-slate-500">ready-to-run</div></div>
             <div className="rounded-2xl border border-slate-200 bg-[#F8FAFC] px-5 py-4"><div className="text-2xl font-black tracking-tight">7</div><div className="mt-1 text-[9px] font-extrabold uppercase tracking-[.16em] text-slate-500">concept paths</div></div>
           </div>
         </div>

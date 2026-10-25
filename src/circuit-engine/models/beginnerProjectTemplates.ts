@@ -44,6 +44,7 @@ export const BEGINNER_PROJECTS = [
   { id: "pwm-dimmer", name: "19 · Three-Level LED Dimmer", description: "Use a potentiometer to select off, medium, or full visual PWM brightness." },
   { id: "two-branch-breadboard", name: "20 · Two-Branch Breadboard Challenge", description: "Trace two LED branches on separate five-hole strips with shared ground and a pushbutton-controlled output." },
   { id: "armed-pir-alarm", name: "21 · Armed PIR Alarm", description: "Combine an arm switch and simulated PIR motion to activate a light and passive buzzer." },
+  { id: "distance-zone-parking", name: "22 · Distance-Zone Parking Assistant", description: "Use an HC-SR04 distance threshold for green/far, yellow/medium, or red/near LED and buzzer feedback." },
 ] as const;
 
 export type BeginnerProjectId = (typeof BEGINNER_PROJECTS)[number]["id"];
@@ -66,6 +67,7 @@ const SKETCHES: Record<BeginnerProjectId, string> = {
   "pwm-dimmer": `const int knobPin = A0;\nconst int ledPin = 9;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  if (analogRead(knobPin) > 700) {\n    analogWrite(ledPin, 255);\n  } else {\n    if (analogRead(knobPin) > 350) {\n      analogWrite(ledPin, 128);\n    } else {\n      analogWrite(ledPin, 0);\n    }\n  }\n  delay(20);\n}`,
   "two-branch-breadboard": `const int blinkLedPin = 8;\nconst int buttonPin = 2;\nconst int buttonLedPin = 9;\n\nvoid setup() {\n  pinMode(blinkLedPin, OUTPUT);\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(buttonLedPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(buttonPin) == LOW) {\n    digitalWrite(buttonLedPin, HIGH);\n  } else {\n    digitalWrite(buttonLedPin, LOW);\n  }\n  digitalWrite(blinkLedPin, HIGH);\n  delay(500);\n  digitalWrite(blinkLedPin, LOW);\n  delay(500);\n}`,
   "armed-pir-alarm": `const int armPin = 2;\nconst int motionPin = 3;\nconst int lampPin = 8;\nconst int buzzerPin = 9;\n\nvoid setup() {\n  pinMode(armPin, INPUT_PULLUP);\n  pinMode(motionPin, INPUT);\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(armPin) == LOW) {\n    if (digitalRead(motionPin) == HIGH) {\n      digitalWrite(lampPin, HIGH);\n      tone(buzzerPin, 880);\n    } else {\n      digitalWrite(lampPin, LOW);\n      noTone(buzzerPin);\n    }\n  } else {\n    digitalWrite(lampPin, LOW);\n    noTone(buzzerPin);\n  }\n  delay(20);\n}`,
+  "distance-zone-parking": `const int trigPin = 3;\nconst int echoPin = 2;\nconst int redPin = 9;\nconst int greenPin = 10;\nconst int bluePin = 11;\nconst int buzzerPin = 12;\n\nvoid setup() {\n  pinMode(trigPin, OUTPUT);\n  pinMode(echoPin, INPUT);\n  pinMode(redPin, OUTPUT);\n  pinMode(greenPin, OUTPUT);\n  pinMode(bluePin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(trigPin, LOW);\n  delayMicroseconds(2);\n  digitalWrite(trigPin, HIGH);\n  delayMicroseconds(10);\n  digitalWrite(trigPin, LOW);\n  if (pulseIn(echoPin, HIGH, 30000) < 870) {\n    digitalWrite(redPin, HIGH);\n    digitalWrite(greenPin, LOW);\n    digitalWrite(bluePin, LOW);\n    tone(buzzerPin, 880);\n  } else {\n    delay(60);\n    digitalWrite(trigPin, LOW);\n    delayMicroseconds(2);\n    digitalWrite(trigPin, HIGH);\n    delayMicroseconds(10);\n    digitalWrite(trigPin, LOW);\n    if (pulseIn(echoPin, HIGH, 30000) < 2320) {\n      digitalWrite(redPin, HIGH);\n      digitalWrite(greenPin, HIGH);\n      digitalWrite(bluePin, LOW);\n      tone(buzzerPin, 440);\n    } else {\n      digitalWrite(redPin, LOW);\n      digitalWrite(greenPin, HIGH);\n      digitalWrite(bluePin, LOW);\n      noTone(buzzerPin);\n    }\n  }\n  delay(60);\n}`,
   "night-light": `const int lightPin = A0;\nconst int lampPin = 8;\n\nvoid setup() {\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (analogRead(lightPin) < 400) {\n    digitalWrite(lampPin, HIGH);\n  } else {\n    digitalWrite(lampPin, LOW);\n  }\n  delay(20);\n}`,
   "rgb-signal": `const int redPin = 9;\nconst int greenPin = 10;\nconst int bluePin = 11;\n\nvoid setup() {\n  pinMode(redPin, OUTPUT);\n  pinMode(greenPin, OUTPUT);\n  pinMode(bluePin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(redPin, HIGH);\n  digitalWrite(greenPin, LOW);\n  digitalWrite(bluePin, LOW);\n  delay(500);\n  digitalWrite(redPin, LOW);\n  digitalWrite(greenPin, HIGH);\n  digitalWrite(bluePin, LOW);\n  delay(500);\n  digitalWrite(redPin, LOW);\n  digitalWrite(greenPin, LOW);\n  digitalWrite(bluePin, HIGH);\n  delay(500);\n  digitalWrite(redPin, HIGH);\n  digitalWrite(greenPin, HIGH);\n  digitalWrite(bluePin, HIGH);\n  delay(500);\n}`,
   "seven-segment": `const int segA = 2;\nconst int segB = 3;\nconst int segC = 4;\nconst int segD = 5;\nconst int segE = 6;\nconst int segF = 7;\nconst int segG = 8;\nconst int segDP = 9;\n\nvoid setup() {\n  pinMode(segA, OUTPUT);\n  pinMode(segB, OUTPUT);\n  pinMode(segC, OUTPUT);\n  pinMode(segD, OUTPUT);\n  pinMode(segE, OUTPUT);\n  pinMode(segF, OUTPUT);\n  pinMode(segG, OUTPUT);\n  pinMode(segDP, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(segA, HIGH);\n  digitalWrite(segB, HIGH);\n  digitalWrite(segC, LOW);\n  digitalWrite(segD, HIGH);\n  digitalWrite(segE, HIGH);\n  digitalWrite(segF, LOW);\n  digitalWrite(segG, HIGH);\n  digitalWrite(segDP, LOW);\n  delay(1000);\n  digitalWrite(segA, HIGH);\n  digitalWrite(segB, HIGH);\n  digitalWrite(segC, HIGH);\n  digitalWrite(segD, HIGH);\n  digitalWrite(segE, LOW);\n  digitalWrite(segF, LOW);\n  digitalWrite(segG, HIGH);\n  digitalWrite(segDP, LOW);\n  delay(1000);\n}`,
@@ -220,6 +222,26 @@ export function createBeginnerProject(id: BeginnerProjectId): BeginnerProjectTem
     createWire(wires, board, "D9", buzzer, "+", "#F59E0B");
     createWire(wires, buzzer, "-", board, "GND-2", "#1F2937");
     focusComponentId = pir.id;
+  } else if (id === "distance-zone-parking") {
+    const sensor = createHcSr04Sensor(405, 275);
+    const rgb = createRGBLED(515, 95);
+    const buzzer = createBuzzer(650, 295, "passive");
+    components.push(sensor, rgb, buzzer);
+    createWire(wires, board, "5V", sensor, "VCC", "#EF4444");
+    createWire(wires, board, "GND-1", sensor, "GND", "#1F2937");
+    createWire(wires, board, "D3", sensor, "TRIG", "#F59E0B");
+    createWire(wires, sensor, "ECHO", board, "D2", "#2563EB");
+    for (const [index, channel] of ["R", "G", "B"].entries()) {
+      const color = channel === "R" ? "#EF4444" : channel === "G" ? "#10B981" : "#2563EB";
+      const resistor = createResistor(350, 135 + index * 32, 220);
+      components.push(resistor);
+      createWire(wires, rgb, channel, resistor, "A", color);
+      createWire(wires, resistor, "B", board, `D${9 + index}`, color);
+    }
+    createWire(wires, rgb, "COMMON", board, "GND-1", "#1F2937");
+    createWire(wires, board, "D12", buzzer, "+", "#F59E0B");
+    createWire(wires, buzzer, "-", board, "GND-2", "#1F2937");
+    focusComponentId = sensor.id;
   } else if (id === "night-light") {
     const ldr = createLdrSensor(465, 240);
     const branch = createLedBranch(board, 8, "yellow");

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BEGINNER_PROJECTS, createBeginnerProject } from "../src/circuit-engine/models/beginnerProjectTemplates";
 import { compileSimulationProgram } from "../src/simulation/interfaces/simulationAdapter";
 
-assert.equal(BEGINNER_PROJECTS.length, 21, "the dropdown should offer all twenty-one catalog projects");
+assert.equal(BEGINNER_PROJECTS.length, 22, "the dropdown should offer all twenty-two catalog projects");
 for (const item of BEGINNER_PROJECTS) {
   const project = createBeginnerProject(item.id);
   const compiled = compileSimulationProgram(project.code);
@@ -32,6 +32,17 @@ for (const item of BEGINNER_PROJECTS) {
     assert.match(project.code, /digitalRead\(armPin\)/);
     assert.match(project.code, /digitalRead\(motionPin\)/);
     assert.match(project.code, /tone\(buzzerPin, 880\)/);
+    assert.match(project.code, /noTone\(buzzerPin\)/);
+  }
+  if (item.id === "distance-zone-parking") {
+    assert.equal(project.components.filter((component) => component.type === "hc-sr04").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "rgb-led").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "buzzer").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "resistor").length, 3);
+    assert.match(project.code, /pulseIn\(echoPin, HIGH, 30000\) < 870/);
+    assert.match(project.code, /pulseIn\(echoPin, HIGH, 30000\) < 2320/);
+    assert.match(project.code, /tone\(buzzerPin, 880\)/);
+    assert.match(project.code, /tone\(buzzerPin, 440\)/);
     assert.match(project.code, /noTone\(buzzerPin\)/);
   }
   const secondCopy = createBeginnerProject(item.id);

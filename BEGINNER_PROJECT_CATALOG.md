@@ -1,10 +1,10 @@
 # Beginner Arduino Project Catalog
 
-A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one across twenty-one guided builds. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
+A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one across twenty-two guided builds. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the twenty-one entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the twenty-two entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
@@ -42,6 +42,7 @@ A step-by-step project path using the components already available in Virtual Ar
 | 19 | Three-Level LED Dimmer | Convert analog thresholds into three PWM brightness levels | Uno, breadboard, potentiometer, green LED, resistor |
 | 20 | Two-Branch Breadboard Challenge | Keep separate LED strips and a button-controlled branch independent | Uno, breadboard, pushbutton, 2 LEDs, 2 resistors |
 | 21 | Armed PIR Alarm | Gate motion-triggered sound and light with an arm switch | Uno, slide switch, PIR, passive buzzer, LED, resistor |
+| 22 | Distance-Zone Parking Assistant | Map near, medium, and far distances to color and tone feedback | Uno, HC-SR04, RGB LED, 3 resistors, passive buzzer |
 
 ---
 
@@ -819,7 +820,67 @@ void loop() {
 
 **Try it:** Load **21 · Armed PIR Alarm**. With the switch OFF, simulate motion; the LED and buzzer should stay off. Turn the switch ON, then simulate motion to activate both. Clear motion to silence them, or switch OFF while motion is still detected to disarm immediately. This is a learning model, not a security alarm: PIR motion is binary and manually toggled, and physical range, field of view, warm-up, retrigger behavior, and sensor electronics are not modeled.
 
-## Bonus exercise (not in the twenty-one-project dropdown): joystick-controlled LED
+## 22. Distance-Zone Parking Assistant
+
+**Learn:** Use the ultrasonic echo duration to select one of three distance zones and provide distinct RGB and sound feedback. Near is urgent red with a higher tone, medium is yellow with a lower tone, and far is green and silent.
+
+**Parts:** Arduino Uno, HC-SR04 ultrasonic sensor, common-cathode RGB LED, three 220 Ω resistors (one per color channel), passive buzzer.
+
+**Wire:** Sensor **VCC→5V**, **GND→GND**, **TRIG→D3**, **ECHO→D2**. Connect RGB **COMMON→GND**. Connect each RGB channel **R/G/B→its own 220 Ω resistor→D9/D10/D11**, respectively. Connect passive buzzer **+→D12** and **−→GND**.
+
+```cpp
+const int trigPin = 3;
+const int echoPin = 2;
+const int redPin = 9;
+const int greenPin = 10;
+const int bluePin = 11;
+const int buzzerPin = 12;
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(redPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
+  pinMode(bluePin, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  if (pulseIn(echoPin, HIGH, 30000) < 870) {
+    digitalWrite(redPin, HIGH);
+    digitalWrite(greenPin, LOW);
+    digitalWrite(bluePin, LOW);
+    tone(buzzerPin, 880);
+  } else {
+    delay(60);
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+    if (pulseIn(echoPin, HIGH, 30000) < 2320) {
+      digitalWrite(redPin, HIGH);
+      digitalWrite(greenPin, HIGH);
+      digitalWrite(bluePin, LOW);
+      tone(buzzerPin, 440);
+    } else {
+      digitalWrite(redPin, LOW);
+      digitalWrite(greenPin, HIGH);
+      digitalWrite(bluePin, LOW);
+      noTone(buzzerPin);
+    }
+  }
+  delay(60);
+}
+```
+
+**Try it:** Load **22 · Distance-Zone Parking Assistant** and run it. Move the distance slider below 15 cm for red/880 Hz, to 15–39 cm for yellow/440 Hz, and to 40 cm or farther for green/silent. The simulator maps distance to an idealized echo duration of about 58 µs/cm and only evaluates bounded `pulseIn()` thresholds; it does not model sound waves, reflections, target shape, or real ultrasonic timing. This is a learning aid, not an actual parking or vehicle-safety device.
+
+## Bonus exercise (not in the twenty-two-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 
