@@ -1,7 +1,7 @@
 /** M5 project persistence validation tests. Run: npx tsx tests/project-persistence.test.ts */
 import assert from "node:assert/strict";
 import { createStarterCircuit } from "../src/circuit-engine/models/starterCircuit";
-import { createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor, createHcSr04Sensor, createTmp36Sensor } from "../src/circuit-engine/models/componentTemplates";
+import { createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor, createHcSr04Sensor, createTmp36Sensor, createRelayModule } from "../src/circuit-engine/models/componentTemplates";
 import { validateCircuit } from "../src/circuit-engine/validation/validator";
 import { createProjectFile, listSavedProjects, loadMostRecentProject, loadProjectById, makeProjectFilename, MAX_PROJECT_BYTES, parseProjectData, parseProjectFile, saveProjectFile } from "../src/lib/projectPersistence";
 
@@ -24,7 +24,7 @@ test("versioned export round-trips circuit, wires, sketch, and settings", () => 
   assert.equal(parsed.file.project.settings.wireColor, "#EF4444");
   assert.match(parsed.file.project.code, /digitalWrite\(ledPin, HIGH\)/);
 });
-test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joystick axes, servo position, H-bridge/motor, PIR motion, ultrasonic distance, and TMP36 temperature properties persist through project JSON", () => {
+test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joystick axes, servo position, H-bridge/motor, PIR motion, ultrasonic distance, and TMP36 temperature and relay properties persist through project JSON", () => {
   const starter = createStarterCircuit();
   const pot = createPotentiometer(420, 260);
   pot.properties.value = 777;
@@ -47,8 +47,10 @@ test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joysti
   ultrasonic.properties.distanceCm = 245;
   const tmp36 = createTmp36Sensor(960, 300);
   tmp36.properties.temperatureC = 41;
+  const relay = createRelayModule(1020, 320);
+  relay.properties.isEnergized = true;
   const now = new Date().toISOString();
-  const file = createProjectFile({ id: "analog_project", name: "Additional Components Test", createdAt: now, updatedAt: now, components: [...starter.components, pot, ldr, rgb, sevenSegment, slideSwitch, joystick, servo, motor, driver, pir, ultrasonic, tmp36], wires: starter.wires, code: starter.code, settings: { wireColor: "#EF4444" } });
+  const file = createProjectFile({ id: "analog_project", name: "Additional Components Test", createdAt: now, updatedAt: now, components: [...starter.components, pot, ldr, rgb, sevenSegment, slideSwitch, joystick, servo, motor, driver, pir, ultrasonic, tmp36, relay], wires: starter.wires, code: starter.code, settings: { wireColor: "#EF4444" } });
   const parsed = parseProjectFile(JSON.stringify(file));
   assert.equal(parsed.success, true);
   if (!parsed.success) return;
@@ -64,6 +66,7 @@ test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joysti
   const restoredPir = parsed.file.project.components.find((component) => component.type === "pir");
   const restoredUltrasonic = parsed.file.project.components.find((component) => component.type === "hc-sr04");
   const restoredTmp36 = parsed.file.project.components.find((component) => component.type === "tmp36");
+  const restoredRelay = parsed.file.project.components.find((component) => component.type === "relay");
   assert.equal(restoredPot?.properties.value, 777);
   assert.equal(restoredPot?.terminals.length, 3);
   assert.equal(restoredLdr?.properties.lightLevel, 24);
@@ -89,6 +92,8 @@ test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joysti
   assert.deepEqual(restoredUltrasonic?.terminals.map((terminal) => terminal.label), ["VCC", "TRIG", "ECHO", "GND"]);
   assert.equal(restoredTmp36?.properties.temperatureC, 41);
   assert.deepEqual(restoredTmp36?.terminals.map((terminal) => terminal.label), ["VCC", "VOUT", "GND"]);
+  assert.equal(restoredRelay?.properties.isEnergized, false, "transient coil state resets on import");
+  assert.deepEqual(restoredRelay?.terminals.map((terminal) => terminal.label), ["VCC", "GND", "IN", "COM", "NO", "NC"]);
 });
 test("default Blink starter is pre-wired and passes circuit validation", () => {
   const starter = createStarterCircuit();

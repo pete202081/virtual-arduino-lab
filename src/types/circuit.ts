@@ -18,6 +18,7 @@ export type ComponentType =
   | "pir"
   | "hc-sr04"
   | "tmp36"
+  | "relay"
   | "buzzer"
   | "wire";
 

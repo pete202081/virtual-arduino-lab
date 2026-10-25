@@ -80,18 +80,26 @@
 - Added the TMP36 Temperature Alarm project, which uses an A0 threshold to switch an LED on above about 30 °C.
 - The model does not simulate thermal response, calibration, noise, self-heating, or ambient heat transfer; only bounded analogRead threshold conditions are executable.
 
+
+## 5V relay module
+
+- Added a single-channel relay model with VCC/GND/IN coil terminals and COM/NO/NC contacts. The active-low coil energizes only with VCC→5V, GND→GND, IN wired to an Uno digital OUTPUT, and LOW at the control pin; energized connects COM–NO, released connects COM–NC.
+- Contact state is reflected in graph connectivity before downstream LED outputs are resolved. Stop/reset and project import release the modeled coil; exported properties do not preserve transient energized state.
+- Added project 17, Relay-Controlled Lamp, demonstrating an ideal low-voltage 5V-to-COM, NO-to-resistor/LED, LED-to-GND load.
+- Only contact logic is represented: no coil current, isolation quality, real contact ratings, arcing, inductive transients, or realistic timing are simulated. The simulator is not for mains design or safety assessment.
+
 ## Beginner project selector
 
-- Added a top-bar dropdown with sixteen ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, Ultrasonic Distance Alarm, and TMP36 Temperature Alarm.
+- Added a top-bar dropdown with seventeen ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, Ultrasonic Distance Alarm, TMP36 Temperature Alarm, and Relay-Controlled Lamp.
 - Selecting one replaces the current screen with its prewired component layout, working wires, project sketch, title, and a relevant selected component in Properties. The canvas auto-fits the loaded circuit; the user can then edit, duplicate, and save it.
-- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all sixteen projects, checking the code, properties, and circuit counts.
+- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all seventeen projects, checking the code, properties, and circuit counts.
 
 ## Verification
 
-- 81 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36 component state, and all sixteen template compile/wiring-reference/fresh-ID checks.
-- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus all sixteen ready-made projects.
+- 83 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all seventeen template compile/wiring-reference/fresh-ID checks.
+- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus relay-controlled lamp switching and all seventeen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits
 
-The interpreter remains bounded and safe, not a general C++/AVR compiler. It supports documented digital inputs from momentary buttons, joystick SW, and the latched slide switch; analog threshold conditions from modeled sensors; `tone`/`noTone`; bounded 0–255 PWM duty on the six Uno PWM pins for LEDs; and on/off-only 7-segment outputs. PWM waveform generation, Servo-library features beyond the restricted attach/write visual model, general `for`/`while`, arbitrary code execution, physical analog/SPICE voltage/current analysis, H-bridge motor current/torque/stall/thermal behavior, PIR sensing/range/timing/ambient effects, ultrasonic propagation/echo waveforms/beam physics, TMP36 thermal response/calibration/noise, general `pulseIn()` use, and interrupts are not modeled. Never connect a physical motor directly to an Uno GPIO. Resistors remain ideal conductive pass-throughs in the graph model.
+The interpreter remains bounded and safe, not a general C++/AVR compiler. It supports documented digital inputs from momentary buttons, joystick SW, and the latched slide switch; analog threshold conditions from modeled sensors; `tone`/`noTone`; bounded 0–255 PWM duty on the six Uno PWM pins for LEDs; and on/off-only 7-segment outputs. PWM waveform generation, Servo-library features beyond the restricted attach/write visual model, general `for`/`while`, arbitrary code execution, physical analog/SPICE voltage/current analysis, H-bridge motor current/torque/stall/thermal behavior, PIR sensing/range/timing/ambient effects, ultrasonic propagation/echo waveforms/beam physics, TMP36 thermal response/calibration/noise, relay coil current/electrical isolation/contact ratings/arcing/transients/mains safety, general `pulseIn()` use, and interrupts are not modeled. Never use the relay model for mains-voltage design or safety guidance. Never connect a physical motor directly to an Uno GPIO. Resistors remain ideal conductive pass-throughs in the graph model.

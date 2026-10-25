@@ -705,6 +705,7 @@ export function getLedBrightnesses(
       const pins = arduino.terminals;
       const grounds = pins.filter((terminal) => terminal.type === "gnd");
       const fiveVolt = pins.find((terminal) => terminal.label === "5V");
+      if (fiveVolt && graph.hasConnection(anode, fiveVolt.id) && grounds.some((ground) => graph.hasConnection(cathode, ground.id))) brightness = 255;
       for (const pin of pins) {
         const match = /^D(\d+)$/.exec(pin.label);
         if (!match) continue;
@@ -895,6 +896,39 @@ export function getDcMotorStates(components: ComponentInstance[], wires: Wire[],
     }
   }
   return results;
+}
+
+export interface RelayState {
+  componentId: string;
+  controlPin: number | null;
+  energized: boolean;
+}
+
+/** Resolve active-low single-channel relay coils from powered module wiring and digital outputs. */
+export function getRelayStates(components: ComponentInstance[], wires: Wire[], snapshot: RuntimeSnapshot): RelayState[] {
+  const graph = buildCircuitGraph(components, wires);
+  const boards = components.filter((component) => component.type === "arduino-uno");
+  return components.filter((component) => component.type === "relay").map((relay) => {
+    const vcc = relay.terminals.find((terminal) => terminal.label === "VCC");
+    const ground = relay.terminals.find((terminal) => terminal.label === "GND");
+    const input = relay.terminals.find((terminal) => terminal.label === "IN");
+    if (!vcc || !ground || !input) return { componentId: relay.id, controlPin: null, energized: false };
+    for (const board of boards) {
+      const fiveVolt = board.terminals.find((terminal) => terminal.label === "5V");
+      const grounds = board.terminals.filter((terminal) => terminal.type === "gnd");
+      const powered = !!fiveVolt && graph.hasConnection(vcc.id, fiveVolt.id) && grounds.some((terminal) => graph.hasConnection(ground.id, terminal.id));
+      if (!powered) continue;
+      const pinTerminal = board.terminals.find((terminal) => /^D\d+$/.test(terminal.label) && graph.hasConnection(input.id, terminal.id));
+      const match = pinTerminal ? /^D(\d+)$/.exec(pinTerminal.label) : null;
+      if (!match) continue;
+      const pin = Number(match[1]);
+      if (snapshot.modes.get(pin) !== "OUTPUT") return { componentId: relay.id, controlPin: pin, energized: false };
+      const level = snapshot.levels.get(pin);
+      const activeLow = relay.properties.activeLow !== false;
+      return { componentId: relay.id, controlPin: pin, energized: level !== undefined && (activeLow ? level === "LOW" : level === "HIGH") };
+    }
+    return { componentId: relay.id, controlPin: null, energized: false };
+  });
 }
 
 export interface SevenSegmentChannels {

@@ -432,6 +432,29 @@ export function createTmp36Sensor(x = 420, y = 260): ComponentInstance {
   };
 }
 
+export function createRelayModule(x = 430, y = 220): ComponentInstance {
+  const id = generateId("relay");
+  return {
+    id,
+    type: "relay",
+    x,
+    y,
+    rotation: 0,
+    width: 164,
+    height: 116,
+    label: "5V Single-Channel Relay Module",
+    terminals: [
+      t(id, "VCC", "power", 8, 20),
+      t(id, "GND", "gnd", 8, 55),
+      t(id, "IN", "digital", 8, 94),
+      t(id, "COM", "generic", 156, 24),
+      t(id, "NO", "generic", 156, 57),
+      t(id, "NC", "generic", 156, 91),
+    ],
+    properties: { activeLow: true, isEnergized: false, relayModel: "Single-channel 5V module" },
+  };
+}
+
 export function createBuzzer(x = 200, y = 300, buzzerType: BuzzerType = "active"): ComponentInstance {
   const id = generateId("buzzer");
   const label = `${buzzerType === "active" ? "Active" : "Passive"} Buzzer`;
@@ -467,6 +490,7 @@ export const COMPONENT_META = {
   pir: { name: "PIR Motion Sensor", category: "Sensors", color: "#7C3AED", icon: "📡" },
   "hc-sr04": { name: "HC-SR04 Ultrasonic Sensor", category: "Sensors", color: "#0284C7", icon: "📏" },
   tmp36: { name: "TMP36 Temperature Sensor", category: "Sensors", color: "#EA580C", icon: "🌡️" },
+  relay: { name: "5V Relay Module", category: "Actuators", color: "#B45309", icon: "⚡" },
   buzzer: { name: "Buzzer", category: "Basic Components", color: "#4B5563", icon: "🔊" },
   wire: { name: "Jumper Wire", category: "Wiring", color: "#3B82F6", icon: "〰" },
 };

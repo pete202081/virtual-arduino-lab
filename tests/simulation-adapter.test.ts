@@ -1,8 +1,8 @@
 /** M4 simulation adapter tests. Run: npx tsx tests/simulation-adapter.test.ts */
 import assert from "node:assert/strict";
-import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor, createHcSr04Sensor, createTmp36Sensor } from "../src/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor, createHcSr04Sensor, createTmp36Sensor, createRelayModule } from "../src/circuit-engine/models/componentTemplates";
 import { STARTER_CODE } from "../src/types/circuit";
-import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, getDcMotorStates, readDigitalPin, readAnalogPin, readUltrasonicPulseDuration, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
+import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, getDcMotorStates, readDigitalPin, readAnalogPin, readUltrasonicPulseDuration, getRelayStates, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
 import { buildCircuitGraph } from "../src/circuit-engine/graph/netGraph";
 
 let passed = 0;
@@ -211,6 +211,39 @@ test("H-bridge maps PWM enable and IN1/IN2 direction to a connected DC motor", (
   const braked: RuntimeSnapshot = { ...clockwise, levels: new Map([[4, "HIGH"], [5, "HIGH"]]) };
   assert.equal(getDcMotorStates(components, wires, braked)[0].direction, "BRAKED");
   assert.deepEqual(getDcMotorStates(components, wires.slice(0, 6), clockwise), []);
+});
+
+test("active-low relay requires module power and OUTPUT control; COM switches the modeled low-voltage LED load", () => {
+  const board = createArduinoUno(0, 0);
+  const relay = createRelayModule(300, 160);
+  const resistor = createResistor(500, 180, 220);
+  const led = createLED(620, 180, "green");
+  const components = [board, relay, resistor, led];
+  const term = (component: typeof board, label: string) => component.terminals.find((item) => item.label === label)!;
+  const wire = (id: string, a: typeof board, aLabel: string, b: typeof board, bLabel: string) => ({
+    id, startTerminalId: term(a, aLabel).id, endTerminalId: term(b, bLabel).id,
+    startComponentId: a.id, endComponentId: b.id, color: "#2563EB",
+  });
+  const wires = [
+    wire("relay-vcc", board, "5V", relay, "VCC"),
+    wire("relay-gnd", board, "GND-1", relay, "GND"),
+    wire("relay-in", board, "D7", relay, "IN"),
+    wire("load-supply", board, "5V", relay, "COM"),
+    wire("load-no", relay, "NO", resistor, "A"),
+    wire("load-resistor", resistor, "B", led, "ANODE"),
+    wire("load-ground", led, "CATHODE", board, "GND-2"),
+  ];
+  const low: RuntimeSnapshot = { modes: new Map([[7, "OUTPUT"]]), levels: new Map([[7, "LOW"]]) };
+  assert.deepEqual(getRelayStates(components, wires, low), [{ componentId: relay.id, controlPin: 7, energized: true }]);
+  relay.properties.isEnergized = true;
+  assert.equal(getLedBrightnesses(components, wires, low)[0].brightness, 255);
+  const high: RuntimeSnapshot = { ...low, levels: new Map([[7, "HIGH"]]) };
+  assert.equal(getRelayStates(components, wires, high)[0].energized, false);
+  relay.properties.isEnergized = false;
+  assert.equal(getLedBrightnesses(components, wires, high)[0].brightness, 0);
+  assert.equal(getRelayStates(components, [wires[2]], low)[0].energized, false, "unpowered coil must remain released");
+  const inputOnly: RuntimeSnapshot = { ...low, modes: new Map([[7, "INPUT"]]) };
+  assert.equal(getRelayStates(components, wires, inputOnly)[0].energized, false, "input-mode pin cannot drive the coil");
 });
 
 test("LED lights only on a connected, forward-biased output path", () => {

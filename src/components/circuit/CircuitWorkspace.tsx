@@ -17,6 +17,7 @@ import { LdrSensor } from "./LdrSensor";
 import { PirSensor } from "./PirSensor";
 import { HcSr04Sensor } from "./HcSr04Sensor";
 import { Tmp36Sensor } from "./Tmp36Sensor";
+import { RelayModule } from "./RelayModule";
 import { RGBLED } from "./RGBLED";
 import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
 import type { RGBLedState, SevenSegmentState, ServoState, DcMotorState } from "@/simulation/interfaces/simulationAdapter";
@@ -429,6 +430,7 @@ export function CircuitWorkspace({
                 {comp.type === "tmp36" && (
                   <Tmp36Sensor {...common} onTemperatureChange={(temperature) => onTemperatureChange(comp.id, temperature)} />
                 )}
+                {comp.type === "relay" && <RelayModule {...common} />}
                 {comp.type === "joystick" && (
                   <JoystickModule
                     {...common}

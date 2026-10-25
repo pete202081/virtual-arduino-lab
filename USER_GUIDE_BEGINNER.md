@@ -1,6 +1,6 @@
 # Virtual Arduino Lab — Beginner’s User Guide
 
-Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. For hands-on practice after the Blink walkthrough, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md), a sixteen-project path with wiring maps, copy-ready sketches, and challenges.
+Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. For hands-on practice after the Blink walkthrough, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md), a seventeen-project path with wiring maps, copy-ready sketches, and challenges.
 
 > **What this is:** a local, browser-based learning simulator. It does not connect to a physical Arduino and does not compile a real AVR binary.
 
@@ -44,7 +44,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 ### Top bar
 
 - **Project title:** click its name to rename it; press Enter or click elsewhere to finish.
-- **Beginner projects…:** loads any of sixteen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
+- **Beginner projects…:** loads any of seventeen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
 - **New:** creates a blank project after confirmation. It starts with the Blink sketch but no circuit components.
 - **Open:** opens a picker for projects saved in this browser.
 - **Save:** saves the current project locally.

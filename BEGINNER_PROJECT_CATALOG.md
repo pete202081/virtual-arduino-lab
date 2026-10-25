@@ -4,14 +4,14 @@ A step-by-step project path using the components already available in Virtual Ar
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the sixteen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the seventeen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
 
 ### Important simulator and hardware notes
 
-- This lab uses a bounded, safe Arduino-like interpreter; it does not run arbitrary C++. The examples intentionally use only supported calls and braced `if` conditions. `for`/`while` loops, arrays, variables that change at runtime, and general C++ are not supported. Bounded `analogWrite(pin, value)` is supported only for Uno PWM pins D3, D5, D6, D9, D10, and D11 with constant duty values from 0 to 255. The PIR example supplies a binary, manually toggled HIGH/LOW digital output and does not model range, field of view, warm-up, retrigger timing, or ambient behavior. The TMP36 example models an idealized analog output from 500 mV at 0 °C plus 10 mV/°C, without calibration or thermal effects. The HC-SR04 example supports only a bounded `pulseIn(echoPin, HIGH[, timeout])` numeric threshold condition after a modeled trigger pulse; it maps the distance slider to about 58 µs/cm and does not model acoustic propagation or real echo waveforms. The H-bridge motor example models direction and PWM speed visually only; it does not calculate motor current, torque, stall, voltage drop, heating, or external-supply behavior. Never drive a physical motor from an Uno GPIO. The limited Servo API supports declared Servo objects, `attach()` on D2–D13, and fixed `write()` angles from 0° to 180°; it renders position/pulse metadata but not a physical waveform.
+- This lab uses a bounded, safe Arduino-like interpreter; it does not run arbitrary C++. The examples intentionally use only supported calls and braced `if` conditions. `for`/`while` loops, arrays, variables that change at runtime, and general C++ are not supported. Bounded `analogWrite(pin, value)` is supported only for Uno PWM pins D3, D5, D6, D9, D10, and D11 with constant duty values from 0 to 255. The PIR example supplies a binary, manually toggled HIGH/LOW digital output and does not model range, field of view, warm-up, retrigger timing, or ambient behavior. The TMP36 example models an idealized analog output from 500 mV at 0 °C plus 10 mV/°C, without calibration or thermal effects. The HC-SR04 example supports only a bounded `pulseIn(echoPin, HIGH[, timeout])` numeric threshold condition after a modeled trigger pulse; it maps the distance slider to about 58 µs/cm and does not model acoustic propagation or real echo waveforms. The H-bridge motor example models direction and PWM speed visually only; it does not calculate motor current, torque, stall, voltage drop, heating, or external-supply behavior. Never drive a physical motor from an Uno GPIO. The limited Servo API supports declared Servo objects, `attach()` on D2–D13, and fixed `write()` angles from 0° to 180°; it renders position/pulse metadata but not a physical waveform. The relay module models a powered active-low coil and ideal COM-to-NO/NC switching for low-voltage learning only; coil current, isolation, contact ratings, arcing, inductive transients, and mains safety are not simulated.
 - The circuit view models digital HIGH/LOW paths, not electrical current or voltage. Resistors are ideal conductive connections in the simulator; **use real current-limiting resistors in physical circuits**.
 - Every ordinary LED needs a series resistor. For an RGB LED, use one resistor per color channel. For a 7-segment display, use one resistor per used segment.
 - The RGB LED and 7-segment display in the lab are common-cathode. RGB COMMON goes to GND; for the 7-segment display, connect both COM1 and COM2 to GND.
@@ -643,7 +643,34 @@ void loop() {
 
 **Try it:** Run the project and move the temperature slider above and below about 30 °C. The idealized model uses VOUT ≈ 500 mV + (10 mV × temperature in °C); 30 °C is about 800 mV or ADC 164 on a 5 V, 10-bit Uno. The sensor must be powered and VOUT must connect to A0. No conversion arithmetic, runtime variables, calibration, noise, thermal lag, self-heating, or ambient heat transfer is modeled; the example uses a fixed ADC threshold rather than computing a temperature value. Check real sensor pinout and voltage before wiring hardware.
 
-## Bonus exercise (not in the sixteen-project dropdown): joystick-controlled LED
+## 17. Relay-Controlled Lamp
+
+**Learn:** Use a digital output to operate an active-low relay coil and switch a separate low-voltage load through the normally-open contact.
+
+**Parts:** Arduino Uno, 5V single-channel relay module, green LED, 220 Ω resistor.
+
+**Control wiring:** Relay VCC→5V, GND→GND, IN→D7. The coil requires all three module/control connections and D7 configured as OUTPUT.
+
+**Low-voltage load wiring:** Uno 5V→relay COM; relay NO→220 Ω resistor→LED anode; LED cathode→Uno GND. COM–NO closes only while the relay is energized. NC is unused in this example; it is connected to COM while the coil is released.
+
+```cpp
+const int relayPin = 7;
+
+void setup() {
+  pinMode(relayPin, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(relayPin, LOW);  // active-low: energize; COM connects to NO
+  delay(1000);
+  digitalWrite(relayPin, HIGH); // release; COM connects to NC
+  delay(1000);
+}
+```
+
+**Try it:** Load the project and run it. The LED on the modeled low-voltage load should turn on while the relay indicator says energized, then turn off when it releases. The graph treats the contact as an ideal switch and the resistor as a conductive connection; it does not calculate voltage, current, isolation, coil current, contact ratings, arcing, inductive transients, or switching delays. This is **not** a mains-voltage or electrical-safety simulator: do not use it to design or assess mains circuits. Follow hardware datasheets and qualified safety guidance for real relays.
+
+## Bonus exercise (not in the seventeen-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 

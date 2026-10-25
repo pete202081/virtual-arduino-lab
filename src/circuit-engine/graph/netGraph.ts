@@ -78,6 +78,14 @@ export function buildCircuitGraph(components: ComponentInstance[], wires: Wire[]
     if ((closedSwitchIds.has(comp.id) || comp.properties.isOn === true) && contactA && contactB) uf.union(contactA, contactB);
   }
 
+  // 2f. Single-channel relay contacts select NO when energized and NC when released.
+  for (const comp of components) {
+    if (comp.type !== "relay") continue;
+    const common = comp.terminals.find((terminal) => terminal.label === "COM")?.id;
+    const contact = comp.terminals.find((terminal) => terminal.label === (comp.properties.isEnergized === true ? "NO" : "NC"))?.id;
+    if (common && contact) uf.union(common, contact);
+  }
+
   // 3. Apply wires (connect their endpoints)
   for (const w of wires) {
     // Validate both endpoints exist in graph (i.e., terminals exist)

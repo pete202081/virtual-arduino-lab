@@ -32,7 +32,7 @@ export type StorageLocation = "IndexedDB" | "localStorage";
 export interface SavedProjectSummary { id: string; name: string; updatedAt: string; componentCount: number; wireCount: number }
 export type ParseResult = { success: true; file: ProjectFile; migrated: boolean } | { success: false; error: string };
 
-const componentTypes = new Set(["arduino-uno", "breadboard", "led", "rgb-led", "seven-segment", "resistor", "pushbutton", "slide-switch", "joystick", "servo", "dc-motor", "h-bridge", "potentiometer", "ldr", "pir", "hc-sr04", "tmp36", "buzzer", "wire"]);
+const componentTypes = new Set(["arduino-uno", "breadboard", "led", "rgb-led", "seven-segment", "resistor", "pushbutton", "slide-switch", "joystick", "servo", "dc-motor", "h-bridge", "potentiometer", "ldr", "pir", "hc-sr04", "tmp36", "relay", "buzzer", "wire"]);
 const terminalTypes = new Set(["digital", "analog", "power", "gnd", "led-anode", "led-cathode", "resistor", "breadboard-hole", "generic", "other"]);
 const safeId = /^[a-zA-Z0-9_+.:\-]{1,160}$/;
 const hexColor = /^#[0-9a-fA-F]{6}$/;
@@ -86,6 +86,7 @@ function normalizeProject(value: unknown, migrated = false): ParseResult {
     if (!Array.isArray(terminals) || terminals.length > 1_000) return { success: false, error: `Component ${id} has invalid terminals.` };
     const properties = normalizeProperties(item.properties);
     if (!properties) return { success: false, error: `Component ${id} has invalid properties.` };
+    if (type === "relay") properties.isEnergized = false;
     if (item.label !== undefined && (typeof item.label !== "string" || item.label.length > 120)) return { success: false, error: `Component ${id} has an invalid label.` };
     const normalizedTerminals: Terminal[] = [];
     for (const terminal of terminals) {
@@ -153,6 +154,7 @@ function normalizeProject(value: unknown, migrated = false): ParseResult {
 export function createProjectFile(input: Omit<ProjectDocument, "components"> & { components: ComponentInstance[] }): ProjectFile {
   const components = input.components.map((component) => ({
     ...component,
+    properties: component.type === "relay" ? { ...component.properties, isEnergized: false } : component.properties,
     selected: undefined,
     terminals: component.terminals.map(({ id, componentId, label, type, dx, dy }) => ({ id, componentId, label, type, dx, dy, connected: false })),
   }));
