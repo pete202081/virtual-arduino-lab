@@ -75,6 +75,8 @@ test("2. Disconnected LED is detected", () => {
 // 3. Breadboard terminal groups have correct connectivity
 test("3. Breadboard 5-hole terminal groups have correct connectivity", () => {
   const bb = createBreadboard(0, 0);
+  assert.equal(bb.height, 184, "board height must leave room for the full lower strip and both power rails");
+  assert.ok(bb.terminals.filter((terminal) => terminal.label.startsWith("R_BOT")).every((terminal) => terminal.dy < bb.height), "lower rail terminals should remain inside the board bounds");
   const components = [bb];
   const wires: Wire[] = [];
   const graph = buildCircuitGraph(components, wires);

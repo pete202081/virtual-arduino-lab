@@ -6,7 +6,7 @@ export function Breadboard({ comp, isSelected, onSelect }: { comp: ComponentInst
     <div
       onClick={onSelect}
       className={`absolute select-none cursor-move ${isSelected ? "ring-2 ring-[#0E9A8B] ring-offset-2" : ""}`}
-      style={{ left: comp.x, top: comp.y, width: comp.width, height: comp.height }}
+      style={{ left: comp.x, top: comp.y, width: comp.width, height: Math.max(comp.height, 184) }}
     >
       <div className="w-full h-full bg-[#F5F0E6] rounded-[8px] border-[2px] border-[#D6CFC0] shadow-lg relative overflow-hidden">
         {/* Top label */}

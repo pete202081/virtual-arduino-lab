@@ -60,7 +60,8 @@ export function createArduinoUno(x = 100, y = 100): ComponentInstance {
 export function createBreadboard(x = 100, y = 320): ComponentInstance {
   const id = generateId("breadboard");
   const w = 360;
-  const h = 160;
+  // Leave sufficient vertical clearance for the lower five-hole strip and both power rails.
+  const h = 184;
   const terminals: Terminal[] = [];
 
   // Breadboard holes: simplified - 30 columns x 10 rows (5 per side x2) + power rails

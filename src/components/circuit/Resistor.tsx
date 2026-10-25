@@ -26,7 +26,7 @@ export function Resistor({ comp, isSelected, onSelect }: { comp: ComponentInstan
         <div className="w-2 h-2 bg-[#D97706] rounded-full border-2 border-white shadow shrink-0" data-terminal-id={`${comp.id}-B`} title="Terminal B" />
         <div className="w-3 h-0.5 bg-slate-400" />
       </div>
-      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-white border border-slate-200 rounded-full shadow-sm whitespace-nowrap">
+      <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-white border border-slate-200 rounded-full shadow-sm whitespace-nowrap">
         <span className="text-[10px] font-bold text-slate-700">{comp.label}</span>
         <span className="text-[9px] text-slate-500 ml-1">{resistance}</span>
       </div>
