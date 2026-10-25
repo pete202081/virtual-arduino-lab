@@ -1,0 +1,472 @@
+"use client";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { ComponentInstance, Wire } from "@/types/circuit";
+import { ArduinoUno } from "./ArduinoUno";
+import { Breadboard } from "./Breadboard";
+import { LED } from "./LED";
+import { Resistor } from "./Resistor";
+import { Pushbutton } from "./Pushbutton";
+import { SlideSwitch } from "./SlideSwitch";
+import { JoystickModule } from "./JoystickModule";
+import { ServoMotor } from "./ServoMotor";
+import { Buzzer } from "./Buzzer";
+import { Potentiometer } from "./Potentiometer";
+import { LdrSensor } from "./LdrSensor";
+import { RGBLED } from "./RGBLED";
+import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
+import type { RGBLedState, SevenSegmentState, ServoState } from "@/simulation/interfaces/simulationAdapter";
+import { ZoomIn, ZoomOut, Maximize2, Grid3x3, Trash2, Cable, MousePointer2 } from "lucide-react";
+
+interface Props {
+  components: ComponentInstance[];
+  wires: Wire[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+  onMoveComponent: (id: string, x: number, y: number) => void;
+  onDeleteComponent: (id: string) => void;
+  onDeleteWire: (id: string) => void;
+  onWireStart: (terminalId: string, compId: string) => void;
+  onWireEnd: (terminalId: string, compId: string) => void;
+  pendingWire: { startTerminalId: string; startComponentId: string } | null;
+  onCancelWire: () => void;
+  wireColor: string;
+  setWireColor: (c: string) => void;
+  litLedIds: string[];
+  ledBrightnesses: Record<string, number>;
+  pressedButtonIds: string[];
+  slideSwitchOnIds: string[];
+  onSlideSwitchToggle: (id: string) => void;
+  onButtonPressStart: (id: string) => void;
+  onButtonPressEnd: (id: string) => void;
+  buzzerFrequencies: Record<string, number>;
+  onPotentiometerChange: (id: string, value: number) => void;
+  onLdrLightLevelChange: (id: string, level: number) => void;
+  onJoystickAxisChange: (id: string, axis: "xValue" | "yValue", value: number) => void;
+  rgbLedStates: Record<string, RGBLedState>;
+  sevenSegmentStates: Record<string, SevenSegmentState>;
+  servoStates: Record<string, ServoState>;
+  fitToComponents: boolean;
+}
+
+export function CircuitWorkspace({
+  components,
+  wires,
+  selectedId,
+  onSelect,
+  onMoveComponent,
+  onDeleteComponent,
+  onDeleteWire,
+  onWireStart,
+  onWireEnd,
+  pendingWire,
+  onCancelWire,
+  wireColor,
+  setWireColor,
+  litLedIds,
+  ledBrightnesses,
+  pressedButtonIds,
+  slideSwitchOnIds,
+  onSlideSwitchToggle,
+  onButtonPressStart,
+  onButtonPressEnd,
+  buzzerFrequencies,
+  onPotentiometerChange,
+  onLdrLightLevelChange,
+  onJoystickAxisChange,
+  rgbLedStates,
+  sevenSegmentStates,
+  servoStates,
+  fitToComponents,
+}: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [hoverTerminal, setHoverTerminal] = useState<string | null>(null);
+  const [showGrid, setShowGrid] = useState(true);
+
+  useEffect(() => {
+    if (!fitToComponents || components.length === 0) return;
+    const bounds = containerRef.current?.getBoundingClientRect();
+    if (!bounds || bounds.width === 0 || bounds.height === 0) return;
+    const minX = Math.min(...components.map((component) => component.x)) - 12;
+    const minY = Math.min(...components.map((component) => component.y)) - 12;
+    const maxX = Math.max(...components.map((component) => component.x + component.width + 24));
+    const maxY = Math.max(...components.map((component) => component.y + component.height + 26));
+    const sceneWidth = maxX - minX;
+    const sceneHeight = maxY - minY;
+    const scale = Math.max(0.4, Math.min(1, (bounds.width - 24) / sceneWidth, (bounds.height - 24) / sceneHeight));
+    setZoom(scale);
+    setPan({
+      x: (bounds.width - sceneWidth * scale) / 2 - minX * scale,
+      y: (bounds.height - sceneHeight * scale) / 2 - minY * scale,
+    });
+  }, [fitToComponents]); // eslint-disable-line react-hooks/exhaustive-deps -- fit once per keyed project template mount
+
+  // Find terminal world position
+  const getTerminalPos = useCallback(
+    (terminalId: string) => {
+      for (const comp of components) {
+        const t = comp.terminals.find((tt) => tt.id === terminalId);
+        if (t) return { x: comp.x + t.dx, y: comp.y + t.dy, compId: comp.id, label: t.label, type: t.type };
+      }
+      return null;
+    },
+    [components]
+  );
+
+  // Mouse handlers for dragging
+  const handleMouseDown = (e: React.MouseEvent, compId: string) => {
+    const comp = components.find((c) => c.id === compId);
+    if (!comp) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = (e.clientX - rect.left - pan.x) / zoom;
+    const y = (e.clientY - rect.top - pan.y) / zoom;
+    setDragging({ id: compId, offsetX: x - comp.x, offsetY: y - comp.y });
+    onSelect(compId);
+    e.stopPropagation();
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    if (dragging) {
+      const x = (e.clientX - rect.left - pan.x) / zoom;
+      const y = (e.clientY - rect.top - pan.y) / zoom;
+      onMoveComponent(dragging.id, x - dragging.offsetX, y - dragging.offsetY);
+    }
+    if (isPanning) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setDragging(null);
+    setIsPanning(false);
+    pressedButtonIds.forEach(onButtonPressEnd);
+  };
+
+  const handleWorkspaceMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+      e.preventDefault();
+      return;
+    }
+    // Click on empty space clears selection and cancels wire
+    if (e.target === e.currentTarget) {
+      onSelect(null);
+      // don't auto cancel wire, let user explicitly cancel
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.001;
+      setZoom((z) => Math.min(2, Math.max(0.5, z + delta)));
+    }
+  };
+
+  // Terminal click delegation via data-terminal-id
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const tid = target.getAttribute("data-terminal-id");
+      if (!tid) return;
+      // Find the actual component containing this terminal
+      let foundCompId: string | null = null;
+      for (const c of components) {
+        if (c.terminals.some((t) => t.id === tid)) {
+          foundCompId = c.id;
+          break;
+        }
+      }
+      if (!foundCompId) return;
+      if (!pendingWire) {
+        onWireStart(tid, foundCompId);
+      } else {
+        if (pendingWire.startTerminalId === tid) {
+          onCancelWire();
+        } else {
+          onWireEnd(tid, foundCompId);
+        }
+      }
+      e.stopPropagation();
+    };
+    const handleOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const tid = target.getAttribute("data-terminal-id");
+      if (tid) setHoverTerminal(tid);
+      else setHoverTerminal(null);
+    };
+    el.addEventListener("click", handleClick);
+    el.addEventListener("mouseover", handleOver);
+    return () => {
+      el.removeEventListener("click", handleClick);
+      el.removeEventListener("mouseover", handleOver);
+    };
+  }, [components, pendingWire, onWireStart, onWireEnd, onCancelWire]);
+
+  const resetView = () => {
+    setPan({ x: 0, y: 0 });
+    setZoom(1);
+  };
+
+  return (
+    <div className="flex-1 flex flex-col bg-[#EEF2F7] relative overflow-hidden">
+      {/* Toolbar */}
+      <div className="h-9 bg-white border-b border-slate-200 flex items-center px-2 gap-1 shrink-0">
+        <button
+          onClick={() => onCancelWire()}
+          className={`h-7 px-2.5 rounded-md flex items-center gap-1.5 text-xs font-bold border ${!pendingWire ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-200"}`}
+        >
+          <MousePointer2 className="w-3.5 h-3.5" /> Select
+        </button>
+        <button
+          onClick={() => {
+            // wire tool is activated by clicking wire palette; this is toggle
+            if (pendingWire) onCancelWire();
+            else {
+              // activate wire tool - we need to notify parent to set wireToolActive
+              // For now, just show hint
+            }
+          }}
+          className={`h-7 px-2.5 rounded-md flex items-center gap-1.5 text-xs font-bold border ${pendingWire ? "bg-blue-600 text-white border-blue-600 animate-pulse" : "bg-white text-slate-700 border-slate-200 hover:border-blue-300"}`}
+        >
+          <Cable className="w-3.5 h-3.5" /> {pendingWire ? "Wiring… click destination" : "Wire Tool"}
+        </button>
+        {pendingWire && (
+          <button onClick={onCancelWire} className="h-7 px-2 bg-amber-100 text-amber-700 rounded-md text-xs font-bold border border-amber-200">
+            Cancel (Esc)
+          </button>
+        )}
+        <div className="h-5 w-px bg-slate-200 mx-1" />
+        <div className="flex items-center gap-1">
+          <span className="text-[11px] font-bold text-slate-600">Color</span>
+          {["#EF4444", "#1F2937", "#2563EB", "#10B981", "#EAB308", "#F97316", "#8B5CF6"].map((col) => (
+            <button
+              key={col}
+              onClick={() => setWireColor(col)}
+              className={`w-5 h-5 rounded-full border-2 ${wireColor === col ? "border-slate-900 scale-110" : "border-white shadow"} `}
+              style={{ background: col }}
+            />
+          ))}
+        </div>
+        <div className="h-5 w-px bg-slate-200 mx-1" />
+        <button
+          onClick={() => {
+            if (selectedId) {
+              const comp = components.find((c) => c.id === selectedId);
+              if (comp) onDeleteComponent(comp.id);
+              else onDeleteWire(selectedId);
+            }
+          }}
+          disabled={!selectedId}
+          className="h-7 px-2 bg-white border border-slate-200 rounded-md flex items-center gap-1 text-xs font-bold disabled:opacity-40"
+        >
+          <Trash2 className="w-3.5 h-3.5" /> Delete
+        </button>
+        <div className="ml-auto flex items-center gap-1">
+          <button onClick={() => setShowGrid((v) => !v)} className={`w-7 h-7 rounded-md flex items-center justify-center border ${showGrid ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200"}`}>
+            <Grid3x3 className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => setZoom((z) => Math.min(2, z + 0.1))} className="w-7 h-7 bg-white border border-slate-200 rounded-md flex items-center justify-center">
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))} className="w-7 h-7 bg-white border border-slate-200 rounded-md flex items-center justify-center">
+            <ZoomOut className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={resetView} className="w-7 h-7 bg-white border border-slate-200 rounded-md flex items-center justify-center">
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
+          <span className="text-xs font-bold text-slate-600 w-10 text-center">{Math.round(zoom * 100)}%</span>
+        </div>
+      </div>
+
+      {/* Info bar */}
+      <div className="h-6 bg-[#0F2142] text-white flex items-center px-3 gap-3 text-[11px] shrink-0">
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 bg-emerald-400 rounded-full" /> {components.length} components • {wires.length} wires
+        </span>
+        <span className="opacity-50">|</span>
+        <span>Drag to move • Click terminals to wire • Scroll + Ctrl to zoom • Alt+Drag to pan</span>
+        {hoverTerminal && <span className="ml-auto bg-white/10 px-2 py-0.5 rounded font-mono">Hover: {hoverTerminal}</span>}
+      </div>
+
+      {/* Canvas */}
+      <div
+        ref={containerRef}
+        className="flex-1 relative overflow-hidden select-none"
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onMouseDown={handleWorkspaceMouseDown}
+        onWheel={handleWheel}
+        style={{ cursor: dragging ? "grabbing" : isPanning ? "grabbing" : pendingWire ? "crosshair" : "default" }}
+      >
+        {/* Grid */}
+        {showGrid && (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `radial-gradient(circle, #CBD5E1 1px, transparent 1px)`,
+              backgroundSize: `${20 * zoom}px ${20 * zoom}px`,
+              backgroundPosition: `${pan.x}px ${pan.y}px`,
+            }}
+          />
+        )}
+        {/* Pan/Zoom container */}
+        <div
+          className="absolute inset-0"
+          style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}
+        >
+          {/* Wires SVG */}
+          <svg className="absolute inset-0 w-[2000px] h-[2000px] pointer-events-none overflow-visible">
+            <defs>
+              <marker id="wire-dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6">
+                <circle cx="5" cy="5" r="3" fill="white" stroke={wireColor} strokeWidth="1" />
+              </marker>
+            </defs>
+            {wires.map((wire) => {
+              const start = getTerminalPos(wire.startTerminalId);
+              const end = getTerminalPos(wire.endTerminalId);
+              if (!start || !end) return null;
+              const isSelected = selectedId === wire.id;
+              // Bezier curve
+              const midX = (start.x + end.x) / 2;
+              const dx = Math.abs(end.x - start.x);
+              const offset = Math.min(60, dx * 0.3);
+              const path = `M ${start.x} ${start.y} C ${midX} ${start.y - offset}, ${midX} ${end.y - offset}, ${end.x} ${end.y}`;
+              return (
+                <g key={wire.id} className="pointer-events-auto" style={{ cursor: "pointer" }} onClick={() => onSelect(wire.id)}>
+                  {/* Hit area */}
+                  <path d={path} stroke="transparent" strokeWidth="12" fill="none" />
+                  <path
+                    d={path}
+                    stroke={isSelected ? "#0E9A8B" : wire.color}
+                    strokeWidth={isSelected ? 4 : 3}
+                    fill="none"
+                    strokeLinecap="round"
+                    style={{ filter: isSelected ? "drop-shadow(0 0 4px #0E9A8B)" : undefined }}
+                  />
+                  {/* Dots at ends */}
+                  <circle cx={start.x} cy={start.y} r="4" fill={isSelected ? "#0E9A8B" : wire.color} stroke="white" strokeWidth="1.5" />
+                  <circle cx={end.x} cy={end.y} r="4" fill={isSelected ? "#0E9A8B" : wire.color} stroke="white" strokeWidth="1.5" />
+                </g>
+              );
+            })}
+            {/* Pending wire preview */}
+            {pendingWire && (
+              (() => {
+                const start = getTerminalPos(pendingWire.startTerminalId);
+                if (!start) return null;
+                return (
+                  <>
+                    <circle cx={start.x} cy={start.y} r="6" fill={wireColor} stroke="white" strokeWidth="2" className="animate-pulse" />
+                    <circle cx={start.x} cy={start.y} r="10" fill="none" stroke={wireColor} strokeWidth="1" opacity="0.4" className="animate-ping" />
+                  </>
+                );
+              })()
+            )}
+          </svg>
+
+          {/* Components */}
+          {components.map((comp) => {
+            const isSelected = selectedId === comp.id;
+            const common = {
+              comp,
+              isSelected,
+              onSelect: () => onSelect(comp.id),
+            };
+            return (
+              <div
+                key={comp.id}
+                onMouseDown={(e) => handleMouseDown(e, comp.id)}
+                className={`${isSelected ? "z-10" : "z-0"}`}
+                style={{ position: "absolute", left: 0, top: 0, width: 0, height: 0 }}
+              >
+                {comp.type === "arduino-uno" && <ArduinoUno {...common} />}
+                {comp.type === "breadboard" && <Breadboard {...common} />}
+                {comp.type === "led" && <LED {...common} isLit={litLedIds.includes(comp.id)} brightness={ledBrightnesses[comp.id] ?? (litLedIds.includes(comp.id) ? 255 : 0)} />}
+                {comp.type === "rgb-led" && <RGBLED {...common} state={rgbLedStates[comp.id] ?? { componentId: comp.id, red: false, green: false, blue: false, redLevel: 0, greenLevel: 0, blueLevel: 0 }} />}
+                {comp.type === "seven-segment" && <SevenSegmentDisplay {...common} state={sevenSegmentStates[comp.id] ?? { componentId: comp.id, segments: { A: false, B: false, C: false, D: false, E: false, F: false, G: false }, decimalPoint: false, digit: null }} />}
+                {comp.type === "resistor" && <Resistor {...common} />}
+                {comp.type === "potentiometer" && (
+                  <Potentiometer {...common} onValueChange={(value) => onPotentiometerChange(comp.id, value)} />
+                )}
+                {comp.type === "ldr" && (
+                  <LdrSensor {...common} onLightLevelChange={(level) => onLdrLightLevelChange(comp.id, level)} />
+                )}
+                {comp.type === "joystick" && (
+                  <JoystickModule
+                    {...common}
+                    isPressed={pressedButtonIds.includes(comp.id)}
+                    onAxisChange={(axis, value) => onJoystickAxisChange(comp.id, axis, value)}
+                    onPressStart={() => onButtonPressStart(comp.id)}
+                    onPressEnd={() => onButtonPressEnd(comp.id)}
+                  />
+                )}
+                {comp.type === "servo" && <ServoMotor {...common} state={servoStates[comp.id] ?? { componentId: comp.id, angle: Number(comp.properties.angle ?? 90), pulseMicroseconds: Number(comp.properties.pulseMicroseconds ?? 1500), refreshHz: 50 }} />}
+                {comp.type === "pushbutton" && (
+                  <Pushbutton
+                    {...common}
+                    isPressed={pressedButtonIds.includes(comp.id)}
+                    onPressStart={() => onButtonPressStart(comp.id)}
+                    onPressEnd={() => onButtonPressEnd(comp.id)}
+                  />
+                )}
+                {comp.type === "slide-switch" && <SlideSwitch {...common} isOn={slideSwitchOnIds.includes(comp.id)} onToggle={() => onSlideSwitchToggle(comp.id)} />}
+                {comp.type === "buzzer" && (
+                  <Buzzer
+                    {...common}
+                    frequency={buzzerFrequencies[comp.id] || 0}
+                    isBuzzing={!!buzzerFrequencies[comp.id]}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Empty state */}
+        {components.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-white/90 backdrop-blur border border-slate-200 rounded-2xl p-8 text-center shadow-lg max-w-sm">
+              <div className="w-12 h-12 bg-[#0F2142] rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Grid3x3 className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-extrabold text-[#0F2142]">Your Circuit Workspace</h3>
+              <p className="text-xs text-slate-500 mt-1">Add Arduino Uno, Breadboard, LED & 220Ω resistor from the left palette. Drag to position, click terminals to wire.</p>
+              <div className="mt-3 flex justify-center gap-2">
+                <span className="text-[10px] font-bold px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">Drag & Drop</span>
+                <span className="text-[10px] font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-full">Wire Tool</span>
+                <span className="text-[10px] font-bold px-2 py-1 bg-amber-100 text-amber-700 rounded-full">Zoom & Pan</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pending wire helper */}
+        {pendingWire && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-[#0F2142] text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold">
+            <Cable className="w-4 h-4 text-[#7de3d8]" />
+            Wiring: {pendingWire.startTerminalId} → Click destination terminal
+            <button onClick={onCancelWire} className="ml-2 px-2 py-0.5 bg-white/15 rounded-full hover:bg-white/25">
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
