@@ -45,6 +45,7 @@ export const BEGINNER_PROJECTS = [
   { id: "two-branch-breadboard", name: "20 · Two-Branch Breadboard Challenge", description: "Trace two LED branches on separate five-hole strips with shared ground and a pushbutton-controlled output." },
   { id: "armed-pir-alarm", name: "21 · Armed PIR Alarm", description: "Combine an arm switch and simulated PIR motion to activate a light and passive buzzer." },
   { id: "distance-zone-parking", name: "22 · Distance-Zone Parking Assistant", description: "Use an HC-SR04 distance threshold for green/far, yellow/medium, or red/near LED and buzzer feedback." },
+  { id: "temperature-controlled-fan", name: "23 · Temperature-Controlled Fan", description: "Use TMP36 thresholds to set visual fan speed through a powered H-bridge." },
 ] as const;
 
 export type BeginnerProjectId = (typeof BEGINNER_PROJECTS)[number]["id"];
@@ -68,6 +69,7 @@ const SKETCHES: Record<BeginnerProjectId, string> = {
   "two-branch-breadboard": `const int blinkLedPin = 8;\nconst int buttonPin = 2;\nconst int buttonLedPin = 9;\n\nvoid setup() {\n  pinMode(blinkLedPin, OUTPUT);\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(buttonLedPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(buttonPin) == LOW) {\n    digitalWrite(buttonLedPin, HIGH);\n  } else {\n    digitalWrite(buttonLedPin, LOW);\n  }\n  digitalWrite(blinkLedPin, HIGH);\n  delay(500);\n  digitalWrite(blinkLedPin, LOW);\n  delay(500);\n}`,
   "armed-pir-alarm": `const int armPin = 2;\nconst int motionPin = 3;\nconst int lampPin = 8;\nconst int buzzerPin = 9;\n\nvoid setup() {\n  pinMode(armPin, INPUT_PULLUP);\n  pinMode(motionPin, INPUT);\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(armPin) == LOW) {\n    if (digitalRead(motionPin) == HIGH) {\n      digitalWrite(lampPin, HIGH);\n      tone(buzzerPin, 880);\n    } else {\n      digitalWrite(lampPin, LOW);\n      noTone(buzzerPin);\n    }\n  } else {\n    digitalWrite(lampPin, LOW);\n    noTone(buzzerPin);\n  }\n  delay(20);\n}`,
   "distance-zone-parking": `const int trigPin = 3;\nconst int echoPin = 2;\nconst int redPin = 9;\nconst int greenPin = 10;\nconst int bluePin = 11;\nconst int buzzerPin = 12;\n\nvoid setup() {\n  pinMode(trigPin, OUTPUT);\n  pinMode(echoPin, INPUT);\n  pinMode(redPin, OUTPUT);\n  pinMode(greenPin, OUTPUT);\n  pinMode(bluePin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(trigPin, LOW);\n  delayMicroseconds(2);\n  digitalWrite(trigPin, HIGH);\n  delayMicroseconds(10);\n  digitalWrite(trigPin, LOW);\n  if (pulseIn(echoPin, HIGH, 30000) < 870) {\n    digitalWrite(redPin, HIGH);\n    digitalWrite(greenPin, LOW);\n    digitalWrite(bluePin, LOW);\n    tone(buzzerPin, 880);\n  } else {\n    delay(60);\n    digitalWrite(trigPin, LOW);\n    delayMicroseconds(2);\n    digitalWrite(trigPin, HIGH);\n    delayMicroseconds(10);\n    digitalWrite(trigPin, LOW);\n    if (pulseIn(echoPin, HIGH, 30000) < 2320) {\n      digitalWrite(redPin, HIGH);\n      digitalWrite(greenPin, HIGH);\n      digitalWrite(bluePin, LOW);\n      tone(buzzerPin, 440);\n    } else {\n      digitalWrite(redPin, LOW);\n      digitalWrite(greenPin, HIGH);\n      digitalWrite(bluePin, LOW);\n      noTone(buzzerPin);\n    }\n  }\n  delay(60);\n}`,
+  "temperature-controlled-fan": `const int tempPin = A0;\nconst int enablePin = 3;\nconst int in1Pin = 4;\nconst int in2Pin = 5;\n\nvoid setup() {\n  pinMode(enablePin, OUTPUT);\n  pinMode(in1Pin, OUTPUT);\n  pinMode(in2Pin, OUTPUT);\n  digitalWrite(in1Pin, HIGH);\n  digitalWrite(in2Pin, LOW);\n}\n\nvoid loop() {\n  if (analogRead(tempPin) > 185) {\n    analogWrite(enablePin, 255);\n  } else {\n    if (analogRead(tempPin) > 140) {\n      analogWrite(enablePin, 128);\n    } else {\n      analogWrite(enablePin, 0);\n    }\n  }\n  delay(100);\n}`,
   "night-light": `const int lightPin = A0;\nconst int lampPin = 8;\n\nvoid setup() {\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (analogRead(lightPin) < 400) {\n    digitalWrite(lampPin, HIGH);\n  } else {\n    digitalWrite(lampPin, LOW);\n  }\n  delay(20);\n}`,
   "rgb-signal": `const int redPin = 9;\nconst int greenPin = 10;\nconst int bluePin = 11;\n\nvoid setup() {\n  pinMode(redPin, OUTPUT);\n  pinMode(greenPin, OUTPUT);\n  pinMode(bluePin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(redPin, HIGH);\n  digitalWrite(greenPin, LOW);\n  digitalWrite(bluePin, LOW);\n  delay(500);\n  digitalWrite(redPin, LOW);\n  digitalWrite(greenPin, HIGH);\n  digitalWrite(bluePin, LOW);\n  delay(500);\n  digitalWrite(redPin, LOW);\n  digitalWrite(greenPin, LOW);\n  digitalWrite(bluePin, HIGH);\n  delay(500);\n  digitalWrite(redPin, HIGH);\n  digitalWrite(greenPin, HIGH);\n  digitalWrite(bluePin, HIGH);\n  delay(500);\n}`,
   "seven-segment": `const int segA = 2;\nconst int segB = 3;\nconst int segC = 4;\nconst int segD = 5;\nconst int segE = 6;\nconst int segF = 7;\nconst int segG = 8;\nconst int segDP = 9;\n\nvoid setup() {\n  pinMode(segA, OUTPUT);\n  pinMode(segB, OUTPUT);\n  pinMode(segC, OUTPUT);\n  pinMode(segD, OUTPUT);\n  pinMode(segE, OUTPUT);\n  pinMode(segF, OUTPUT);\n  pinMode(segG, OUTPUT);\n  pinMode(segDP, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(segA, HIGH);\n  digitalWrite(segB, HIGH);\n  digitalWrite(segC, LOW);\n  digitalWrite(segD, HIGH);\n  digitalWrite(segE, HIGH);\n  digitalWrite(segF, LOW);\n  digitalWrite(segG, HIGH);\n  digitalWrite(segDP, LOW);\n  delay(1000);\n  digitalWrite(segA, HIGH);\n  digitalWrite(segB, HIGH);\n  digitalWrite(segC, HIGH);\n  digitalWrite(segD, HIGH);\n  digitalWrite(segE, LOW);\n  digitalWrite(segF, LOW);\n  digitalWrite(segG, HIGH);\n  digitalWrite(segDP, LOW);\n  delay(1000);\n}`,
@@ -359,6 +361,26 @@ export function createBeginnerProject(id: BeginnerProjectId): BeginnerProjectTem
     createWire(wires, board, "5V", sensor, "VCC", "#EF4444");
     createWire(wires, board, "GND-1", sensor, "GND", "#1F2937");
     createWire(wires, sensor, "VOUT", board, "A0", "#F97316");
+    focusComponentId = sensor.id;
+  } else if (id === "temperature-controlled-fan") {
+    const breadboard = createBreadboard(35, 280);
+    const sensor = createTmp36Sensor(460, 275);
+    const driver = createHBridgeDriver(430, 70);
+    const fan = createDcMotor(650, 95);
+    components.push(breadboard, sensor, driver, fan);
+    createWire(wires, board, "5V", breadboard, "R_TOP+_0", "#EF4444");
+    createWire(wires, board, "GND-1", breadboard, "R_BOT-_0", "#1F2937");
+    createWire(wires, breadboard, "R_TOP+_8", sensor, "VCC", "#EF4444");
+    createWire(wires, breadboard, "R_BOT-_8", sensor, "GND", "#1F2937");
+    createWire(wires, sensor, "VOUT", board, "A0", "#F97316");
+    createWire(wires, breadboard, "R_TOP+_16", driver, "VCC", "#EF4444");
+    createWire(wires, breadboard, "R_TOP+_20", driver, "VM", "#EF4444");
+    createWire(wires, breadboard, "R_BOT-_16", driver, "GND", "#1F2937");
+    createWire(wires, board, "D3", driver, "ENA", "#2563EB");
+    createWire(wires, board, "D4", driver, "IN1", "#10B981");
+    createWire(wires, board, "D5", driver, "IN2", "#F59E0B");
+    createWire(wires, driver, "OUT1", fan, "M+", "#EF4444");
+    createWire(wires, driver, "OUT2", fan, "M-", "#1F2937");
     focusComponentId = sensor.id;
   } else if (id === "ultrasonic-distance-alarm") {
     const sensor = createHcSr04Sensor(405, 225);

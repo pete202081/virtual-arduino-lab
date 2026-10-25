@@ -1,6 +1,6 @@
 # Virtual Arduino Lab — Beginner’s User Guide
 
-Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. Browse the [Project Gallery](/projects) to choose from all 22 guided builds by concept and difficulty; for wiring maps, copy-ready sketches, and extension challenges, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md).
+Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. Browse the [Project Gallery](/projects) to choose from all 23 guided builds by concept and difficulty; for wiring maps, copy-ready sketches, and extension challenges, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md).
 
 > **What this is:** a local, browser-based learning simulator. It does not connect to a physical Arduino and does not compile a real AVR binary.
 
@@ -44,7 +44,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 ### Top bar
 
 - **Project title:** click its name to rename it; press Enter or click elsewhere to finish.
-- **Beginner projects…:** loads any of twenty-two complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choose **Project gallery** on the landing page to browse them by concept and difficulty. Choosing a project replaces the current workspace; duplicate or save work first if you want to keep it.
+- **Beginner projects…:** loads any of twenty-three complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choose **Project gallery** on the landing page to browse them by concept and difficulty. Choosing a project replaces the current workspace; duplicate or save work first if you want to keep it.
 - **Quick Add:** opens a compact top-bar picker for frequently used parts. Selecting an item adds it directly to the canvas.
 - **New:** creates a blank project after confirmation. It starts with the Blink sketch but no circuit components.
 - **Open:** opens a picker for projects saved in this browser.
@@ -716,6 +716,10 @@ Load **21 · Armed PIR Alarm** from the project selector or gallery. Turn the sl
 ### Project 22: Distance-Zone Parking Assistant
 
 Load **22 · Distance-Zone Parking Assistant**. The HC-SR04 distance control selects three feedback zones: near (under 15 cm) shows red with an 880 Hz tone; medium (15–40 cm) shows yellow with a 440 Hz tone; far (40 cm or more) shows green and stays silent. Move the simulated-distance slider to test each zone. This extends the existing one-threshold distance alarm; the model uses an idealized distance-to-echo-duration mapping and does not model real acoustic behavior.
+
+### Project 23: Temperature-Controlled Fan
+
+Load **23 · Temperature-Controlled Fan**. The TMP36's simulated temperature changes its analog reading at A0. The sketch stops the fan at readings of 140 or less (roughly 18 °C and cooler), uses 50% PWM between the thresholds, and commands full PWM above 185 (roughly 41 °C and hotter). The H-bridge receives its enable signal on D3 and direction signals on D4/D5; its outputs drive the modeled DC motor. Adjust the sensor's temperature slider to try cool, room-temperature, and hot conditions. The motor is a visual direction/speed model, not a real fan or power circuit. For physical hardware, follow the sensor and driver datasheets and use a suitably rated motor supply; never power a motor from an Uno GPIO.
 
 ### Try these safe learning changes
 

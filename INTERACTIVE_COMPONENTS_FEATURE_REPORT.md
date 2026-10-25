@@ -3,7 +3,7 @@
 ## Landing page and lab entry
 
 - The default route `/` is now a responsive landing page that explains the product, workflow, component families, guided projects, and honest simulation limits; its primary calls to action open the simulator at `/lab`.
-- Added `/projects`, a curated gallery of all 22 templates with concept/difficulty filters, search, a suggested learning progression, and direct links that load the chosen circuit in the lab.
+- Added `/projects`, a curated gallery of all 23 templates with concept/difficulty filters, search, a suggested learning progression, and direct links that load the chosen circuit in the lab.
 - The simulator’s top-bar brand returns to the landing page. E2E coverage checks mobile layout, safety messaging, gallery filtering, direct project loading, and navigation into the lab.
 
 ## Pushbutton
@@ -104,14 +104,14 @@
 
 ## Beginner project selector
 
-- Added a top-bar dropdown with twenty-two ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, Ultrasonic Distance Alarm, TMP36 Temperature Alarm, Relay-Controlled Lamp, Breadboard Basics: Blink an LED, Three-Level LED Dimmer, Two-Branch Breadboard Challenge, Armed PIR Alarm, and Distance-Zone Parking Assistant.
+- Added a top-bar dropdown with twenty-three ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, Ultrasonic Distance Alarm, TMP36 Temperature Alarm, Relay-Controlled Lamp, Breadboard Basics: Blink an LED, Three-Level LED Dimmer, Two-Branch Breadboard Challenge, Armed PIR Alarm, Distance-Zone Parking Assistant, and Temperature-Controlled Fan.
 - Selecting one replaces the current screen with its prewired component layout, working wires, project sketch, title, and a relevant selected component in Properties. The canvas auto-fits the loaded circuit; the user can then edit, duplicate, and save it.
-- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all twenty-two projects, checking the code, properties, and circuit counts.
+- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all twenty-three projects, checking the code, properties, and circuit counts.
 
 ## Verification
 
-- 96 unit checks pass, including obstacle-aware and manual orthogonal wire routing, route-coordinate persistence/validation, bounded circuit undo/redo history, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all twenty-two template compile/wiring-reference/fresh-ID checks.
-- 16 Playwright end-to-end tests pass, including the responsive landing page, concept/difficulty gallery filters and project loading, manual wire-route dragging and persistence, undo/redo, component interactions, sensors, actuator controls, and all twenty-two ready-made projects.
+- 97 unit checks pass, including obstacle-aware and manual orthogonal wire routing, route-coordinate persistence/validation, bounded circuit undo/redo history, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all twenty-three template compile/wiring-reference/fresh-ID checks.
+- 16 Playwright end-to-end tests pass, including the responsive landing page, concept/difficulty gallery filters and project loading, manual wire-route dragging and persistence, undo/redo, component interactions, sensors, actuator controls, and all twenty-three ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits

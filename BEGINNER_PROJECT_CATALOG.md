@@ -1,10 +1,10 @@
 # Beginner Arduino Project Catalog
 
-A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one across twenty-two guided builds. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
+A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one across twenty-three guided builds. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the twenty-two entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the twenty-three entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
@@ -43,6 +43,7 @@ A step-by-step project path using the components already available in Virtual Ar
 | 20 | Two-Branch Breadboard Challenge | Keep separate LED strips and a button-controlled branch independent | Uno, breadboard, pushbutton, 2 LEDs, 2 resistors |
 | 21 | Armed PIR Alarm | Gate motion-triggered sound and light with an arm switch | Uno, slide switch, PIR, passive buzzer, LED, resistor |
 | 22 | Distance-Zone Parking Assistant | Map near, medium, and far distances to color and tone feedback | Uno, HC-SR04, RGB LED, 3 resistors, passive buzzer |
+| 23 | Temperature-Controlled Fan | Use TMP36 thresholds to select off, medium, or full modeled fan speed | Uno, breadboard, TMP36, H-bridge, DC motor |
 
 ---
 
@@ -880,7 +881,45 @@ void loop() {
 
 **Try it:** Load **22 · Distance-Zone Parking Assistant** and run it. Move the distance slider below 15 cm for red/880 Hz, to 15–39 cm for yellow/440 Hz, and to 40 cm or farther for green/silent. The simulator maps distance to an idealized echo duration of about 58 µs/cm and only evaluates bounded `pulseIn()` thresholds; it does not model sound waves, reflections, target shape, or real ultrasonic timing. This is a learning aid, not an actual parking or vehicle-safety device.
 
-## Bonus exercise (not in the twenty-two-project dropdown): joystick-controlled LED
+## 23. Temperature-Controlled Fan
+
+**Learn:** Read an idealized TMP36 temperature value and select off, medium, or full fan speed using analog thresholds and PWM through the H-bridge.
+
+**Parts:** Arduino Uno, breadboard, TMP36 temperature sensor, H-bridge driver, DC motor.
+
+**Wire:** Connect Uno **5V→breadboard positive rail** and **GND→negative rail**. Connect TMP36 **VCC→positive rail**, **GND→negative rail**, and **VOUT→A0**. Connect the H-bridge **VCC→positive rail**, **VM→positive rail**, and **GND→negative rail**. Connect Uno **D3→ENA**, **D4→IN1**, and **D5→IN2**. Connect H-bridge **OUT1→motor M+** and **OUT2→motor M−**. This project uses the simulator's idealized shared 5 V rail model; a physical motor supply must be selected and wired according to the driver's datasheet, with grounds referenced appropriately.
+
+```cpp
+const int tempPin = A0;
+const int enablePin = 3;
+const int in1Pin = 4;
+const int in2Pin = 5;
+
+void setup() {
+  pinMode(enablePin, OUTPUT);
+  pinMode(in1Pin, OUTPUT);
+  pinMode(in2Pin, OUTPUT);
+  digitalWrite(in1Pin, HIGH);
+  digitalWrite(in2Pin, LOW);
+}
+
+void loop() {
+  if (analogRead(tempPin) > 185) {
+    analogWrite(enablePin, 255);
+  } else {
+    if (analogRead(tempPin) > 140) {
+      analogWrite(enablePin, 128);
+    } else {
+      analogWrite(enablePin, 0);
+    }
+  }
+  delay(100);
+}
+```
+
+**Try it:** Load **23 · Temperature-Controlled Fan** and run the sketch. At the default room-temperature setting, the modeled fan runs at 50% PWM. Set the temperature low (about 18 °C or cooler) to stop it, then high (about 41 °C or warmer) for full speed. The TMP36 temperature slider maps to an idealized analog reading, and the motor shows modeled direction/speed only—there is no thermal feedback, fan airflow, current, torque, voltage-drop, or heat simulation. Never connect a physical motor directly to an Uno GPIO; use a correctly rated driver and supply.
+
+## Bonus exercise (not in the twenty-three-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 
