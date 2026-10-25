@@ -116,6 +116,8 @@ function normalizeProject(value: unknown, migrated = false): ParseResult {
   for (const item of raw.wires) {
     if (!isRecord(item)) return { success: false, error: "A wire entry is malformed." };
     const { id, startTerminalId, endTerminalId, startComponentId, endComponentId, color } = item;
+    const routePoint = item.routePoint;
+    if (routePoint !== undefined && (!isRecord(routePoint) || typeof routePoint.x !== "number" || !Number.isFinite(routePoint.x) || Math.abs(routePoint.x) > 10_000 || typeof routePoint.y !== "number" || !Number.isFinite(routePoint.y) || Math.abs(routePoint.y) > 10_000)) return { success: false, error: `Wire ${String(id)} has an invalid manual route point.` };
     if (typeof id !== "string" || !safeId.test(id) || wireIds.has(id)) return { success: false, error: "Wire IDs must be valid and unique." };
     if (typeof startTerminalId !== "string" || typeof endTerminalId !== "string" || startTerminalId === endTerminalId) return { success: false, error: `Wire ${id} has invalid endpoints.` };
     if (!terminalIds.has(startTerminalId) || !terminalIds.has(endTerminalId)) return { success: false, error: `Wire ${id} references a missing terminal.` };
@@ -125,7 +127,15 @@ function normalizeProject(value: unknown, migrated = false): ParseResult {
     const endTerminal = components.find((component) => component.id === endComponentId)?.terminals.find((terminal) => terminal.id === endTerminalId);
     if (!startTerminal || !endTerminal || startTerminal.componentId !== startComponentId || endTerminal.componentId !== endComponentId) return { success: false, error: `Wire ${id} endpoint/component mapping does not match.` };
     wireIds.add(id);
-    wires.push({ id, startTerminalId, endTerminalId, startComponentId, endComponentId, color: String(color) });
+    wires.push({
+      id,
+      startTerminalId,
+      endTerminalId,
+      startComponentId,
+      endComponentId,
+      color: String(color),
+      ...(routePoint ? { routePoint: { x: routePoint.x as number, y: routePoint.y as number } } : {}),
+    });
   }
 
   const createdAt = typeof raw.createdAt === "string" && Number.isFinite(Date.parse(raw.createdAt)) ? raw.createdAt : new Date().toISOString();
@@ -158,7 +168,15 @@ export function createProjectFile(input: Omit<ProjectDocument, "components"> & {
     selected: undefined,
     terminals: component.terminals.map(({ id, componentId, label, type, dx, dy }) => ({ id, componentId, label, type, dx, dy, connected: false })),
   }));
-  const wires = input.wires.map(({ id, startTerminalId, endTerminalId, startComponentId, endComponentId, color }) => ({ id, startTerminalId, endTerminalId, startComponentId, endComponentId, color }));
+  const wires = input.wires.map(({ id, startTerminalId, endTerminalId, startComponentId, endComponentId, color, routePoint }) => ({
+    id,
+    startTerminalId,
+    endTerminalId,
+    startComponentId,
+    endComponentId,
+    color,
+    ...(routePoint ? { routePoint: { x: routePoint.x, y: routePoint.y } } : {}),
+  }));
   return {
     format: PROJECT_FORMAT,
     schemaVersion: PROJECT_SCHEMA_VERSION,

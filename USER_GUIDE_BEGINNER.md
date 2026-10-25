@@ -111,6 +111,10 @@ You can also click the **Jumper Wire** card under Wiring to highlight the wiring
 
 You can wire directly between components, or connect them through breadboard holes. To route through the breadboard, make wires from component terminals to holes; the wire is drawn on the board’s front surface and its endpoint is centered on the selected hole. Column numbers and A–J row letters help you locate holes. Hover over a hole to enlarge it and show both its simulator ID (such as `T-4-0`) and common coordinate (`A5`); the full connected net is highlighted as well. This is only a visual aid—the graph still applies the board’s internal connectivity rules.
 
+### Adjust a wire route
+
+The lab automatically draws wires as rounded, right-angle routes while keeping their endpoints attached to the chosen terminals. To customize one, click the wire, then drag its circular bend handle on the canvas; the route stays orthogonal as the handle moves. You can also focus the handle and use the arrow keys to nudge it (hold **Shift** for a larger step). The **Wire Properties** panel shows whether the route is automatic or manual. Choose **Reset to auto-route** there to remove your custom bend and let the obstacle-aware router choose a fresh path. Manual bend coordinates are preserved when you save, export, reopen, or import a project.
+
 ---
 
 ## 4. How the breadboard behaves

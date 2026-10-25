@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { ComponentInstance, Wire } from "@/types/circuit";
 import { ArduinoUno } from "./ArduinoUno";
 import { Breadboard } from "./Breadboard";
@@ -23,7 +24,9 @@ import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
 import type { RGBLedState, SevenSegmentState, ServoState, DcMotorState } from "@/simulation/interfaces/simulationAdapter";
 import { ZoomIn, ZoomOut, Maximize2, Grid3x3, Trash2, Cable, MousePointer2 } from "lucide-react";
 import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
-import { buildWireRoutePoints, wireRouteToPath } from "./wireRouting";
+import { buildWireRoutePoints, getRouteHandlePoint, wireRouteToPath, type WireRoutePoint } from "./wireRouting";
+
+const clampRouteCoordinate = (value: number) => Math.max(-10_000, Math.min(10_000, value));
 
 interface Props {
   components: ComponentInstance[];
@@ -33,6 +36,7 @@ interface Props {
   onMoveComponent: (id: string, x: number, y: number) => void;
   onDeleteComponent: (id: string) => void;
   onDeleteWire: (id: string) => void;
+  onUpdateWireRoute: (id: string, updates: Partial<Wire>) => void;
   onWireStart: (terminalId: string, compId: string) => void;
   onWireEnd: (terminalId: string, compId: string) => void;
   pendingWire: { startTerminalId: string; startComponentId: string } | null;
@@ -68,6 +72,7 @@ export function CircuitWorkspace({
   onMoveComponent,
   onDeleteComponent,
   onDeleteWire,
+  onUpdateWireRoute,
   onWireStart,
   onWireEnd,
   pendingWire,
@@ -95,9 +100,11 @@ export function CircuitWorkspace({
   fitToComponents,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [viewportOrigin, setViewportOrigin] = useState({ x: 0, y: 0 });
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
+  const [draggingWireRouteId, setDraggingWireRouteId] = useState<string | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [hoverTerminal, setHoverTerminal] = useState<string | null>(null);
@@ -107,6 +114,42 @@ export function CircuitWorkspace({
     const net = hoverTerminal ? circuitGraph.getNetForTerminal(hoverTerminal) : undefined;
     return new Set(net?.terminals ?? []);
   }, [circuitGraph, hoverTerminal]);
+
+  useEffect(() => {
+    const updateViewportOrigin = () => {
+      const bounds = containerRef.current?.getBoundingClientRect();
+      if (bounds) setViewportOrigin({ x: bounds.left, y: bounds.top });
+    };
+    updateViewportOrigin();
+    const observer = new ResizeObserver(updateViewportOrigin);
+    if (containerRef.current) observer.observe(containerRef.current);
+    window.addEventListener("resize", updateViewportOrigin);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateViewportOrigin);
+    };
+  }, []);
+
+  useEffect(() => { // Keep the portal handle draggable even when the code panel overlaps the canvas stacking context.
+    if (!draggingWireRouteId) return;
+    const moveRoutePoint = (event: MouseEvent) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      onUpdateWireRoute(draggingWireRouteId, {
+        routePoint: {
+          x: clampRouteCoordinate((event.clientX - rect.left - pan.x) / zoom),
+          y: clampRouteCoordinate((event.clientY - rect.top - pan.y) / zoom),
+        },
+      });
+    };
+    const stopRoutePointDrag = () => setDraggingWireRouteId(null);
+    window.addEventListener("mousemove", moveRoutePoint);
+    window.addEventListener("mouseup", stopRoutePointDrag);
+    return () => {
+      window.removeEventListener("mousemove", moveRoutePoint);
+      window.removeEventListener("mouseup", stopRoutePointDrag);
+    };
+  }, [draggingWireRouteId, onUpdateWireRoute, pan.x, pan.y, zoom]);
 
   useEffect(() => {
     if (!fitToComponents || components.length === 0) return;
@@ -138,6 +181,18 @@ export function CircuitWorkspace({
     [components]
   );
 
+  const routedWirePoints = useMemo(() => {
+    const previousRoutes: WireRoutePoint[][] = [];
+    return wires.map((wire, index) => {
+      const start = getTerminalPos(wire.startTerminalId);
+      const end = getTerminalPos(wire.endTerminalId);
+      if (!start || !end) return [];
+      const route = buildWireRoutePoints(start, end, index, components, previousRoutes, wire.routePoint);
+      previousRoutes.push(route);
+      return route;
+    });
+  }, [components, getTerminalPos, wires]);
+
   // Mouse handlers for dragging
   const handleMouseDown = (e: React.MouseEvent, compId: string) => {
     const comp = components.find((c) => c.id === compId);
@@ -151,9 +206,24 @@ export function CircuitWorkspace({
     e.stopPropagation();
   };
 
+  const handleRouteHandleMouseDown = (event: React.MouseEvent<SVGCircleElement>, wire: Wire, routePoint: WireRoutePoint) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onSelect(wire.id);
+    setDraggingWireRouteId(wire.id);
+    if (!wire.routePoint) onUpdateWireRoute(wire.id, { routePoint });
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
+
+    if (draggingWireRouteId) {
+      const x = (e.clientX - rect.left - pan.x) / zoom;
+      const y = (e.clientY - rect.top - pan.y) / zoom;
+      onUpdateWireRoute(draggingWireRouteId, { routePoint: { x: clampRouteCoordinate(x), y: clampRouteCoordinate(y) } });
+      return;
+    }
 
     if (dragging) {
       const x = (e.clientX - rect.left - pan.x) / zoom;
@@ -170,6 +240,7 @@ export function CircuitWorkspace({
 
   const handleMouseUp = () => {
     setDragging(null);
+    setDraggingWireRouteId(null);
     setIsPanning(false);
     pressedButtonIds.forEach(onButtonPressEnd);
   };
@@ -382,8 +453,7 @@ export function CircuitWorkspace({
               if (!start || !end) return null;
               const isSelected = selectedId === wire.id;
               const isNetHighlighted = highlightedTerminalIds.has(wire.startTerminalId) || highlightedTerminalIds.has(wire.endTerminalId);
-              const routePoints = buildWireRoutePoints(start, end, index, components);
-              const path = wireRouteToPath(routePoints);
+              const path = wireRouteToPath(routedWirePoints[index] ?? [start, end]);
               return (
                 <g key={wire.id} data-wire-id={wire.id} className="pointer-events-auto" style={{ cursor: "pointer" }} onClick={() => onSelect(wire.id)}>
                   {/* Hit area */}
@@ -513,8 +583,7 @@ export function CircuitWorkspace({
                     const endY = end.y - board.y;
                     const isSelected = selectedId === wire.id;
                     const isNetHighlighted = highlightedTerminalIds.has(wire.startTerminalId) || highlightedTerminalIds.has(wire.endTerminalId);
-                    const routePoints = buildWireRoutePoints(start, end, index, components);
-                    const path = wireRouteToPath(routePoints, { x: board.x, y: board.y });
+                    const path = wireRouteToPath(routedWirePoints[index] ?? [start, end], { x: board.x, y: board.y });
                     return (
                       <g key={wire.id}>
                         <path
@@ -566,6 +635,61 @@ export function CircuitWorkspace({
           </div>
         )}
       </div>
+      {selectedId && wires.some((wire) => wire.id === selectedId) && typeof document !== "undefined" && createPortal(
+        <svg
+          data-testid="wire-route-handles"
+          aria-label="Selected wire route controls"
+          className="fixed inset-0 z-[9999] w-screen h-screen pointer-events-none overflow-visible"
+          style={{ position: "fixed", left: 0, top: 0, width: "100vw", height: "100vh", zIndex: 9999, pointerEvents: "none" }}
+        >
+          {wires.map((wire, index) => {
+            if (wire.id !== selectedId) return null;
+            const route = routedWirePoints[index];
+            if (!route || route.length < 2) return null;
+            const routePoint = wire.routePoint ?? getRouteHandlePoint(route);
+            const x = viewportOrigin.x + pan.x + routePoint.x * zoom;
+            const y = viewportOrigin.y + pan.y + routePoint.y * zoom;
+            return (
+              <g key={`route-handle-${wire.id}`}>
+                <circle cx={x} cy={y} r="11" fill="#0E9A8B" opacity="0.18" pointerEvents="none" />
+                <circle
+                  data-testid="wire-route-handle"
+                  data-wire-id={wire.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Drag wire bend to reroute"
+                  cx={x}
+                  cy={y}
+                  r="7"
+                  fill="white"
+                  stroke="#0E9A8B"
+                  strokeWidth="3"
+                  className={`pointer-events-auto cursor-grab ${draggingWireRouteId === wire.id ? "cursor-grabbing" : ""}`}
+                  style={{ pointerEvents: "all" }}
+                  onMouseDown={(event) => handleRouteHandleMouseDown(event, wire, routePoint)}
+                  onClick={(event) => { event.stopPropagation(); onSelect(wire.id); }}
+                  onKeyDown={(event) => {
+                    const step = event.shiftKey ? 20 : 8;
+                    const delta = event.key === "ArrowLeft" ? { x: -step, y: 0 }
+                      : event.key === "ArrowRight" ? { x: step, y: 0 }
+                      : event.key === "ArrowUp" ? { x: 0, y: -step }
+                      : event.key === "ArrowDown" ? { x: 0, y: step }
+                      : null;
+                    if (delta) {
+                      event.preventDefault();
+                      onSelect(wire.id);
+                      onUpdateWireRoute(wire.id, { routePoint: { x: clampRouteCoordinate(routePoint.x + delta.x / zoom), y: clampRouteCoordinate(routePoint.y + delta.y / zoom) } });
+                    }
+                  }}
+                >
+                  <title>Drag to adjust this wire; use arrow keys to nudge. Reset from Wire Properties.</title>
+                </circle>
+              </g>
+            );
+          })}
+        </svg>,
+        document.body,
+      )}
     </div>
   );
 }

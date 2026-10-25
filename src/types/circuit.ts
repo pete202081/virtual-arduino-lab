@@ -62,6 +62,8 @@ export interface Wire {
   startComponentId: string;
   endComponentId: string;
   color: string;
+  /** Optional persistent manual bend control point; cleared to restore auto-routing. */
+  routePoint?: { x: number; y: number };
   selected?: boolean;
 }
 

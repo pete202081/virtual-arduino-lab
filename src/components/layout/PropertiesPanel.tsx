@@ -1,6 +1,6 @@
 "use client";
 import { ComponentInstance, Wire } from "@/types/circuit";
-import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2, Radio, Waves, Thermometer, Zap } from "lucide-react";
+import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, RotateCcw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2, Radio, Waves, Thermometer, Zap } from "lucide-react";
 
 interface Props {
   selectedComponent: ComponentInstance | null;
@@ -73,6 +73,21 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-lg p-2.5" data-testid="wire-route-properties">
+            <div className="text-[11px] font-bold text-slate-700">Wire Route</div>
+            <p className="text-[10px] text-slate-500 mt-1">
+              {selectedWire.routePoint ? "Manual route — drag the canvas handle to adjust." : "Auto-routed — drag the canvas handle to customize."}
+            </p>
+            <button
+              data-testid="reset-wire-route"
+              onClick={() => onUpdateWire(selectedWire.id, { routePoint: undefined })}
+              disabled={!selectedWire.routePoint}
+              className="w-full mt-2 h-8 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 border border-slate-200 rounded-md flex items-center justify-center gap-1.5 text-[11px] font-bold"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Reset to auto-route
+            </button>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-lg p-2.5">

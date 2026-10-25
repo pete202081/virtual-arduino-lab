@@ -830,6 +830,7 @@ export default function Home() {
             onMoveComponent={handleMove}
             onDeleteComponent={handleDeleteComponent}
             onDeleteWire={handleDeleteWire}
+            onUpdateWireRoute={handleUpdateWire}
             onWireStart={handleWireStart}
             onWireEnd={handleWireEnd}
             pendingWire={pendingWire}

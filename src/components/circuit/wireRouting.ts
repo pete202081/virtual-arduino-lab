@@ -188,7 +188,18 @@ export function buildWireRoutePoints(
   wireIndex: number,
   components: ComponentInstance[],
   previousRoutes: WireRoutePoint[][] = [],
+  manualRoutePoint?: WireRoutePoint,
 ): WireRoutePoint[] {
+  if (manualRoutePoint) {
+    return compactPoints([
+      start,
+      { x: manualRoutePoint.x, y: start.y },
+      manualRoutePoint,
+      { x: end.x, y: manualRoutePoint.y },
+      end,
+    ]);
+  }
+
   const startComponent = components.find((component) => component.id === start.compId);
   const endComponent = components.find((component) => component.id === end.compId);
   const startBoard = startComponent?.type === "breadboard" ? startComponent : undefined;
@@ -238,6 +249,25 @@ export function buildWireRoutePoints(
   const endStub = terminalExit(endComponent, end);
   const between = findBestOrthogonalRoute(startStub, endStub, allObstacles, previousRoutes, wireIndex);
   return compactPoints([start, startStub, ...between.slice(1, -1), endStub, end]);
+}
+
+/** Return a stable point halfway along the visible polyline for a draggable route handle. */
+export function getRouteHandlePoint(points: WireRoutePoint[]): WireRoutePoint {
+  if (points.length < 2) return points[0] ?? { x: 0, y: 0 };
+  const lengths = points.slice(1).map((point, index) => Math.hypot(point.x - points[index].x, point.y - points[index].y));
+  const halfLength = lengths.reduce((sum, length) => sum + length, 0) / 2;
+  let traveled = 0;
+  for (let index = 0; index < lengths.length; index++) {
+    const segmentLength = lengths[index];
+    if (traveled + segmentLength >= halfLength) {
+      const start = points[index];
+      const end = points[index + 1];
+      const fraction = segmentLength === 0 ? 0 : (halfLength - traveled) / segmentLength;
+      return { x: start.x + (end.x - start.x) * fraction, y: start.y + (end.y - start.y) * fraction };
+    }
+    traveled += segmentLength;
+  }
+  return points[points.length - 1];
 }
 
 /** Convert a polyline to a gently rounded SVG path, optionally in local coordinates. */

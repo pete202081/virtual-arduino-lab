@@ -24,6 +24,20 @@ test("versioned export round-trips circuit, wires, sketch, and settings", () => 
   assert.equal(parsed.file.project.settings.wireColor, "#EF4444");
   assert.match(parsed.file.project.code, /digitalWrite\(ledPin, HIGH\)/);
 });
+test("custom wire bend coordinates round-trip through project export/import and malformed points are rejected", () => {
+  const file = starterFile();
+  file.project.wires[0].routePoint = { x: 412.5, y: 289.25 };
+  const parsed = parseProjectFile(JSON.stringify(file));
+  assert.equal(parsed.success, true);
+  if (!parsed.success) return;
+  assert.deepEqual(parsed.file.project.wires[0].routePoint, { x: 412.5, y: 289.25 });
+
+  const malformed = starterFile();
+  (malformed.project.wires[0] as unknown as { routePoint: unknown }).routePoint = { x: Infinity, y: 10 };
+  const rejected = parseProjectData(malformed);
+  assert.equal(rejected.success, false);
+  if (!rejected.success) assert.match(rejected.error, /invalid manual route point/);
+});
 test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joystick axes, servo position, H-bridge/motor, PIR motion, ultrasonic distance, and TMP36 temperature and relay properties persist through project JSON", () => {
   const starter = createStarterCircuit();
   const pot = createPotentiometer(420, 260);

@@ -81,6 +81,48 @@ test("save/open, duplicate, export/import, and safely reject invalid project fil
   await expect(page.getByText("Blink LED — Pin 8 (copy)", { exact: true })).toBeVisible();
 });
 
+test("selected wire bend handles stay orthogonal, persist on save/open, and reset to auto-route", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await expect(page.getByText("Arduino Sketch")).toBeVisible();
+
+  await page.locator("g[data-wire-id]").first().dispatchEvent("click");
+  const handle = page.getByTestId("wire-route-handle");
+  await expect(handle).toBeVisible();
+  const beforeX = Number(await handle.getAttribute("cx"));
+  const beforeY = Number(await handle.getAttribute("cy"));
+  const box = await handle.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width / 2 + 46, box!.y + box!.height / 2 + 34, { steps: 5 });
+  await page.mouse.up();
+  await expect.poll(async () => Number(await handle.getAttribute("cx"))).not.toBe(beforeX);
+  const editedX = Number(await handle.getAttribute("cx"));
+  const editedY = Number(await handle.getAttribute("cy"));
+  expect(editedY).not.toBe(beforeY);
+  await expect(page.getByTestId("wire-route-properties")).toContainText("Manual route");
+
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText(/Saved “Blink LED — Pin 8” to IndexedDB/)).toBeVisible();
+  await page.getByRole("button", { name: "Open", exact: true }).click();
+  const picker = page.getByRole("dialog", { name: "Open a saved project" });
+  await expect(picker).toBeVisible();
+  await picker.getByRole("button", { name: /Blink LED — Pin 8/ }).click();
+  await expect(page.getByText(/Opened saved project “Blink LED — Pin 8”/)).toBeVisible();
+
+  await page.locator("g[data-wire-id]").first().dispatchEvent("click");
+  const restoredHandle = page.getByTestId("wire-route-handle");
+  await expect(restoredHandle).toBeVisible();
+  expect(Number(await restoredHandle.getAttribute("cx"))).toBeCloseTo(editedX, 1);
+  expect(Number(await restoredHandle.getAttribute("cy"))).toBeCloseTo(editedY, 1);
+  await page.getByTestId("reset-wire-route").click();
+  await expect(page.getByTestId("wire-route-properties")).toContainText("Auto-routed");
+  await expect(page.getByTestId("reset-wire-route")).toBeDisabled();
+  expect(errors).toEqual([]);
+});
+
 test("interactive pushbutton can be pressed and released on the canvas", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createArduinoUno, createBreadboard, createLED, createResistor } from "../src/circuit-engine/models/componentTemplates";
-import { buildWireRoutePoints, wireRouteToPath, type RoutedTerminal } from "../src/components/circuit/wireRouting";
+import { buildWireRoutePoints, getRouteHandlePoint, wireRouteToPath, type RoutedTerminal } from "../src/components/circuit/wireRouting";
 import type { ComponentInstance } from "../src/types/circuit";
 
 function position(component: ComponentInstance, label: string): RoutedTerminal {
@@ -71,4 +71,14 @@ assert.equal(directRoute.at(-1)?.x, ledPoint.x);
 assert.ok(isOrthogonal(directRoute), "direct component wires should have an elbow route too");
 console.log("✅ direct component wires use deterministic elbow routing");
 
-console.log("5 wire-routing checks passed.");
+const manualBend = { x: 410, y: 360 };
+const manualRoute = buildWireRoutePoints(d8, boardHole, 0, components, [], manualBend);
+assert.deepEqual(manualRoute[0], d8, "manual routes must retain the attached start terminal");
+assert.deepEqual(manualRoute.at(-1), boardHole, "manual routes must retain the attached end terminal");
+assert.ok(isOrthogonal(manualRoute), "manual routes must remain orthogonal");
+assert.ok(manualRoute.some((point) => point.x === manualBend.x && point.y === manualBend.y), "manual bend must lie on the route");
+const handlePoint = getRouteHandlePoint(manualRoute);
+assert.ok(manualRoute.some((point) => Math.abs(point.x - handlePoint.x) < 0.001 || Math.abs(point.y - handlePoint.y) < 0.001), "drag handle should remain on a route segment");
+console.log("✅ manual route handles preserve terminal endpoints and orthogonal bends");
+
+console.log("6 wire-routing checks passed.");

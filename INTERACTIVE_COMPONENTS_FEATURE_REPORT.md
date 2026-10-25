@@ -93,7 +93,7 @@
 
 - Added the Breadboard Basics: Blink an LED project, with D8 and resistor terminals sharing one five-hole strip and explicit Uno 5V/GND connections to separate breadboard rails.
 - The selected breadboard Properties panel now provides a concise wiring walkthrough. Wire traces are rendered on the board’s front surface and endpoints are centered precisely on the visible hole heads. Column numbers and A–J row labels, hover enlargement, and a terminal-ID/common-coordinate tooltip make hole selection clearer; rail hovers report rail polarity and position. Hovering any terminal or breadboard hole highlights every terminal on its connected net, including holes bridged by breadboard strips and attached jumper wires; connected wires glow as well.
-- Wires now use rounded orthogonal elbow paths. Breadboard routes approach from the nearest edge through staggered outer lanes, then continue to the exact hole; this simplifies the routes and reduces crossings, though it is not a full obstacle-avoiding router.
+- Wires now use rounded orthogonal elbow paths. Breadboard routes approach from the nearest edge through staggered outer lanes, then continue to the exact hole; the route scorer detours around component footprints and penalizes crossings/overlaps; it remains a heuristic and may not find a perfect path in very crowded layouts. Select a wire and drag its canvas bend handle to create a persisted manual route; endpoints remain attached and routes stay orthogonal. The Properties panel resets a manual route to the obstacle-aware automatic route, and the handle supports arrow-key nudging.
 - This teaching aid reflects the graph model: five-hole strips and continuous rails connect internally, the trench isolates the two fields, and rails remain isolated until explicitly wired. It does not calculate voltage or current.
 
 ## Beginner project selector
@@ -104,8 +104,8 @@
 
 ## Verification
 
-- 88 unit checks pass, including deterministic orthogonal wire routing, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all eighteen template compile/wiring-reference/fresh-ID checks.
-- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus relay-controlled lamp switching and all eighteen ready-made projects.
+- 91 unit checks pass, including obstacle-aware and manual orthogonal wire routing, route-coordinate persistence/validation, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all eighteen template compile/wiring-reference/fresh-ID checks.
+- 13 Playwright end-to-end tests pass, including manual wire-route dragging, save/open persistence, route reset, analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus relay-controlled lamp switching and all eighteen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits

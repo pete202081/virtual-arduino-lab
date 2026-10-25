@@ -47,12 +47,12 @@ npm audit
 - `tests/circuit-graph.test.ts` — 14 graph, breadboard, and validation tests
 - `tests/sketch-validator.test.ts` — 12 editor/compile-diagnostic tests
 - `tests/simulation-adapter.test.ts` — 29 interpreter, timing, stop, PWM, Servo, DC motor/H-bridge, PIR, HC-SR04, TMP36, relay, LED-path, pushbutton, slide-switch, joystick, buzzer, analog sensor, RGB LED, and 7-segment tests
-- `tests/project-persistence.test.ts` — 11 schema, migration, safety, and fallback tests
+- `tests/project-persistence.test.ts` — 12 schema, migration, safety, route-coordinate, and fallback tests
 - `tests/beginner-project-templates.test.ts` — 18 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
-- `tests/wire-routing.test.ts` — four deterministic orthogonal-route, board-entry-lane, and endpoint checks
-- `e2e/release-journey.spec.ts` — 12 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, sensor thresholds, relay switching, all eighteen projects, breadboard hole targeting, and exact wire-endpoint alignment
+- `tests/wire-routing.test.ts` — six endpoint, obstacle-detour, right-angle, crossing-penalty, and manual-bend checks
+- `e2e/release-journey.spec.ts` — 13 browser journeys covering core components, PWM RGB brightness, joystick and slide-switch behavior, sensor thresholds, relay switching, all eighteen projects, breadboard hole targeting, exact wire-endpoint alignment, and manual wire-route editing/save/reset
 
-Current verified status: all 88 unit checks pass, all 12 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
+Current verified status: all 91 unit checks pass, all 13 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
 
 ## Implemented simulation subset and limitations
 
