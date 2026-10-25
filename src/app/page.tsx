@@ -34,6 +34,7 @@ export default function Home() {
   const [pendingWire, setPendingWire] = useState<{ startTerminalId: string; startComponentId: string } | null>(null);
   const [wireColor, setWireColor] = useState("#EF4444");
   const [wireToolActive, setWireToolActive] = useState(false);
+  const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
   const [litLedIds, setLitLedIds] = useState<string[]>([]);
   const [ledBrightnesses, setLedBrightnesses] = useState<Record<string, number>>({});
   const [pressedButtonIds, setPressedButtonIds] = useState<string[]>([]);
@@ -813,10 +814,11 @@ export default function Home() {
         onRename={setProjectName}
         activeBeginnerProjectId={activeBeginnerProjectId}
         onLoadBeginnerProject={handleLoadBeginnerProject}
+        onAddComponent={(type) => handleAddComponent(type)}
       />
 
       <div className="flex-1 flex overflow-hidden">
-        <ComponentPalette onAddComponent={handleAddComponent} onSelectWireTool={() => setWireToolActive((v) => !v)} wireToolActive={wireToolActive || !!pendingWire} />
+        <ComponentPalette onAddComponent={handleAddComponent} onSelectWireTool={() => setWireToolActive((v) => !v)} wireToolActive={wireToolActive || !!pendingWire} isCollapsed={isPaletteCollapsed} onToggleCollapse={() => setIsPaletteCollapsed((collapsed) => !collapsed)} />
 
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <CircuitWorkspace

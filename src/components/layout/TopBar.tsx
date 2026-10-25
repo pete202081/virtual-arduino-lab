@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Cpu, Play, Square, RotateCcw, Save, FolderOpen, FilePlus, Undo, Redo, Zap, AlertCircle, Circle, MoreHorizontal, Copy, Download, Upload, BookOpen } from "lucide-react";
+import { Cpu, Play, Square, RotateCcw, Save, FolderOpen, FilePlus, Undo, Redo, Zap, AlertCircle, Circle, MoreHorizontal, Copy, Download, Upload, BookOpen, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { SimulationState } from "@/types/circuit";
+import { ComponentType, SimulationState } from "@/types/circuit";
 import { BEGINNER_PROJECTS } from "@/circuit-engine/models/beginnerProjectTemplates";
 import type { BeginnerProjectId } from "@/circuit-engine/models/beginnerProjectTemplates";
 
@@ -22,11 +22,13 @@ interface TopBarProps {
   onRename: (name: string) => void;
   activeBeginnerProjectId: BeginnerProjectId | "";
   onLoadBeginnerProject: (id: BeginnerProjectId) => void;
+  onAddComponent: (type: ComponentType) => void;
 }
 
-export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExport, onImport, onResetStarter, simulationState, onRun, onStop, onReset, onRename, activeBeginnerProjectId, onLoadBeginnerProject }: TopBarProps) {
+export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExport, onImport, onResetStarter, simulationState, onRun, onStop, onReset, onRename, activeBeginnerProjectId, onLoadBeginnerProject, onAddComponent }: TopBarProps) {
   const [editing, setEditing] = useState(false);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editName, setEditName] = useState(projectName);
 
   const statusConfig: Record<SimulationState, { label: string; color: string; icon: LucideIcon }> = {
@@ -40,6 +42,27 @@ export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExpo
   };
   const status = statusConfig[simulationState] || statusConfig.IDLE;
   const StatusIcon = status.icon;
+  const quickAddItems: Array<{ type: ComponentType; label: string; color: string }> = [
+    { type: "arduino-uno", label: "UNO", color: "#0F2142" },
+    { type: "breadboard", label: "BB", color: "#374151" },
+    { type: "led", label: "LED", color: "#DC2626" },
+    { type: "rgb-led", label: "RGB", color: "#7C3AED" },
+    { type: "seven-segment", label: "7-SEG", color: "#B91C1C" },
+    { type: "resistor", label: "220Ω", color: "#D97706" },
+    { type: "pushbutton", label: "BTN", color: "#6B7280" },
+    { type: "slide-switch", label: "SW", color: "#0E7490" },
+    { type: "buzzer", label: "BZ", color: "#4B5563" },
+    { type: "potentiometer", label: "POT", color: "#0E9A8B" },
+    { type: "ldr", label: "LDR", color: "#D97706" },
+    { type: "pir", label: "PIR", color: "#7C3AED" },
+    { type: "hc-sr04", label: "SONAR", color: "#0284C7" },
+    { type: "tmp36", label: "TMP36", color: "#EA580C" },
+    { type: "relay", label: "RELAY", color: "#B45309" },
+    { type: "joystick", label: "JOY", color: "#2563EB" },
+    { type: "servo", label: "SERVO", color: "#0E7490" },
+    { type: "h-bridge", label: "H-BRIDGE", color: "#334155" },
+    { type: "dc-motor", label: "MOTOR", color: "#475569" },
+  ];
 
   return (
     <header className="h-14 bg-[#0F2142] text-white flex items-center px-3 gap-2 shrink-0 border-b border-[#1a345f] select-none">
@@ -105,8 +128,38 @@ export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExpo
         </select>
       </div>
 
+      {/* Quick Add component menu */}
+      <div className="relative shrink-0">
+        <button
+          onClick={() => setQuickAddOpen((open) => !open)}
+          aria-label="Quick Add"
+          aria-expanded={quickAddOpen}
+          className="h-8 px-2.5 rounded-md border border-white/15 bg-[#0E9A8B] hover:bg-[#0b8a7c] flex items-center gap-1.5 text-[11px] font-bold whitespace-nowrap"
+        >
+          <Plus className="h-3.5 w-3.5" /> <span className="hidden md:inline">Quick Add</span>
+        </button>
+        {quickAddOpen && (
+          <div className="absolute left-0 top-10 z-50 w-[276px] rounded-xl border border-slate-200 bg-white p-2.5 text-slate-800 shadow-xl">
+            <div className="mb-2 text-[11px] font-extrabold tracking-wide text-[#0F2142]">QUICK ADD COMPONENT</div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {quickAddItems.map((item) => (
+                <button
+                  key={item.type}
+                  onClick={() => { onAddComponent(item.type); setQuickAddOpen(false); }}
+                  aria-label={`Quick add ${item.label}`}
+                  className="h-12 rounded-lg border border-slate-200 bg-white hover:border-[#0E9A8B] hover:bg-teal-50 flex flex-col items-center justify-center gap-1"
+                >
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded px-1 text-[9px] font-extrabold text-white" style={{ background: item.color }}>{item.label.slice(0, 2)}</span>
+                  <span className="text-[9px] font-bold text-slate-700">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Actions */}
-      <div className="flex items-center gap-1 ml-2">
+      <div className="flex items-center gap-1 ml-1">
         <button onClick={onNew} className="h-8 px-2.5 bg-white/10 hover:bg-white/15 rounded-md flex items-center gap-1.5 text-xs font-semibold border border-white/10 transition-colors">
           <FilePlus className="w-3.5 h-3.5" /> <span className="hidden sm:inline">New</span>
         </button>

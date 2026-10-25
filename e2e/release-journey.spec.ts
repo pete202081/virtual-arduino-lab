@@ -270,6 +270,18 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
   await expect(selector.locator("option")).toHaveCount(18); // placeholder plus seventeen projects
+  await page.getByRole("button", { name: "Quick Add" }).click();
+  await page.getByRole("button", { name: "Quick add LED" }).click();
+  await expect(page.getByText("5 components • 3 wires").first()).toBeVisible();
+  const library = page.getByRole("complementary", { name: "Component library" });
+  const expandedWidth = (await library.boundingBox())?.width;
+  await page.getByRole("button", { name: "Collapse component library" }).click();
+  await expect(page.getByRole("button", { name: "Expand component library" })).toBeVisible();
+  await expect(page.getByPlaceholder("Search components...")).toBeHidden();
+  const collapsedWidth = (await library.boundingBox())?.width;
+  expect(collapsedWidth).toBeLessThan(expandedWidth ?? 0);
+  await page.getByRole("button", { name: "Expand component library" }).click();
+  await expect(page.getByPlaceholder("Search components...")).toBeVisible();
   const projects = [
     { id: "blink-led", name: "01 · Blink one LED", focus: "RED LED", code: "const int ledPin = 8;" },
     { id: "traffic-light", name: "02 · Traffic-light sequence", focus: "RED LED", code: "const int redPin = 8;" },

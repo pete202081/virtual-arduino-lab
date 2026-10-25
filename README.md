@@ -1,6 +1,6 @@
 # Virtual Arduino Lab
 
-A local-first beginner circuit workspace built with Next.js, TypeScript, Tailwind CSS, and Monaco. The default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of seventeen complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches.
+A local-first beginner circuit workspace built with Next.js, TypeScript, Tailwind CSS, and Monaco. The default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of seventeen complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches. Collapse the left component library whenever you want more room for circuit design.
 
 **New to the lab?** Follow the [Beginner User Guide](USER_GUIDE_BEGINNER.md) for workspace and wiring basics, then build the sequenced projects in the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md). The catalog includes components, wiring maps, copy-ready sketches, and extension challenges for all seventeen projects.
 
@@ -32,7 +32,7 @@ npm run test:e2e
 npm audit
 ```
 
-`npm run test:e2e` builds the production app, starts it on port 3100, and runs Playwright Chromium journeys for project management, components, sensors, inputs, and all seventeen beginner presets. On Linux CI machines, install Playwright’s OS libraries with `npx playwright install-deps chromium` before the first run. The app itself does not require Chromium specifically.
+`npm run test:e2e` builds the production app, starts it on port 3100, and runs Playwright Chromium journeys for project management, components, sensors, inputs, and all seventeen beginner presets, including the component-library collapse/expand control. On Linux CI machines, install Playwright’s OS libraries with `npx playwright install-deps chromium` before the first run. The app itself does not require Chromium specifically.
 
 ## Project actions
 

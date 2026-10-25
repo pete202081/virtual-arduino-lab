@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Search, Cpu, Grid3x3, Lightbulb, Minus, Circle, Volume2, Cable, AlertTriangle, SlidersHorizontal, Sun, Hash, ToggleLeft, Gamepad2, RotateCw, Radio, Waves, Thermometer, Zap } from "lucide-react";
+import { Search, Cpu, Grid3x3, Lightbulb, Minus, Circle, Volume2, Cable, AlertTriangle, SlidersHorizontal, Sun, Hash, ToggleLeft, Gamepad2, RotateCw, Radio, Waves, Thermometer, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ComponentType } from "@/types/circuit";
 
@@ -50,9 +50,11 @@ interface Props {
   onAddComponent: (type: ComponentType, extra?: string) => void;
   onSelectWireTool: () => void;
   wireToolActive: boolean;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolActive }: Props) {
+export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolActive, isCollapsed, onToggleCollapse }: Props) {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -65,10 +67,41 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
   });
 
   return (
-    <div className="w-[280px] shrink-0 bg-white border-r border-slate-200 flex flex-col h-full">
+    <aside
+      aria-label="Component library"
+      className={`shrink-0 bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden transition-[width] duration-200 ease-in-out ${isCollapsed ? "w-12" : "w-[280px]"}`}
+    >
+      {isCollapsed ? (
+        <div className="flex h-full flex-col items-center gap-4 py-3">
+          <button
+            onClick={onToggleCollapse}
+            aria-label="Expand component library"
+            aria-expanded={false}
+            title="Expand component library"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0F2142] focus:outline-none focus:ring-2 focus:ring-[#0E9A8B]"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <span className="text-[10px] font-extrabold tracking-[0.16em] text-slate-500" style={{ writingMode: "vertical-rl" }}>COMPONENT LIBRARY</span>
+        </div>
+      ) : (
+        <>
       <div className="p-3 border-b border-slate-100">
-        <div className="font-extrabold text-[12px] tracking-wide text-[#0F2142]">COMPONENT LIBRARY</div>
-        <div className="text-[11px] text-slate-500">Drag onto workspace or click to add</div>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="font-extrabold text-[12px] tracking-wide text-[#0F2142]">COMPONENT LIBRARY</div>
+            <div className="text-[11px] text-slate-500">Drag onto workspace or click to add</div>
+          </div>
+          <button
+            onClick={onToggleCollapse}
+            aria-label="Collapse component library"
+            aria-expanded={true}
+            title="Collapse component library to make more room"
+            className="-mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-[#0F2142] focus:outline-none focus:ring-2 focus:ring-[#0E9A8B]"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        </div>
         <div className="relative mt-2">
           <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400" />
           <input
@@ -168,40 +201,8 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
           </div>
         </div>
       </div>
-
-      <div className="p-2 border-t border-slate-100 bg-slate-50">
-        <div className="text-[11px] font-bold text-slate-700">Quick Add</div>
-        <div className="grid grid-cols-3 gap-1.5 mt-1.5">
-          {[
-            { t: "arduino-uno" as ComponentType, label: "UNO", col: "#0F2142" },
-            { t: "breadboard" as ComponentType, label: "BB", col: "#374151" },
-            { t: "led" as ComponentType, label: "LED", col: "#DC2626" },
-            { t: "rgb-led" as ComponentType, label: "RGB", col: "#7C3AED" },
-            { t: "seven-segment" as ComponentType, label: "7-SEG", col: "#B91C1C" },
-            { t: "resistor" as ComponentType, label: "220Ω", col: "#D97706" },
-            { t: "pushbutton" as ComponentType, label: "BTN", col: "#6B7280" },
-            { t: "slide-switch" as ComponentType, label: "SW", col: "#0E7490" },
-            { t: "buzzer" as ComponentType, label: "BZ", col: "#4B5563" },
-            { t: "potentiometer" as ComponentType, label: "POT", col: "#0E9A8B" },
-            { t: "ldr" as ComponentType, label: "LDR", col: "#D97706" },
-            { t: "pir" as ComponentType, label: "PIR", col: "#7C3AED" },
-            { t: "hc-sr04" as ComponentType, label: "SONAR", col: "#0284C7" },
-            { t: "tmp36" as ComponentType, label: "TMP36", col: "#EA580C" },
-            { t: "relay" as ComponentType, label: "RELAY", col: "#B45309" },
-            { t: "joystick" as ComponentType, label: "JOY", col: "#2563EB" },
-            { t: "servo" as ComponentType, label: "SERVO", col: "#0E7490" },
-            { t: "h-bridge" as ComponentType, label: "H-BRIDGE", col: "#334155" },
-            { t: "dc-motor" as ComponentType, label: "MOTOR", col: "#475569" }
-          ].map((q) => (
-            <button key={q.t} onClick={() => onAddComponent(q.t)} className="h-14 rounded-lg border border-slate-200 bg-white hover:border-[#0E9A8B] flex flex-col items-center justify-center gap-1">
-              <div className="w-6 h-6 rounded text-white flex items-center justify-center text-[10px] font-bold" style={{ background: q.col }}>
-                {q.label.slice(0, 2)}
-              </div>
-              <span className="text-[10px] font-bold text-slate-700">{q.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </aside>
   );
 }

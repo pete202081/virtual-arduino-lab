@@ -45,6 +45,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 
 - **Project title:** click its name to rename it; press Enter or click elsewhere to finish.
 - **Beginner projects…:** loads any of seventeen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
+- **Quick Add:** opens a compact top-bar picker for frequently used parts. Selecting an item adds it directly to the canvas.
 - **New:** creates a blank project after confirmation. It starts with the Blink sketch but no circuit components.
 - **Open:** opens a picker for projects saved in this browser.
 - **Save:** saves the current project locally.
@@ -54,7 +55,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 
 ### Left: Component Library
 
-Browse or search for components, choose a category, or use **Quick Add**. Interactive items include Arduino Uno R3, breadboard, single LED, RGB LED, 7-segment display, 220 Ω resistor, pushbutton, latched slide switch, joystick module, servo motor, DC motor, H-bridge driver, potentiometer, LDR sensor, PIR motion sensor, HC-SR04 ultrasonic sensor, buzzer, and jumper-wire tool.
+Browse or search the full component list and choose a category. Use the **Collapse component library** arrow in its header to give the design area more horizontal room; the narrow rail’s **Expand component library** arrow restores it. Interactive items include Arduino Uno R3, breadboard, single LED, RGB LED, 7-segment display, 220 Ω resistor, pushbutton, latched slide switch, joystick module, servo motor, DC motor, H-bridge driver, 5V relay module, potentiometer, LDR sensor, PIR motion sensor, HC-SR04 ultrasonic sensor, TMP36 temperature sensor, buzzer, and jumper-wire tool.
 
 Clicking an available component adds it to the canvas; supported component cards can also be dragged onto the workspace.
 
