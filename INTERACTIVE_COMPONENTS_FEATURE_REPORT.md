@@ -1,5 +1,10 @@
 # Interactive Components Feature Report
 
+## Landing page and lab entry
+
+- The default route `/` is now a responsive landing page that explains the product, workflow, component families, guided projects, and honest simulation limits; its primary calls to action open the simulator at `/lab`.
+- The simulator’s top-bar brand returns to the landing page. Landing-page E2E coverage checks mobile layout, safety messaging, and navigation into the lab.
+
 ## Pushbutton
 
 - Four-terminal, normally-open momentary switch is available in the component library and Quick Add.
@@ -105,7 +110,7 @@
 ## Verification
 
 - 92 unit checks pass, including obstacle-aware and manual orthogonal wire routing, route-coordinate persistence/validation, bounded circuit undo/redo history, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all eighteen template compile/wiring-reference/fresh-ID checks.
-- 14 Playwright end-to-end tests pass, including manual wire-route dragging, save/open persistence, route reset and undo/redo, toolbar/keyboard history controls, analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, sensor behaviors, relay switching, and all eighteen ready-made projects.
+- 15 Playwright end-to-end tests pass, including the responsive landing page and lab entry, manual wire-route dragging, save/open persistence, route reset and undo/redo, toolbar/keyboard history controls, analogWrite-driven RGB brightness, joystick analog/digital input behavior, servo/motor controls, sensor behaviors, relay switching, and all eighteen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits

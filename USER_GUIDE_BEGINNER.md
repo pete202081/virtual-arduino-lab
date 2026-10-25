@@ -23,7 +23,7 @@ Welcome! This guide walks you through the Virtual Arduino Lab from first opening
 
 ## 1. Start here: run the ready-made Blink project
 
-On a first visit with no saved project, the app loads a ready-made example containing an Arduino Uno, breadboard, LED, 220 Ω resistor, three wires, and the Blink sketch. It is already wired as **D8 → resistor → LED → GND**.
+Open the landing page at `/` and choose **Start building** or **Open the Lab**. On a first visit with no saved project, the simulator loads a ready-made example containing an Arduino Uno, breadboard, LED, 220 Ω resistor, three wires, and the Blink sketch. It is already wired as **D8 → resistor → LED → GND**.
 
 1. Wait for the project to appear on the canvas.
 2. In the **Circuit Validation** panel, look for **`[VALID] Circuit looks valid`**.

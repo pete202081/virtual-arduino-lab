@@ -1,1062 +1,326 @@
-"use client";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { TopBar } from "@/components/layout/TopBar";
-import { ComponentPalette } from "@/components/layout/ComponentPalette";
-import { CircuitWorkspace } from "@/components/circuit/CircuitWorkspace";
-import { PropertiesPanel } from "@/components/layout/PropertiesPanel";
-import { Console } from "@/components/layout/Console";
-import { CodeEditor } from "@/components/editor/CodeEditor";
-import { ComponentInstance, ComponentType, Wire, ConsoleTab, SimulationState, SimulationEvent, STARTER_CODE } from "@/types/circuit";
-import { createArduinoUno, createBreadboard, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createPirSensor, createHcSr04Sensor, createTmp36Sensor, createRelayModule, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "@/circuit-engine/models/componentTemplates";
-import { generateId, formatTime } from "@/lib/utils";
-import { validateCircuit } from "@/circuit-engine/validation/validator";
-import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
-import { validateSketch, CompileResult } from "@/simulation/interfaces/compileAdapter";
-import { compileSimulationProgram, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, getDcMotorStates, getRelayStates, readDigitalPin, readAnalogPin, readUltrasonicPulseDuration, RuntimeSnapshot, RGBLedState, SevenSegmentState, ServoState, DcMotorState, SimulationRuntime } from "@/simulation/interfaces/simulationAdapter";
-import { createStarterCircuit } from "@/circuit-engine/models/starterCircuit";
-import { createBeginnerProject } from "@/circuit-engine/models/beginnerProjectTemplates";
-import type { BeginnerProjectId } from "@/circuit-engine/models/beginnerProjectTemplates";
-import { createProjectFile, listSavedProjects, loadMostRecentProject, loadProjectById, makeProjectFilename, MAX_PROJECT_BYTES, parseProjectFile, ProjectFile, SavedProjectSummary, saveProjectFile } from "@/lib/projectPersistence";
-import { CircuitHistory, type CircuitHistorySnapshot } from "@/lib/circuitHistory";
+import Link from "next/link";
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  AudioLines,
+  BookOpen,
+  Boxes,
+  Cable,
+  Check,
+  CircuitBoard,
+  Code2,
+  Cpu,
+  Gauge,
+  GitBranch,
+  Lightbulb,
+  MoveRight,
+  Play,
+  RotateCcw,
+  Save,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 
-export default function Home() {
-  const [projectName, setProjectName] = useState("Blink LED — Pin 8");
-  const [activeBeginnerProjectId, setActiveBeginnerProjectId] = useState<BeginnerProjectId | "">("");
-  const [projectId, setProjectId] = useState("");
-  const [projectCreatedAt, setProjectCreatedAt] = useState("");
-  const importInputRef = useRef<HTMLInputElement | null>(null);
-  const [components, setComponents] = useState<ComponentInstance[]>([]);
-  const [wires, setWires] = useState<Wire[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-  const [code, setCode] = useState(STARTER_CODE);
-  const [simulationState, setSimulationState] = useState<SimulationState>("IDLE");
-  const [logs, setLogs] = useState<SimulationEvent[]>([]);
-  const [activeTab, setActiveTab] = useState<ConsoleTab>("validation");
-  const [pendingWire, setPendingWire] = useState<{ startTerminalId: string; startComponentId: string } | null>(null);
-  const [wireColor, setWireColor] = useState("#EF4444");
-  const [wireToolActive, setWireToolActive] = useState(false);
-  const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
-  const [litLedIds, setLitLedIds] = useState<string[]>([]);
-  const [ledBrightnesses, setLedBrightnesses] = useState<Record<string, number>>({});
-  const [pressedButtonIds, setPressedButtonIds] = useState<string[]>([]);
-  const [slideSwitchOnIds, setSlideSwitchOnIds] = useState<string[]>([]);
-  const [buzzerFrequencies, setBuzzerFrequencies] = useState<Record<string, number>>({});
-  const [rgbLedStates, setRgbLedStates] = useState<Record<string, RGBLedState>>({});
-  const [sevenSegmentStates, setSevenSegmentStates] = useState<Record<string, SevenSegmentState>>({});
-  const [servoStates, setServoStates] = useState<Record<string, ServoState>>({});
-  const [motorStates, setMotorStates] = useState<Record<string, DcMotorState>>({});
-  const [serialBaud, setSerialBaud] = useState(9600);
-  const [showGuide, setShowGuide] = useState(false);
-  const [openProjectsDialog, setOpenProjectsDialog] = useState(false);
-  const [savedProjects, setSavedProjects] = useState<SavedProjectSummary[]>([]);
-  const [compileResult, setCompileResult] = useState<CompileResult | null>(null);
-  const runtimeRef = useRef<SimulationRuntime | null>(null);
-  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const componentsRef = useRef(components);
-  const wiresRef = useRef(wires);
-  const historyRef = useRef(new CircuitHistory(100));
-  const historyGestureSnapshotRef = useRef<CircuitHistorySnapshot | null>(null);
-  const historyGestureChangedRef = useRef(false);
-  const pressedButtonIdsRef = useRef<Set<string>>(new Set());
-  const slideSwitchOnIdsRef = useRef<Set<string>>(new Set());
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const oscillatorsRef = useRef<Map<string, { oscillator: OscillatorNode; gain: GainNode; frequency: number }>>(new Map());
-  componentsRef.current = components;
-  wiresRef.current = wires;
+const featureCards = [
+  {
+    icon: Boxes,
+    eyebrow: "DESIGN",
+    title: "A complete visual workbench",
+    text: "Place parts on a pan-and-zoom canvas, search and filter the component library, and use Quick Add for common parts.",
+    accent: "teal",
+  },
+  {
+    icon: Cable,
+    eyebrow: "CONNECT",
+    title: "Wiring that teaches",
+    text: "Connect terminals or breadboard holes. Automatic routes avoid component footprints; select a wire to drag its bend, then undo or reset it.",
+    accent: "blue",
+  },
+  {
+    icon: Code2,
+    eyebrow: "PROGRAM",
+    title: "A friendly Arduino sketch editor",
+    text: "Edit a sketch with helpful validation and a clearly documented, safe subset of Arduino-style instructions—no arbitrary code execution.",
+    accent: "violet",
+  },
+  {
+    icon: Play,
+    eyebrow: "SIMULATE",
+    title: "See cause and effect",
+    text: "Run, stop, and reset supported sketches. Watch LEDs, displays, motors, servos, buzzers, relays, and sensors respond to circuit inputs.",
+    accent: "amber",
+  },
+  {
+    icon: BookOpen,
+    eyebrow: "LEARN",
+    title: "18 guided starter projects",
+    text: "Explore ready-wired examples from Blink and traffic lights to joystick control, sensors, a motor driver, and breadboard basics.",
+    accent: "rose",
+  },
+  {
+    icon: Save,
+    eyebrow: "KEEP BUILDING",
+    title: "Projects stay yours",
+    text: "Save locally, reopen, duplicate, or export/import project JSON. Undo and redo circuit edits, including wire bends, up to 100 steps.",
+    accent: "cyan",
+  },
+];
 
-  const ensureAudioContext = useCallback(() => {
-    if (typeof window === "undefined" || !window.AudioContext) return;
-    try {
-      if (!audioContextRef.current || audioContextRef.current.state === "closed") audioContextRef.current = new window.AudioContext();
-      if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume().catch(() => undefined);
-    } catch {
-      // Visual buzzer state still works in browsers that block Web Audio.
-    }
-  }, []);
+const components = [
+  "Arduino Uno R3", "830-point breadboard", "LED + RGB LED", "Single-digit 7-segment", "220 Ω resistor",
+  "Pushbutton", "Slide switch", "Potentiometer", "LDR", "Joystick", "Servo", "DC motor + H-bridge",
+  "5V relay", "PIR", "HC-SR04", "TMP36", "Buzzer", "Jumper wires",
+];
 
-  const stopBuzzerAudio = useCallback(() => {
-    for (const node of oscillatorsRef.current.values()) {
-      try { node.gain.gain.setTargetAtTime(0, audioContextRef.current?.currentTime ?? 0, 0.01); node.oscillator.stop(); } catch { /* already stopped */ }
-      node.oscillator.disconnect();
-      node.gain.disconnect();
-    }
-    oscillatorsRef.current.clear();
-    setBuzzerFrequencies({});
-  }, []);
+const steps = [
+  { number: "01", icon: Boxes, title: "Build the circuit", text: "Add parts from the searchable library or Quick Add. Place them on the canvas and connect the terminals." },
+  { number: "02", icon: Code2, title: "Write a sketch", text: "Use the editor to shape a supported Arduino-style sketch. Validation points out common code and wiring problems." },
+  { number: "03", icon: Play, title: "Run and explore", text: "Start the simulation, change the modeled inputs, and observe what your circuit does. Save or export your project when ready." },
+];
 
-  const syncBuzzerAudio = useCallback((signals: Array<{ componentId: string; frequency: number }>) => {
-    const next = new Map(signals.map((signal) => [signal.componentId, signal.frequency]));
-    for (const [id, node] of oscillatorsRef.current) {
-      if (next.has(id)) continue;
-      try { node.gain.gain.setTargetAtTime(0, audioContextRef.current?.currentTime ?? 0, 0.01); node.oscillator.stop(); } catch { /* already stopped */ }
-      node.oscillator.disconnect();
-      node.gain.disconnect();
-      oscillatorsRef.current.delete(id);
-    }
-    const context = audioContextRef.current;
-    for (const [id, frequency] of next) {
-      const existing = oscillatorsRef.current.get(id);
-      if (existing) {
-        if (existing.frequency !== frequency && context) {
-          existing.oscillator.frequency.setTargetAtTime(frequency, context.currentTime, 0.01);
-          existing.frequency = frequency;
-        }
-        continue;
-      }
-      if (!context || context.state === "closed") continue;
-      try {
-        const oscillator = context.createOscillator();
-        const gain = context.createGain();
-        oscillator.type = "square";
-        oscillator.frequency.setValueAtTime(frequency, context.currentTime);
-        gain.gain.setValueAtTime(0, context.currentTime);
-        gain.gain.linearRampToValueAtTime(0.025, context.currentTime + 0.02);
-        oscillator.connect(gain);
-        gain.connect(context.destination);
-        oscillator.start();
-        oscillatorsRef.current.set(id, { oscillator, gain, frequency });
-      } catch {
-        // Keep the visual indicator even if the browser cannot start audio.
-      }
-    }
-    setBuzzerFrequencies(Object.fromEntries(next));
-  }, []);
+const codeFeatures = [
+  "Digital pin setup and HIGH/LOW output",
+  "Bounded digital and analog input checks",
+  "Visual PWM brightness on Uno PWM pins",
+  "Serial print, delays, tone() and noTone()",
+  "Restricted Servo attach()/write() behavior",
+  "Bounded HC-SR04 pulse-duration thresholds",
+];
 
-  const setButtonPressed = (id: string, pressed: boolean) => {
-    const next = new Set(pressedButtonIdsRef.current);
-    if (pressed) next.add(id);
-    else next.delete(id);
-    pressedButtonIdsRef.current = next;
-    setPressedButtonIds(Array.from(next));
-  };
-  const handleToggleSlideSwitch = (id: string) => {
-    const next = new Set(slideSwitchOnIdsRef.current);
-    const isOn = !next.has(id);
-    if (isOn) next.add(id);
-    else next.delete(id);
-    slideSwitchOnIdsRef.current = next;
-    setSlideSwitchOnIds(Array.from(next));
-    setComponents((current) => current.map((component) => component.id === id
-      ? { ...component, properties: { ...component.properties, isOn } }
-      : component));
-  };
-  const releaseAllButtons = useCallback(() => {
-    pressedButtonIdsRef.current = new Set();
-    setPressedButtonIds([]);
-  }, []);
-  const syncSlideSwitches = useCallback((items: ComponentInstance[]) => {
-    const ids = items.filter((component) => component.type === "slide-switch" && component.properties.isOn === true).map((component) => component.id);
-    slideSwitchOnIdsRef.current = new Set(ids);
-    setSlideSwitchOnIds(ids);
-  }, []);
+const accentClasses: Record<string, string> = {
+  teal: "bg-teal-50 text-teal-700 ring-teal-100",
+  blue: "bg-blue-50 text-blue-700 ring-blue-100",
+  violet: "bg-violet-50 text-violet-700 ring-violet-100",
+  amber: "bg-amber-50 text-amber-700 ring-amber-100",
+  rose: "bg-rose-50 text-rose-700 ring-rose-100",
+  cyan: "bg-cyan-50 text-cyan-700 ring-cyan-100",
+};
 
-  const captureCircuitSnapshot = useCallback((): CircuitHistorySnapshot => ({
-    components: structuredClone(componentsRef.current),
-    wires: structuredClone(wiresRef.current),
-  }), []);
-  const publishHistoryAvailability = useCallback(() => {
-    setCanUndo(historyRef.current.canUndo);
-    setCanRedo(historyRef.current.canRedo);
-  }, []);
-  const recordCircuitHistory = () => {
-    if (historyGestureSnapshotRef.current) return;
-    historyRef.current.push(captureCircuitSnapshot());
-    publishHistoryAvailability();
-  };
-  const beginHistoryGesture = useCallback(() => {
-    if (historyGestureSnapshotRef.current) return;
-    historyGestureSnapshotRef.current = captureCircuitSnapshot();
-    historyGestureChangedRef.current = false;
-  }, [captureCircuitSnapshot]);
-  const markHistoryGestureChanged = useCallback(() => {
-    if (historyGestureSnapshotRef.current) historyGestureChangedRef.current = true;
-  }, []);
-  const endHistoryGesture = useCallback(() => {
-    const before = historyGestureSnapshotRef.current;
-    const changed = historyGestureChangedRef.current;
-    historyGestureSnapshotRef.current = null;
-    historyGestureChangedRef.current = false;
-    if (before && changed && JSON.stringify(before) !== JSON.stringify(captureCircuitSnapshot())) {
-      historyRef.current.push(before);
-    }
-    publishHistoryAvailability();
-  }, [captureCircuitSnapshot, publishHistoryAvailability]);
-  const clearCircuitHistory = useCallback(() => {
-    historyRef.current.clear();
-    historyGestureSnapshotRef.current = null;
-    historyGestureChangedRef.current = false;
-    publishHistoryAvailability();
-  }, [publishHistoryAvailability]);
-  const restoreCircuitSnapshot = useCallback((snapshot: CircuitHistorySnapshot) => {
-    componentsRef.current = snapshot.components;
-    wiresRef.current = snapshot.wires;
-    setComponents(snapshot.components);
-    setWires(snapshot.wires);
-    syncSlideSwitches(snapshot.components);
-    setSelectedId((current) => current && (snapshot.components.some((component) => component.id === current) || snapshot.wires.some((wire) => wire.id === current)) ? current : null);
-  }, [syncSlideSwitches]);
-  const handleUndo = useCallback(() => {
-    if (historyGestureSnapshotRef.current) return;
-    const snapshot = historyRef.current.undo(captureCircuitSnapshot());
-    if (!snapshot) return;
-    restoreCircuitSnapshot(snapshot);
-    publishHistoryAvailability();
-  }, [captureCircuitSnapshot, publishHistoryAvailability, restoreCircuitSnapshot]);
-  const handleRedo = useCallback(() => {
-    if (historyGestureSnapshotRef.current) return;
-    const snapshot = historyRef.current.redo(captureCircuitSnapshot());
-    if (!snapshot) return;
-    restoreCircuitSnapshot(snapshot);
-    publishHistoryAvailability();
-  }, [captureCircuitSnapshot, publishHistoryAvailability, restoreCircuitSnapshot]);
-
-  useEffect(() => {
-    const handleHistoryShortcut = (event: KeyboardEvent) => {
-      const target = event.target;
-      if (target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select, [contenteditable='true'], .monaco-editor"))) return;
-      const modifier = event.ctrlKey || event.metaKey;
-      if (!modifier) return;
-      const key = event.key.toLowerCase();
-      if (key === "z") {
-        event.preventDefault();
-        if (event.shiftKey) handleRedo();
-        else handleUndo();
-      } else if (key === "y") {
-        event.preventDefault();
-        handleRedo();
-      }
-    };
-    window.addEventListener("keydown", handleHistoryShortcut);
-    return () => window.removeEventListener("keydown", handleHistoryShortcut);
-  }, [handleRedo, handleUndo]);
-
-  const syncOutputVisuals = (snapshot: RuntimeSnapshot) => {
-    const relayStates = getRelayStates(componentsRef.current, wiresRef.current, snapshot);
-    const relayStateById = new Map(relayStates.map((state) => [state.componentId, state.energized]));
-    let relayPropertiesChanged = false;
-    const nextComponents = componentsRef.current.map((component) => {
-      if (component.type !== "relay") return component;
-      const isEnergized = relayStateById.get(component.id) ?? false;
-      if (component.properties.isEnergized === isEnergized) return component;
-      relayPropertiesChanged = true;
-      return { ...component, properties: { ...component.properties, isEnergized } };
-    });
-    if (relayPropertiesChanged) {
-      componentsRef.current = nextComponents;
-      setComponents(nextComponents);
-    }
-    const brightnesses = getLedBrightnesses(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current);
-    setLedBrightnesses(Object.fromEntries(brightnesses.map(({ componentId, brightness }) => [componentId, brightness])));
-    const lit = brightnesses.filter((led) => led.brightness > 0).map((led) => led.componentId);
-    setLitLedIds(lit);
-    const rgbStates = getRGBLedStates(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current);
-    setRgbLedStates(Object.fromEntries(rgbStates.map((state) => [state.componentId, state])));
-    const displayStates = getSevenSegmentStates(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current);
-    setSevenSegmentStates(Object.fromEntries(displayStates.map((state) => [state.componentId, state])));
-    const servoOutputStates = getServoStates(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current);
-    setServoStates(Object.fromEntries(servoOutputStates.map((state) => [state.componentId, state])));
-    const motorOutputStates = getDcMotorStates(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current);
-    setMotorStates(Object.fromEntries(motorOutputStates.map((state) => [state.componentId, state])));
-    return lit;
-  };
-
-  const clearRelayStates = () => {
-    const nextComponents = componentsRef.current.map((component) => component.type === "relay" && component.properties.isEnergized === true
-      ? { ...component, properties: { ...component.properties, isEnergized: false } }
-      : component);
-    componentsRef.current = nextComponents;
-    setComponents(nextComponents);
-  };
-
-  const applyProjectFile = useCallback((file: ProjectFile) => {
-    clearCircuitHistory();
-    const project = file.project;
-    setProjectId(project.id);
-    setProjectCreatedAt(project.createdAt);
-    setProjectName(project.name);
-    setActiveBeginnerProjectId("");
-    setComponents(project.components);
-    syncSlideSwitches(project.components);
-    setWires(project.wires);
-    setCode(project.code);
-    setWireColor(project.settings.wireColor);
-    setSelectedId(null);
-    setLitLedIds([]);
-    setLedBrightnesses({});
-    setRgbLedStates({});
-    setSevenSegmentStates({});
-    setServoStates({});
-    setMotorStates({});
-    releaseAllButtons();
-    stopBuzzerAudio();
-    setSerialBaud(9600);
-    setCompileResult(null);
-    setSimulationState("IDLE");
-  }, [clearCircuitHistory, releaseAllButtons, stopBuzzerAudio, syncSlideSwitches]);
-
-  // Load the latest IndexedDB project (localStorage/legacy fallback handled by persistence service).
-  useEffect(() => {
-    let active = true;
-    setLogs([
-      { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Virtual Arduino Lab ready. Projects are saved locally in this browser." },
-      { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Use Save, Export JSON, or Import JSON from the project menu." },
-    ]);
-    loadMostRecentProject().then((saved) => {
-      if (!active) return;
-      if (saved?.success) {
-        applyProjectFile(saved.file);
-        setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Opened saved project “${saved.file.project.name}”.` }]);
-        if (saved.migrated) saveProjectFile(saved.file).catch(() => undefined);
-        return;
-      }
-      const starter = createStarterCircuit();
-      const now = new Date().toISOString();
-      setProjectId(generateId("project"));
-      setProjectCreatedAt(now);
-      setProjectName(starter.name);
-      setCode(starter.code);
-      setComponents(starter.components);
-      setWires(starter.wires);
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Loaded the pre-wired Blink LED starter circuit — ready to Run." }]);
-    }).catch(() => {
-      if (!active) return;
-      const starter = createStarterCircuit();
-      const now = new Date().toISOString();
-      setProjectId(generateId("project"));
-      setProjectCreatedAt(now);
-      setProjectName(starter.name);
-      setCode(starter.code);
-      setComponents(starter.components);
-      setWires(starter.wires);
-    });
-    return () => { active = false; };
-  }, [applyProjectFile]);
-
-  useEffect(() => () => {
-    runtimeRef.current?.stop();
-    stopBuzzerAudio();
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    if (audioContextRef.current?.state !== "closed") void audioContextRef.current?.close().catch(() => undefined);
-  }, [stopBuzzerAudio]);
-
-  const makeCurrentProjectFile = useCallback(() => {
-    const now = new Date().toISOString();
-    return createProjectFile({
-      id: projectId || generateId("project"),
-      name: projectName,
-      createdAt: projectCreatedAt || now,
-      updatedAt: now,
-      components,
-      wires,
-      code,
-      settings: { wireColor },
-    });
-  }, [projectId, projectName, projectCreatedAt, components, wires, code, wireColor]);
-
-  const saveProject = useCallback(async () => {
-    try {
-      const file = makeCurrentProjectFile();
-      const location = await saveProjectFile(file);
-      setProjectId(file.project.id);
-      setProjectCreatedAt(file.project.createdAt);
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Saved “${projectName}” to ${location} (${components.length} components, ${wires.length} wires).` }]);
-    } catch (error) {
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message: `Save failed: ${error instanceof Error ? error.message : "Unknown storage error."}` }]);
-    }
-    setActiveTab("logs");
-  }, [components, wires, projectName, makeCurrentProjectFile]);
-
-  const handleExportProject = () => {
-    try {
-      const file = makeCurrentProjectFile();
-      const text = JSON.stringify(file, null, 2);
-      if (new TextEncoder().encode(text).byteLength > MAX_PROJECT_BYTES) throw new Error("Project exceeds the 5 MB export limit.");
-      const blob = new Blob([text], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = makeProjectFilename(projectName);
-      anchor.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Exported ${anchor.download} as a versioned JSON project.` }]);
-      setActiveTab("logs");
-    } catch (error) {
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message: `Export failed: ${error instanceof Error ? error.message : "Unknown export error."}` }]);
-      setActiveTab("logs");
-    }
-  };
-
-  const handleImportProject = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (file.size > MAX_PROJECT_BYTES) {
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message: "Import rejected: file exceeds the 5 MB limit." }]);
-      setActiveTab("logs");
-      return;
-    }
-    try {
-      const result = parseProjectFile(await file.text());
-      if (!result.success) throw new Error(result.error);
-      runtimeRef.current?.stop();
-      runtimeRef.current = null;
-      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      applyProjectFile(result.file);
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Imported and validated “${result.file.project.name}”. Save it locally or export a copy.` }]);
-    } catch (error) {
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message: `Import rejected safely: ${error instanceof Error ? error.message : "Invalid project file."}` }]);
-    }
-    setActiveTab("logs");
-  };
-
-  const handleDuplicateProject = async () => {
-    const now = new Date().toISOString();
-    const copyName = `${projectName} (copy)`.slice(0, 120);
-    const duplicate = createProjectFile({
-      id: generateId("project"), name: copyName, createdAt: now, updatedAt: now,
-      components, wires, code, settings: { wireColor },
-    });
-    applyProjectFile(duplicate);
-    try {
-      const location = await saveProjectFile(duplicate);
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Duplicated as “${copyName}” and saved to ${location}.` }]);
-    } catch (error) {
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message: `Duplicate created in workspace but could not save: ${error instanceof Error ? error.message : "Storage error."}` }]);
-    }
-    setActiveTab("logs");
-  };
-
-  const handleResetStarter = () => {
-    if (!confirm("Replace the current workspace with the pre-wired Blink starter?")) return;
-    clearCircuitHistory();
-    runtimeRef.current?.stop();
-    runtimeRef.current = null;
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    const starter = createStarterCircuit();
-    const now = new Date().toISOString();
-    setProjectId(generateId("project"));
-    setProjectCreatedAt(now);
-    setProjectName(starter.name);
-    setActiveBeginnerProjectId("");
-    setComponents(starter.components);
-    syncSlideSwitches(starter.components);
-    setWires(starter.wires);
-    setCode(starter.code);
-    setWireColor("#EF4444");
-    setLitLedIds([]);
-    setLedBrightnesses({});
-    setRgbLedStates({});
-    setSevenSegmentStates({});
-    setServoStates({});
-    setMotorStates({});
-    releaseAllButtons();
-    stopBuzzerAudio();
-    setCompileResult(null);
-    setSimulationState("IDLE");
-    setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Reset to the pre-wired Blink LED starter example. Use Save to keep it." }]);
-    setActiveTab("logs");
-  };
-
-  const handleAddComponent = (type: ComponentType, extra?: string) => {
-    let comp: ComponentInstance | null = null;
-    const randX = type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "potentiometer" || type === "ldr" || type === "pir" || type === "hc-sr04" || type === "tmp36" || type === "relay" || type === "joystick" || type === "servo" || type === "dc-motor" || type === "h-bridge" || type === "rgb-led" || type === "seven-segment" ? 440 + Math.random() * 60 : 80 + Math.random() * 200;
-    const randY = type === "potentiometer" || type === "ldr" || type === "pir" || type === "hc-sr04" || type === "tmp36" || type === "relay" || type === "joystick" ? 250 + Math.random() * 60 : type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "servo" || type === "dc-motor" || type === "h-bridge" ? 130 + Math.random() * 100 : 80 + Math.random() * 120;
-    if (type === "arduino-uno") comp = createArduinoUno(randX, randY);
-    if (type === "breadboard") comp = createBreadboard(randX, randY + 80);
-    if (type === "led") comp = createLED(randX, randY, extra || "red");
-    if (type === "rgb-led") comp = createRGBLED(randX, randY);
-    if (type === "seven-segment") comp = createSevenSegmentDisplay(randX, randY);
-    if (type === "resistor") comp = createResistor(randX, randY, 220);
-    if (type === "pushbutton") comp = createPushButton(randX, randY);
-    if (type === "slide-switch") comp = createSlideSwitch(randX, randY);
-    if (type === "buzzer") comp = createBuzzer(randX, randY, extra === "passive" ? "passive" : "active");
-    if (type === "potentiometer") comp = createPotentiometer(randX, randY);
-    if (type === "ldr") comp = createLdrSensor(randX, randY);
-    if (type === "pir") comp = createPirSensor(randX, randY);
-    if (type === "hc-sr04") comp = createHcSr04Sensor(randX, randY);
-    if (type === "tmp36") comp = createTmp36Sensor(randX, randY);
-    if (type === "relay") comp = createRelayModule(randX, randY);
-    if (type === "joystick") comp = createJoystickModule(randX, randY);
-    if (type === "servo") comp = createServoMotor(randX, randY);
-    if (type === "dc-motor") comp = createDcMotor(randX, randY);
-    if (type === "h-bridge") comp = createHBridgeDriver(randX, randY);
-    if (comp) {
-      recordCircuitHistory();
-      setComponents((c) => [...c, comp!]);
-      setSelectedId(comp!.id);
-      setLogs((l) => [...l, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Added ${comp!.label} at (${Math.round(comp!.x)}, ${Math.round(comp!.y)})` }]);
-    }
-  };
-
-  const handleMove = (id: string, x: number, y: number) => {
-    setComponents((cs) => cs.map((c) => (c.id === id ? { ...c, x, y } : c)));
-    // Update wires' connected status is visual; graph in M2 will recompute nets
-  };
-
-  const handleDeleteComponent = (id: string) => {
-    recordCircuitHistory();
-    if (components.some((component) => component.id === id && component.type === "buzzer")) stopBuzzerAudio();
-    const nextSwitches = new Set(slideSwitchOnIdsRef.current);
-    nextSwitches.delete(id);
-    slideSwitchOnIdsRef.current = nextSwitches;
-    setSlideSwitchOnIds(Array.from(nextSwitches));
-    setButtonPressed(id, false);
-    setComponents((cs) => cs.filter((c) => c.id !== id));
-    // Remove wires attached to this component
-    setWires((ws) => ws.filter((w) => w.startComponentId !== id && w.endComponentId !== id));
-    setSelectedId(null);
-    setLogs((l) => [...l, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Deleted component ${id.slice(0, 12)}` }]);
-  };
-
-  const handleDeleteWire = (id: string) => {
-    recordCircuitHistory();
-    setWires((ws) => ws.filter((w) => w.id !== id));
-    setSelectedId(null);
-    setLogs((l) => [...l, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Deleted wire ${id.slice(0, 12)}` }]);
-  };
-
-  const handleSelect = (id: string | null) => {
-    setSelectedId(id);
-  };
-  const handleCodeChange = (nextCode: string) => {
-    setCode(nextCode);
-    setCompileResult(null);
-  };
-  const handleCodeReset = () => {
-    setCode(STARTER_CODE);
-    setCompileResult(null);
-  };
-
-  const handleUpdateComponent = (id: string, updates: Partial<ComponentInstance>) => {
-    recordCircuitHistory();
-    setComponents((cs) => cs.map((c) => (c.id === id ? { ...c, ...updates } : c)));
-  };
-
-  const handlePotentiometerChange = (id: string, value: number) => {
-    setComponents((current) => current.map((component) => component.id === id
-      ? { ...component, properties: { ...component.properties, value: Math.max(0, Math.min(1023, Math.round(value))) } }
-      : component));
-  };
-
-  const handleLdrLightLevelChange = (id: string, level: number) => {
-    setComponents((current) => current.map((component) => component.id === id
-      ? { ...component, properties: { ...component.properties, lightLevel: Math.max(0, Math.min(100, Math.round(level))) } }
-      : component));
-  };
-
-  const handleTemperatureChange = (id: string, temperature: number) => {
-    setComponents((current) => current.map((component) => component.id === id
-      ? { ...component, properties: { ...component.properties, temperatureC: Math.max(-40, Math.min(125, Math.round(temperature))) } }
-      : component));
-  };
-
-  const handleUltrasonicDistanceChange = (id: string, distance: number) => {
-    setComponents((current) => current.map((component) => component.id === id
-      ? { ...component, properties: { ...component.properties, distanceCm: Math.max(2, Math.min(400, Math.round(distance))) } }
-      : component));
-  };
-
-  const handlePirMotionToggle = (id: string) => {
-    setComponents((current) => current.map((component) => component.id === id
-      ? { ...component, properties: { ...component.properties, motionDetected: component.properties.motionDetected !== true } }
-      : component));
-  };
-
-  const handleJoystickAxisChange = (id: string, axis: "xValue" | "yValue", value: number) => {
-    setComponents((current) => current.map((component) => component.id === id
-      ? { ...component, properties: { ...component.properties, [axis]: Math.max(0, Math.min(1023, Math.round(value))) } }
-      : component));
-  };
-
-  const handleUpdateWire = (id: string, updates: Partial<Wire>) => {
-    recordCircuitHistory();
-    setWires((ws) => ws.map((w) => (w.id === id ? { ...w, ...updates } : w)));
-  };
-
-  const handleRotate = (id: string) => {
-    recordCircuitHistory();
-    setComponents((cs) => cs.map((c) => (c.id === id ? { ...c, rotation: (c.rotation + 90) % 360 } : c)));
-  };
-
-  const handleWireStart = (tid: string, compId: string) => {
-    setPendingWire({ startTerminalId: tid, startComponentId: compId });
-    setWireToolActive(true);
-    setLogs((l) => [...l, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Wire start: ${tid} — now click destination terminal` }]);
-    setActiveTab("logs");
-  };
-  const handleWireEnd = (tid: string, compId: string) => {
-    if (!pendingWire) return;
-    if (pendingWire.startTerminalId === tid) {
-      setPendingWire(null);
-      return;
-    }
-    // Check duplicate wire
-    const exists = wires.some(
-      (w) =>
-        (w.startTerminalId === pendingWire.startTerminalId && w.endTerminalId === tid) ||
-        (w.startTerminalId === tid && w.endTerminalId === pendingWire.startTerminalId)
-    );
-    if (exists) {
-      setLogs((l) => [...l, { id: generateId("log"), timestamp: formatTime(), type: "warning", message: `Wire already exists between those terminals.` }]);
-      setPendingWire(null);
-      setWireToolActive(false);
-      return;
-    }
-    const newWire: Wire = {
-      id: generateId("wire"),
-      startTerminalId: pendingWire.startTerminalId,
-      endTerminalId: tid,
-      startComponentId: pendingWire.startComponentId,
-      endComponentId: compId,
-      color: wireColor,
-    };
-    recordCircuitHistory();
-    setWires((ws) => [...ws, newWire]);
-    // Mark terminals as connected
-    setComponents((cs) =>
-      cs.map((c) => ({
-        ...c,
-        terminals: c.terminals.map((t) => (t.id === pendingWire.startTerminalId || t.id === tid ? { ...t, connected: true } : t)),
-      }))
-    );
-    setLogs((l) => [
-      ...l,
-      { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Wire created: ${pendingWire.startTerminalId} → ${tid} (${wireColor})` },
-    ]);
-    setPendingWire(null);
-    setWireToolActive(false);
-  };
-  const handleCancelWire = () => {
-    setPendingWire(null);
-    setWireToolActive(false);
-  };
-
-  // M4 safe interpreter: supported sketch statements drive virtual pin state and circuit nets.
-  const handleRun = () => {
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    runtimeRef.current?.stop();
-    runtimeRef.current = null;
-    setLitLedIds([]);
-    setLedBrightnesses({});
-    setRgbLedStates({});
-    setSevenSegmentStates({});
-    setServoStates({});
-    setMotorStates({});
-    releaseAllButtons();
-    stopBuzzerAudio();
-    const sketchCheck = validateSketch(code);
-    const interpreted = compileSimulationProgram(code);
-    const errors = [
-      ...sketchCheck.errors.map((error) => ({ line: error.line, column: error.column, message: error.message, severity: "error" as const })),
-      ...interpreted.errors.map((error) => ({ line: error.line, column: 0, message: error.message, severity: "error" as const })),
-    ];
-    setCompileResult({ ...sketchCheck, success: errors.length === 0, errors });
-    if (!sketchCheck.success || !interpreted.success || !interpreted.program) {
-      setSimulationState("ERROR");
-      setLogs((current) => [
-        ...current,
-        { id: generateId("log"), timestamp: formatTime(), type: "error", message: `Simulation rejected: ${errors.length} compile/adapter error(s).` },
-        ...errors.map((error) => ({ id: generateId("log"), timestamp: formatTime(), type: "error" as const, message: `Line ${error.line}: ${error.message}` })),
-      ]);
-      setActiveTab("logs");
-      transitionTimerRef.current = setTimeout(() => setSimulationState("IDLE"), 2500);
-      return;
-    }
-    if (!components.some((component) => component.type === "arduino-uno")) {
-      setSimulationState("ERROR");
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message: "Cannot run: add an Arduino Uno R3 to the workspace." }]);
-      setActiveTab("validation");
-      transitionTimerRef.current = setTimeout(() => setSimulationState("IDLE"), 2000);
-      return;
-    }
-
-    ensureAudioContext();
-    syncBuzzerAudio(getBuzzerSignals(components, wires, { modes: new Map(), levels: new Map(), tones: new Map() }, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current));
-    const circuitIssues = validateCircuit(components, wires, code).filter((message) => message.severity !== "info");
-    setSimulationState("VALIDATING");
-    setActiveTab("logs");
-    setLogs((current) => [
-      ...current,
-      { id: generateId("log"), timestamp: formatTime(), type: "info", message: "M4: validating sketch and circuit connectivity…" },
-      ...sketchCheck.warnings.map((warning) => ({ id: generateId("log"), timestamp: formatTime(), type: "warning" as const, message: `Line ${warning.line}: ${warning.message}` })),
-      ...circuitIssues.map((issue) => ({ id: generateId("log"), timestamp: formatTime(), type: issue.severity === "error" ? "error" as const : "warning" as const, message: `[${issue.code}] ${issue.message}` })),
-    ]);
-
-    transitionTimerRef.current = setTimeout(() => {
-      setSimulationState("COMPILING");
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "M4 adapter compiled supported setup()/loop() instructions — no native AVR binary." }]);
-      transitionTimerRef.current = setTimeout(() => {
-        setSimulationState("RUNNING");
-        setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Simulation running: sketch statements, delay timing, serial output, and connected LED pin state are active." }]);
-        const runtime = new SimulationRuntime(interpreted.program!, {
-          onPinChange: (pin, level, snapshot: RuntimeSnapshot) => {
-            const lit = syncOutputVisuals(snapshot);
-            syncBuzzerAudio(getBuzzerSignals(componentsRef.current, wiresRef.current, snapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current));
-            setLogs((current) => [
-              ...current,
-              { id: generateId("log"), timestamp: formatTime(), type: "pin-change", message: `D${pin} → ${level}${lit.length ? ` • ${lit.length} connected LED(s) ON` : " • no forward-biased LED path"}` },
-            ]);
-          },
-          onPwmChange: (pin, value, snapshot) => {
-            const lit = syncOutputVisuals(snapshot);
-            setLogs((current) => [
-              ...current,
-              { id: generateId("log"), timestamp: formatTime(), type: "pin-change", message: `D${pin} PWM → ${value}/255${lit.length ? ` • ${lit.length} connected LED(s) ON` : " • no forward-biased LED path"}` },
-            ]);
-          },
-          onServoChange: (pin, angle, snapshot) => {
-            syncOutputVisuals(snapshot);
-            setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "pin-change", message: `D${pin} servo → ${angle}° (${Math.round(1000 + (angle / 180) * 1000)} µs @ 50 Hz)` }]);
-          },
-          onDigitalRead: (pin, runtimeSnapshot) => readDigitalPin(pin, runtimeSnapshot.modes, componentsRef.current, wiresRef.current, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current),
-          onPulseIn: (pin, timeout, runtimeSnapshot) => readUltrasonicPulseDuration(pin, timeout, componentsRef.current, wiresRef.current, runtimeSnapshot),
-          onAnalogRead: (pin) => readAnalogPin(pin, componentsRef.current, wiresRef.current),
-          onToneChange: (_pin, _frequency, runtimeSnapshot) => syncBuzzerAudio(getBuzzerSignals(componentsRef.current, wiresRef.current, runtimeSnapshot, pressedButtonIdsRef.current, slideSwitchOnIdsRef.current)),
-          onSerial: (text) => setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "serial", message: text }]),
-          onBaud: (baud) => setSerialBaud(baud),
-          onError: (message) => {
-            setSimulationState("ERROR");
-            setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message }]);
-          },
-        });
-        runtimeRef.current = runtime;
-        runtime.start();
-      }, 180);
-    }, 180);
-  };
-
-  const handleStop = () => {
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    runtimeRef.current?.stop();
-    runtimeRef.current = null;
-    setSimulationState("STOPPED");
-    clearRelayStates();
-    setLitLedIds([]);
-    setLedBrightnesses({});
-    setRgbLedStates({});
-    setSevenSegmentStates({});
-    setServoStates({});
-    setMotorStates({});
-    releaseAllButtons();
-    stopBuzzerAudio();
-    setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Simulation stopped; timers cancelled, buttons released, and LEDs turned off." }]);
-    transitionTimerRef.current = setTimeout(() => setSimulationState("IDLE"), 800);
-  };
-  const handleReset = () => {
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    runtimeRef.current?.stop();
-    runtimeRef.current = null;
-    setSimulationState("RESET");
-    clearRelayStates();
-    setLitLedIds([]);
-    setLedBrightnesses({});
-    setRgbLedStates({});
-    setSevenSegmentStates({});
-    setServoStates({});
-    setMotorStates({});
-    releaseAllButtons();
-    stopBuzzerAudio();
-    setSerialBaud(9600);
-    setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Reset: interpreter stopped, pins cleared, buttons released, LED off, serial baud restored to 9600." }]);
-    transitionTimerRef.current = setTimeout(() => setSimulationState("IDLE"), 500);
-  };
-
-  const handleLoadBeginnerProject = (id: BeginnerProjectId) => {
-    clearCircuitHistory();
-    const template = createBeginnerProject(id);
-    runtimeRef.current?.stop();
-    runtimeRef.current = null;
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    releaseAllButtons();
-    stopBuzzerAudio();
-    setLitLedIds([]);
-    setLedBrightnesses({});
-    setRgbLedStates({});
-    setSevenSegmentStates({});
-    setServoStates({});
-    setMotorStates({});
-    setSimulationState("IDLE");
-    setProjectId(generateId("project"));
-    const now = new Date().toISOString();
-    setProjectCreatedAt(now);
-    setProjectName(template.name);
-    setActiveBeginnerProjectId(template.id);
-    setComponents(template.components);
-    syncSlideSwitches(template.components);
-    setWires(template.wires);
-    setCode(template.code);
-    setSelectedId(template.focusComponentId);
-    setPendingWire(null);
-    setWireToolActive(false);
-    setWireColor("#EF4444");
-    setSerialBaud(9600);
-    setCompileResult(null);
-    setLogs([{ id: generateId("log"), timestamp: formatTime(), type: "info", message: `Loaded “${template.name}”. ${template.description} Review the selected component’s Properties panel, then Run or edit the sketch.` }]);
-    setActiveTab("logs");
-  };
-
-  const handleNew = () => {
-    if (confirm("Create a blank project? Unsaved changes will be lost.")) {
-      clearCircuitHistory();
-      runtimeRef.current?.stop();
-      runtimeRef.current = null;
-      if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-      const now = new Date().toISOString();
-      setProjectId(generateId("project"));
-      setProjectCreatedAt(now);
-      setLitLedIds([]);
-    setLedBrightnesses({});
-      setRgbLedStates({});
-      setSevenSegmentStates({});
-      setServoStates({});
-      setMotorStates({});
-      releaseAllButtons();
-      stopBuzzerAudio();
-      setSimulationState("IDLE");
-      setComponents([]);
-      syncSlideSwitches([]);
-      setWires([]);
-      setCode(STARTER_CODE);
-      setCompileResult(null);
-      setWireColor("#EF4444");
-      setProjectName("New Project");
-      setActiveBeginnerProjectId("");
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Blank project created. Add components, then save or export." }]);
-      setSelectedId(null);
-    }
-  };
-  const handleOpen = async () => {
-    const projects = await listSavedProjects().catch(() => []);
-    if (projects.length === 0) {
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "warning", message: "No saved project was found in this browser. Use Import JSON to open a project file." }]);
-      setActiveTab("logs");
-      return;
-    }
-    setSavedProjects(projects);
-    setOpenProjectsDialog(true);
-  };
-  const handleChooseProject = async (id: string) => {
-    runtimeRef.current?.stop();
-    runtimeRef.current = null;
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    setLitLedIds([]);
-    setLedBrightnesses({});
-    setRgbLedStates({});
-    setSevenSegmentStates({});
-    setServoStates({});
-    setMotorStates({});
-    setSimulationState("IDLE");
-    const result = await loadProjectById(id).catch(() => null);
-    if (!result?.success) {
-      setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "error", message: "Could not open this saved project; its record may be corrupt." }]);
-      setActiveTab("logs");
-      return;
-    }
-    applyProjectFile(result.file);
-    setOpenProjectsDialog(false);
-    setLogs((current) => [...current, { id: generateId("log"), timestamp: formatTime(), type: "info", message: `Opened saved project “${result.file.project.name}”.` }]);
-    setActiveTab("logs");
-  };
-
-  const selectedComponent = components.find((c) => c.id === selectedId) || null;
-  const selectedWire = wires.find((w) => w.id === selectedId) || null;
-
-  // M2: Real circuit validation via graph + breadboard
-  const validationMessages = validateCircuit(components, wires, code);
-  const circuitGraph = buildCircuitGraph(components, wires);
-
-  // Update terminal connected flags based on graph (breadboard internal nets + wires)
-  // We compute connected state: terminal is connected if its net has >1 terminal
-  useEffect(() => {
-    setComponents((prev) => {
-      let changed = false;
-      const next = prev.map((comp) => {
-        const updatedTerms = comp.terminals.map((t) => {
-          const net = circuitGraph.getNetForTerminal(t.id);
-          const shouldBeConnected = net ? net.terminals.length > 1 : false;
-          if (t.connected !== shouldBeConnected) {
-            changed = true;
-            return { ...t, connected: shouldBeConnected };
-          }
-          return t;
-        });
-        if (changed) return { ...comp, terminals: updatedTerms };
-        return comp;
-      });
-      return changed ? next : prev;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wires, components.length]); // only recompute when wires change or component count changes to avoid loop
-
-  // Preserve connections on move is already handled: wires reference terminal IDs, not positions
-
+export default function LandingPage() {
   return (
-    <div className="h-screen flex flex-col bg-[#F1F3F6] overflow-hidden">
-      <input ref={importInputRef} type="file" accept="application/json,.json" className="hidden" aria-label="Import Virtual Arduino Lab project" onChange={handleImportProject} />
-      <TopBar
-        projectName={projectName}
-        onNew={handleNew}
-        onSave={saveProject}
-        onOpen={handleOpen}
-        onDuplicate={handleDuplicateProject}
-        onExport={handleExportProject}
-        onImport={() => importInputRef.current?.click()}
-        onResetStarter={handleResetStarter}
-        simulationState={simulationState}
-        onRun={handleRun}
-        onStop={handleStop}
-        onReset={handleReset}
-        onRename={setProjectName}
-        activeBeginnerProjectId={activeBeginnerProjectId}
-        onLoadBeginnerProject={handleLoadBeginnerProject}
-        onAddComponent={(type) => handleAddComponent(type)}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-      />
-
-      <div className="flex-1 flex overflow-hidden">
-        <ComponentPalette onAddComponent={handleAddComponent} onSelectWireTool={() => setWireToolActive((v) => !v)} wireToolActive={wireToolActive || !!pendingWire} isCollapsed={isPaletteCollapsed} onToggleCollapse={() => setIsPaletteCollapsed((collapsed) => !collapsed)} />
-
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          <CircuitWorkspace
-            key={projectId}
-            components={components}
-            wires={wires}
-            selectedId={selectedId}
-            onSelect={handleSelect}
-            onMoveComponent={handleMove}
-            onHistoryGestureStart={beginHistoryGesture}
-            onHistoryGestureChange={markHistoryGestureChanged}
-            onHistoryGestureEnd={endHistoryGesture}
-            onDeleteComponent={handleDeleteComponent}
-            onDeleteWire={handleDeleteWire}
-            onUpdateWireRoute={handleUpdateWire}
-            onWireStart={handleWireStart}
-            onWireEnd={handleWireEnd}
-            pendingWire={pendingWire}
-            onCancelWire={handleCancelWire}
-            wireColor={wireColor}
-            setWireColor={setWireColor}
-            litLedIds={simulationState === "RUNNING" ? litLedIds : []}
-            ledBrightnesses={simulationState === "RUNNING" ? ledBrightnesses : {}}
-            pressedButtonIds={pressedButtonIds}
-            slideSwitchOnIds={slideSwitchOnIds}
-            onSlideSwitchToggle={handleToggleSlideSwitch}
-            buzzerFrequencies={simulationState === "RUNNING" ? buzzerFrequencies : {}}
-            onPotentiometerChange={handlePotentiometerChange}
-            onLdrLightLevelChange={handleLdrLightLevelChange}
-            onPirMotionToggle={handlePirMotionToggle}
-            onUltrasonicDistanceChange={handleUltrasonicDistanceChange}
-            onTemperatureChange={handleTemperatureChange}
-            onJoystickAxisChange={handleJoystickAxisChange}
-            rgbLedStates={simulationState === "RUNNING" ? rgbLedStates : {}}
-            sevenSegmentStates={simulationState === "RUNNING" ? sevenSegmentStates : {}}
-            servoStates={simulationState === "RUNNING" ? servoStates : {}}
-            motorStates={simulationState === "RUNNING" ? motorStates : {}}
-            fitToComponents={Boolean(activeBeginnerProjectId)}
-            onButtonPressStart={(id) => setButtonPressed(id, true)}
-            onButtonPressEnd={(id) => setButtonPressed(id, false)}
-          />
-          <Console activeTab={activeTab} onChangeTab={setActiveTab} logs={logs} onClear={() => setLogs([])} validationMessages={validationMessages} serialBaud={serialBaud} />
+    <main className="landing-page min-h-screen overflow-x-hidden bg-[#F6F8FB] text-[#102142]">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-[72px] max-w-[1240px] items-center justify-between px-5 lg:px-8">
+          <Link href="/" className="group flex items-center gap-3" aria-label="Virtual Arduino Lab home">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0E9A8B] text-white shadow-lg shadow-teal-900/15 transition group-hover:-rotate-3">
+              <CircuitBoard className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block text-[13px] font-black tracking-[0.11em]">VIRTUAL ARDUINO LAB</span>
+              <span className="mt-0.5 block text-[11px] font-medium text-slate-500">Learn by building</span>
+            </span>
+          </Link>
+          <nav aria-label="Main navigation" className="hidden items-center gap-8 text-[13px] font-semibold text-slate-600 md:flex">
+            <a className="transition hover:text-[#0E9A8B]" href="#features">Features</a>
+            <a className="transition hover:text-[#0E9A8B]" href="#how-it-works">How it works</a>
+            <a className="transition hover:text-[#0E9A8B]" href="#components">Components</a>
+            <a className="transition hover:text-[#0E9A8B]" href="#simulation">Simulation scope</a>
+          </nav>
+          <Link href="/lab" className="group inline-flex h-10 items-center gap-2 rounded-xl bg-[#102142] px-4 text-[13px] font-bold text-white shadow-md shadow-slate-900/10 transition hover:-translate-y-0.5 hover:bg-[#18345f]">
+            Open the Lab <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          </Link>
         </div>
+      </header>
 
-        <CodeEditor code={code} onChange={handleCodeChange} onReset={handleCodeReset} compileResult={compileResult || undefined} />
-
-        <PropertiesPanel
-          selectedComponent={selectedComponent}
-          selectedWire={selectedWire}
-          onUpdateComponent={handleUpdateComponent}
-          onUpdateWire={handleUpdateWire}
-          onDelete={() => {
-            if (selectedComponent) handleDeleteComponent(selectedComponent.id);
-            if (selectedWire) handleDeleteWire(selectedWire.id);
-          }}
-          onRotate={handleRotate}
-          onToggleSlideSwitch={handleToggleSlideSwitch}
-          pressedButtonIds={pressedButtonIds}
-          onJoystickButtonPressStart={(id) => setButtonPressed(id, true)}
-          onJoystickButtonPressEnd={(id) => setButtonPressed(id, false)}
-          onJoystickAxisChange={handleJoystickAxisChange}
-        />
-      </div>
-
-      {/* Footer status */}
-      <div className="h-5 bg-[#0F2142] text-white flex items-center px-3 gap-3 text-[10px] shrink-0 border-t border-[#1a345f]">
-        <span>M5 Ready: local persistence + JSON import/export ✓ ({circuitGraph.nets.length} nets)</span>
-        <span className="opacity-50">|</span>
-        <span>
-          {components.length} components • {wires.length} wires • {validationMessages.filter((m) => m.severity === "error").length} errors
-        </span>
-        <span className="opacity-50">|</span>
-        <span className="hidden md:inline">Validated: {validationMessages.find((m) => m.code === "VALID") ? "Valid ✓" : validationMessages.some((m) => m.severity === "error") ? "Errors" : "WIP"}</span>
-        <button onClick={() => setShowGuide(true)} className="ml-auto px-2 py-0.5 bg-[#0E9A8B] hover:bg-[#0b8a7c] rounded text-white font-bold">
-          How to use this lab →
-        </button>
-      </div>
-
-      {/* Saved project picker */}
-      {openProjectsDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onClick={() => setOpenProjectsDialog(false)}>
-          <div role="dialog" aria-modal="true" aria-labelledby="open-project-title" className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between bg-[#0F2142] p-4 text-white">
-              <div><h2 id="open-project-title" className="font-extrabold">Open a saved project</h2><p className="text-xs text-white/70">Stored locally in this browser — nothing is uploaded.</p></div>
-              <button onClick={() => setOpenProjectsDialog(false)} className="rounded px-2 py-1 text-white/80 hover:bg-white/10" aria-label="Close project picker">✕</button>
+      <section className="relative isolate overflow-hidden">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-36 -top-40 -z-10 h-[580px] w-[580px] rounded-full bg-teal-200/30 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -left-48 top-64 -z-10 h-[480px] w-[480px] rounded-full bg-blue-200/25 blur-3xl" />
+        <div className="mx-auto grid max-w-[1240px] items-center gap-14 px-5 pb-20 pt-16 md:grid-cols-[1.04fr_.96fr] md:gap-10 md:pb-24 md:pt-24 lg:px-8 lg:pt-28">
+          <div className="max-w-[630px]">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-200/80 bg-white/80 px-3.5 py-2 text-[11px] font-bold tracking-wide text-teal-800 shadow-sm">
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-teal-600" /></span>
+              A browser-based circuit learning studio
             </div>
-            <div className="max-h-[55vh] space-y-2 overflow-auto p-4">
-              {savedProjects.map((project) => (
-                <button key={project.id} onClick={() => void handleChooseProject(project.id)} className="w-full rounded-xl border border-slate-200 p-3 text-left hover:border-[#0E9A8B] hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-[#0E9A8B]">
-                  <span className="block text-sm font-bold text-slate-800">{project.name}</span>
-                  <span className="mt-1 block text-xs text-slate-500">{project.componentCount} components · {project.wireCount} wires · Saved {new Date(project.updatedAt).toLocaleString()}</span>
-                </button>
-              ))}
+            <h1 className="text-[clamp(2.8rem,6vw,5.4rem)] font-black leading-[.99] tracking-[-.065em] text-[#102142]">
+              Build circuits.
+              <span className="mt-1 block bg-gradient-to-r from-[#0E9A8B] via-teal-600 to-blue-600 bg-clip-text text-transparent">See ideas light up.</span>
+            </h1>
+            <p className="mt-7 max-w-[570px] text-[16px] leading-7 text-slate-600 md:text-[18px] md:leading-8">
+              Create Arduino-style circuits, write a sketch, and learn from the result—all in one visual lab. Start with a guided project or make something of your own.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Link href="/lab" className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#0E9A8B] px-6 text-sm font-extrabold text-white shadow-lg shadow-teal-900/15 transition hover:-translate-y-0.5 hover:bg-[#0b887c]">
+                <Zap className="h-4 w-4 fill-current" /> Start building <ArrowRight className="ml-1 h-4 w-4 transition group-hover:translate-x-1" />
+              </Link>
+              <a href="#how-it-works" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50">
+                See how it works <ArrowDownRight className="h-4 w-4" />
+              </a>
             </div>
-            <div className="border-t border-slate-200 p-3 text-right"><button onClick={() => setOpenProjectsDialog(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Cancel</button></div>
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold text-slate-500">
+              <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-teal-700" /> Safe, bounded sketch interpreter</span>
+              <span className="inline-flex items-center gap-1.5"><Save className="h-3.5 w-3.5 text-teal-700" /> Local project saves</span>
+              <span className="inline-flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-teal-700" /> No hardware required to explore</span>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Guide Modal */}
-      {showGuide && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowGuide(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-[#0F2142] text-white p-4">
-              <div className="font-extrabold">How to use this lab</div>
-              <div className="text-xs text-white/70">Follow these 7 steps to build the hero circuit</div>
-            </div>
-            <div className="p-4 space-y-3 text-sm">
-              <ol className="list-decimal list-inside space-y-1.5 text-slate-700">
-                <li>
-                  <b>Add Arduino Uno R3</b> from left palette (click or drag)
-                </li>
-                <li>
-                  <b>Add Breadboard</b> underneath
-                </li>
-                <li>
-                  <b>Add LED</b> (choose color) and <b>220Ω Resistor</b>
-                </li>
-                <li>
-                  <b>Select Wire Tool</b> → click <b>Arduino D8</b> → click <b>Resistor A</b>
-                </li>
-                <li>Wire <b>Resistor B → LED Anode (A)</b></li>
-                <li>Wire <b>LED Cathode (C) → Arduino GND</b></li>
-                <li>
-                  <b>Click Run</b> on top bar — supported sketch instructions now drive output pins; LED lights only when wiring, polarity, and pin state form a forward path
-                </li>
-              </ol>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs">
-                <b>Beginner tip:</b> Breadboard center trench is not connected — top 5-hole columns ≠ bottom. Power rails are separate.
+          <div className="relative mx-auto w-full max-w-[570px]">
+            <div aria-hidden="true" className="absolute -inset-5 rounded-[36px] bg-gradient-to-br from-teal-300/30 via-blue-200/20 to-indigo-200/30 blur-2xl" />
+            <div className="relative overflow-hidden rounded-[26px] border border-white bg-white shadow-[0_28px_90px_-30px_rgba(16,33,66,.28)] ring-1 ring-slate-200/70">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#102142] text-teal-300"><Cpu className="h-4 w-4" /></span>
+                  <div><div className="text-[12px] font-extrabold text-[#102142]">Circuit workspace</div><div className="text-[10px] text-slate-400">Blink LED · Pin 8</div></div>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ready to run</span>
               </div>
-              <button onClick={() => setShowGuide(false)} className="w-full h-9 bg-[#0E9A8B] hover:bg-[#0b8a7c] text-white rounded-lg font-bold">
-                Got it — start building
-              </button>
+              <div className="relative h-[330px] overflow-hidden bg-[#F7F9FC] p-5 sm:h-[370px]">
+                <div aria-hidden="true" className="absolute inset-0 opacity-40" style={{ backgroundImage: "radial-gradient(#aab8c9 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
+                <div className="absolute left-8 top-16 z-10 w-[132px] rounded-xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-900/5 sm:left-10 sm:w-[148px]">
+                  <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#102142] text-[9px] font-black text-white">UNO</span><span className="text-[10px] font-extrabold text-slate-800">Arduino Uno</span></div>
+                  <div className="mt-3 grid grid-cols-4 gap-1">{Array.from({ length: 12 }, (_, index) => <span key={index} className={`h-1.5 rounded-full ${index === 7 ? "bg-teal-500" : "bg-slate-200"}`} />)}</div>
+                  <div className="mt-2 text-[8px] font-mono text-slate-400">D8 · GND · 5V</div>
+                </div>
+                <div className="absolute right-7 top-12 z-10 w-[174px] rounded-xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-900/5 sm:right-9 sm:w-[205px]">
+                  <div className="mb-2 flex items-center justify-between"><span className="text-[10px] font-extrabold text-slate-700">Breadboard</span><span className="text-[8px] font-mono text-slate-400">A–J · 1–30</span></div>
+                  <div className="rounded-lg border border-slate-100 bg-[#FBFCFD] p-2">
+                    <div className="mb-2 flex gap-1">{Array.from({ length: 10 }, (_, index) => <span key={`n${index}`} className="flex-1 text-center text-[6px] text-slate-400">{index * 3 + 1}</span>)}</div>
+                    <div className="grid grid-cols-10 gap-x-1.5 gap-y-1">{Array.from({ length: 50 }, (_, index) => <span key={index} className={`mx-auto h-1.5 w-1.5 rounded-full ${index === 21 || index === 31 ? "bg-teal-500 ring-2 ring-teal-100" : "bg-slate-300"}`} />)}</div>
+                    <div className="my-2 h-1 border-y border-dashed border-slate-200" />
+                    <div className="grid grid-cols-10 gap-x-1.5 gap-y-1">{Array.from({ length: 50 }, (_, index) => <span key={`b${index}`} className="mx-auto h-1.5 w-1.5 rounded-full bg-slate-300" />)}</div>
+                  </div>
+                  <div className="mt-2 flex justify-between text-[7px] font-semibold text-slate-400"><span className="text-red-400">+ POWER</span><span className="text-blue-400">− GROUND</span></div>
+                </div>
+                <svg className="absolute inset-0 z-20 h-full w-full" viewBox="0 0 570 370" fill="none" aria-hidden="true">
+                  <path d="M184 118 H247 V123 H365" stroke="#0E9A8B" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M365 123 H418 V148" stroke="#EF4444" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M445 148 V229 H260 V213" stroke="#25334a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M260 213 V255 H171 V220" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5 6" />
+                  <circle cx="247" cy="123" r="5" fill="white" stroke="#0E9A8B" strokeWidth="3" />
+                  <circle cx="418" cy="148" r="5" fill="white" stroke="#EF4444" strokeWidth="3" />
+                  <circle cx="260" cy="213" r="5" fill="white" stroke="#25334a" strokeWidth="3" />
+                </svg>
+                <div className="absolute bottom-7 left-8 z-30 flex items-center gap-2 rounded-lg border border-teal-100 bg-white/95 px-3 py-2 shadow-md sm:left-10">
+                  <span className="relative flex h-7 w-7 items-center justify-center"><span className="absolute h-7 w-7 animate-pulse rounded-full bg-red-300/40" /><Lightbulb className="relative h-5 w-5 fill-amber-300 text-amber-500" /></span>
+                  <div><div className="text-[9px] font-extrabold text-slate-800">LED · ON</div><div className="text-[8px] text-slate-400">D8 → resistor → GND</div></div>
+                </div>
+                <div className="absolute bottom-6 right-7 z-30 flex items-center gap-1 rounded-lg bg-[#102142] px-3 py-2 text-[9px] font-bold text-white shadow-md sm:right-9"><GitBranch className="h-3.5 w-3.5 text-teal-300" /> 3 connected nets</div>
+              </div>
+              <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-[10px] text-slate-500">
+                <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Circuit graph validated</span>
+                <span className="font-mono">4 parts · 3 wires</span>
+              </div>
+            </div>
+            <div className="absolute -bottom-7 -left-4 hidden items-center gap-2 rounded-xl border border-white bg-white px-3.5 py-2.5 text-[10px] font-bold text-slate-700 shadow-xl shadow-slate-900/10 sm:flex">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600"><Zap className="h-4 w-4" /></span> Visual PWM + sensor inputs
+            </div>
+            <div className="absolute -right-4 -top-5 hidden items-center gap-2 rounded-xl border border-white bg-white px-3.5 py-2.5 text-[10px] font-bold text-slate-700 shadow-xl shadow-slate-900/10 sm:flex">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><RotateCcw className="h-4 w-4" /></span> Undo · redo · keep exploring
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </section>
+
+      <section className="border-y border-slate-200/80 bg-white/80">
+        <div className="mx-auto grid max-w-[1080px] grid-cols-2 gap-y-6 px-5 py-7 text-center sm:grid-cols-4 lg:px-8">
+          <div><div className="text-2xl font-black tracking-tight text-[#102142]">18</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">guided projects</div></div>
+          <div><div className="text-2xl font-black tracking-tight text-[#102142]">20</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">parts & tools</div></div>
+          <div><div className="text-2xl font-black tracking-tight text-[#102142]">100</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">undo history steps</div></div>
+          <div><div className="text-2xl font-black tracking-tight text-[#102142]">Local</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">project storage</div></div>
+        </div>
+      </section>
+
+      <section id="features" className="mx-auto max-w-[1240px] scroll-mt-24 px-5 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto mb-12 max-w-[660px] text-center">
+          <span className="text-[11px] font-extrabold tracking-[.2em] text-teal-700">YOUR WHOLE WORKFLOW, IN ONE PLACE</span>
+          <h2 className="mt-3 text-3xl font-black tracking-[-.04em] text-[#102142] sm:text-4xl">From first wire to working idea</h2>
+          <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base">A focused place to assemble a circuit, experiment with a sketch, and understand the connection between code and components.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {featureCards.map(({ icon: Icon, eyebrow, title, text, accent }) => (
+            <article key={title} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-teal-200 hover:shadow-xl hover:shadow-slate-900/5">
+              <span className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ring-1 ${accentClasses[accent]}`}><Icon className="h-5 w-5" /></span>
+              <div className="mt-5 text-[9px] font-black tracking-[.18em] text-slate-400">{eyebrow}</div>
+              <h3 className="mt-1.5 text-[17px] font-extrabold tracking-tight text-[#102142]">{title}</h3>
+              <p className="mt-2 text-[13px] leading-6 text-slate-600">{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="how-it-works" className="scroll-mt-24 border-y border-slate-200/80 bg-white py-20 lg:py-24">
+        <div className="mx-auto max-w-[1240px] px-5 lg:px-8">
+          <div className="mb-12 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div><span className="text-[11px] font-extrabold tracking-[.2em] text-teal-700">THREE SIMPLE STEPS</span><h2 className="mt-3 text-3xl font-black tracking-[-.04em] text-[#102142] sm:text-4xl">How the lab works</h2></div>
+            <p className="max-w-[430px] text-sm leading-6 text-slate-600">You don’t need a physical board to get started. Build virtually, inspect the logic, then take what you learn to your next experiment.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {steps.map(({ number, icon: Icon, title, text }, index) => (
+              <article key={number} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-[#F8FAFC] p-6 sm:p-7">
+                <div className="flex items-center justify-between"><span className="font-mono text-[12px] font-bold text-teal-700">STEP {number}</span><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#0E9A8B] shadow-sm"><Icon className="h-5 w-5" /></span></div>
+                <h3 className="mt-7 text-lg font-extrabold text-[#102142]">{title}</h3>
+                <p className="mt-2 text-[13px] leading-6 text-slate-600">{text}</p>
+                {index < steps.length - 1 && <MoveRight aria-hidden="true" className="absolute -right-3 top-1/2 z-10 hidden h-6 w-6 rounded-full bg-white p-1 text-teal-700 shadow md:block" />}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="components" className="scroll-mt-24 mx-auto grid max-w-[1240px] gap-12 px-5 py-20 md:grid-cols-[.9fr_1.1fr] md:items-center lg:px-8 lg:py-24">
+        <div>
+          <span className="text-[11px] font-extrabold tracking-[.2em] text-teal-700">A PALETTE BUILT FOR EXPERIMENTS</span>
+          <h2 className="mt-3 text-3xl font-black tracking-[-.04em] text-[#102142] sm:text-4xl">A lot to explore.<br />One searchable library.</h2>
+          <p className="mt-4 text-sm leading-6 text-slate-600">Browse by category or search the full list. Drag parts into the workspace, click to add, then inspect terminals and properties as you build.</p>
+          <div className="mt-6 flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50/70 p-4">
+            <Search className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
+            <p className="text-[12px] leading-5 text-teal-950"><strong>Learn breadboard connectivity:</strong> numbered columns, A–J rows, hole targeting, rail polarity, five-hole strip connectivity, and connected-net highlighting help make each connection easier to inspect.</p>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="mb-4 flex items-center justify-between"><div><div className="text-[13px] font-extrabold text-[#102142]">Parts & interactive modules</div><div className="mt-1 text-[10px] text-slate-500">Select a family to get started</div></div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-bold text-slate-500">20 ITEMS</span></div>
+          <div className="flex flex-wrap gap-2">
+            {components.map((item, index) => <span key={item} className={`rounded-lg border px-3 py-2 text-[11px] font-semibold ${index % 5 === 0 ? "border-teal-100 bg-teal-50 text-teal-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{item}</span>)}
+          </div>
+          <div className="mt-5 border-t border-slate-100 pt-4 text-[10px] leading-5 text-slate-500">Also includes visual terminal interaction, a jumper-wire tool, properties panels, project-specific focus, and Quick Add shortcuts.</div>
+        </div>
+      </section>
+
+      <section id="simulation" className="scroll-mt-24 bg-[#102142] py-20 text-white lg:py-24">
+        <div className="mx-auto grid max-w-[1240px] gap-12 px-5 md:grid-cols-[.88fr_1.12fr] md:items-center lg:px-8">
+          <div>
+            <span className="text-[11px] font-extrabold tracking-[.2em] text-teal-300">CLEAR, HONEST SIMULATION</span>
+            <h2 className="mt-3 text-3xl font-black tracking-[-.04em] sm:text-4xl">Understand the model.<br />Learn with confidence.</h2>
+            <p className="mt-4 max-w-[480px] text-sm leading-6 text-slate-300">This lab interprets a deliberately limited, documented subset of Arduino-style code. It never executes arbitrary user code and it is not a replacement for an Arduino IDE, electronics bench, or physical safety checks.</p>
+            <div className="mt-6 space-y-2.5">
+              {codeFeatures.map((feature) => <div key={feature} className="flex items-center gap-2.5 text-[12px] text-slate-200"><Check className="h-4 w-4 shrink-0 text-teal-300" />{feature}</div>)}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[.06] p-5 sm:p-7">
+            <div className="flex items-center gap-2 text-[12px] font-bold text-white"><Gauge className="h-4 w-4 text-teal-300" /> What responds in the virtual lab</div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-slate-950/20 p-4"><Lightbulb className="h-4 w-4 text-amber-300" /><div className="mt-3 text-[12px] font-bold">Lights & displays</div><p className="mt-1 text-[10px] leading-5 text-slate-400">LED, independent RGB channels with visual PWM brightness, and a single common-cathode 7-segment digit with independent A–G/DP outputs (no decoder or multiplexing).</p></div>
+              <div className="rounded-xl border border-white/10 bg-slate-950/20 p-4"><AudioLines className="h-4 w-4 text-violet-300" /><div className="mt-3 text-[12px] font-bold">Sound & motion</div><p className="mt-1 text-[10px] leading-5 text-slate-400">Active/passive buzzer patterns, restricted Servo position commands, and H-bridge-driven motor direction/speed visuals.</p></div>
+              <div className="rounded-xl border border-white/10 bg-slate-950/20 p-4"><Gauge className="h-4 w-4 text-blue-300" /><div className="mt-3 text-[12px] font-bold">Sensor inputs</div><p className="mt-1 text-[10px] leading-5 text-slate-400">Potentiometer, LDR, joystick axes/buttons, PIR motion, HC-SR04 distance, and TMP36 temperature controls.</p></div>
+              <div className="rounded-xl border border-white/10 bg-slate-950/20 p-4"><CircuitBoard className="h-4 w-4 text-rose-300" /><div className="mt-3 text-[12px] font-bold">Switching & feedback</div><p className="mt-1 text-[10px] leading-5 text-slate-400">Pushbuttons, latched switches, modeled relay contacts, graph-based validation, logs, and serial output.</p></div>
+            </div>
+            <p className="mt-4 rounded-lg bg-amber-300/10 px-3 py-2.5 text-[10px] leading-5 text-amber-100"><strong>Limits matter:</strong> no arbitrary C++, AVR binary, SPICE/current analysis, real PWM waveforms, or physical sensor/electromechanical physics. Relay behavior is low-voltage logic only—never use it to design mains circuits.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1240px] px-5 py-20 lg:px-8 lg:py-24">
+        <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-teal-700 via-[#0E9A8B] to-[#126f82] px-7 py-10 text-white shadow-xl shadow-teal-900/15 sm:px-12 sm:py-14">
+          <div aria-hidden="true" className="absolute -right-16 -top-28 h-80 w-80 rounded-full border-[44px] border-white/10" />
+          <div aria-hidden="true" className="absolute -bottom-28 right-1/4 h-64 w-64 rounded-full border-[32px] border-white/[.07]" />
+          <div className="relative z-10 max-w-[680px]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-[10px] font-bold"><Sparkles className="h-3.5 w-3.5" /> YOUR NEXT IDEA STARTS HERE</span>
+            <h2 className="mt-4 text-3xl font-black tracking-[-.04em] sm:text-4xl">Ready to make something blink?</h2>
+            <p className="mt-3 max-w-[560px] text-sm leading-6 text-teal-50">Open a guided project, wire a fresh circuit, and learn by seeing your sketch respond.</p>
+            <Link href="/lab" className="group mt-7 inline-flex h-12 items-center gap-2 rounded-xl bg-white px-5 text-sm font-extrabold text-teal-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-teal-50">Enter the Virtual Lab <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-3 px-5 py-6 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+          <div className="flex items-center gap-2 font-bold text-slate-700"><span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#0E9A8B] text-white"><CircuitBoard className="h-3.5 w-3.5" /></span> Virtual Arduino Lab</div>
+          <p>Built for learning. Simulated behavior is intentionally limited; verify real circuits and component datasheets before hardware use.</p>
+          <Link href="/lab" className="inline-flex items-center gap-1 font-bold text-teal-700 hover:text-teal-900">Open the Lab <MoveRight className="h-3.5 w-3.5" /></Link>
+        </div>
+      </footer>
+    </main>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { Cpu, Play, Square, RotateCcw, Save, FolderOpen, FilePlus, Undo, Redo, Zap, AlertCircle, Circle, MoreHorizontal, Copy, Download, Upload, BookOpen, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ComponentType, SimulationState } from "@/types/circuit";
@@ -71,7 +72,7 @@ export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExpo
   return (
     <header className="h-14 bg-[#0F2142] text-white flex items-center px-3 gap-2 shrink-0 border-b border-[#1a345f] select-none">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 pr-3 border-r border-white/10">
+      <Link href="/" aria-label="Virtual Arduino Lab landing page" className="flex items-center gap-2.5 pr-3 border-r border-white/10 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-300">
         <div className="w-8 h-8 bg-[#0E9A8B] rounded-lg flex items-center justify-center">
           <Cpu className="w-4 h-4 text-white" />
         </div>
@@ -79,7 +80,7 @@ export function TopBar({ projectName, onNew, onSave, onOpen, onDuplicate, onExpo
           <div className="font-extrabold text-[13px] leading-none tracking-tight">VIRTUAL ARDUINO LAB</div>
           <div className="text-[10px] text-white/60 leading-none">Interactive Circuit Simulator</div>
         </div>
-      </div>
+      </Link>
 
       {/* Project title - editable */}
       <div className="flex items-center gap-2 px-3 min-w-0">

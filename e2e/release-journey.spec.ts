@@ -1,9 +1,25 @@
 import { test, expect } from "@playwright/test";
 
+test("default landing page explains the lab and opens the simulator", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Build circuits\. See ideas light up\./ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "From first wire to working idea" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How the lab works" })).toBeVisible();
+  await expect(page.getByText(/never executes arbitrary user code/)).toBeVisible();
+  await expect(page.getByText("18", { exact: true }).first()).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("link", { name: /Start building/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.getByRole("link", { name: /Start building/ }).click();
+  await expect(page).toHaveURL(/\/lab$/);
+  await expect(page.getByText("Arduino Sketch")).toBeVisible();
+});
+
 test("pre-wired Blink starter runs from circuit graph and stops/resets", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await expect(page.getByText(/VALID.*Circuit looks valid/)).toBeVisible();
   await page.locator(".monaco-editor").waitFor({ state: "visible" });
@@ -45,7 +61,7 @@ test("pre-wired Blink starter runs from circuit graph and stops/resets", async (
 });
 
 test("save/open, duplicate, export/import, and safely reject invalid project files", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
 
   await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -84,7 +100,7 @@ test("save/open, duplicate, export/import, and safely reject invalid project fil
 test("selected wire bend handles stay orthogonal, persist on save/open, and reset to auto-route", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Redo" })).toBeDisabled();
@@ -134,7 +150,7 @@ test("selected wire bend handles stay orthogonal, persist on save/open, and rese
 });
 
 test("undo and redo component additions with toolbar buttons and keyboard shortcuts", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Redo" })).toBeDisabled();
@@ -155,7 +171,7 @@ test("undo and redo component additions with toolbar buttons and keyboard shortc
 test("interactive pushbutton can be pressed and released on the canvas", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /Pushbutton.*Interactive/ }).click();
 
@@ -189,7 +205,7 @@ test("interactive pushbutton can be pressed and released on the canvas", async (
 test("passive buzzer can be added, wired, and driven by tone()", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /Buzzer.*Audio/ }).click();
 
@@ -220,7 +236,7 @@ test("passive buzzer can be added, wired, and driven by tone()", async ({ page }
 test("potentiometer analog input changes the simulated LED output", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /Potentiometer 10kΩ.*Analog/ }).click();
 
@@ -258,7 +274,7 @@ test("potentiometer analog input changes the simulated LED output", async ({ pag
 test("LDR light sensor changes analogRead and controls the starter LED", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /LDR Light Sensor.*Sensor/ }).click();
 
@@ -295,7 +311,7 @@ test("LDR light sensor changes analogRead and controls the starter LED", async (
 test("RGB LED independently displays its digital red, green, and blue channels", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /RGB LED.*3 channels/ }).click();
 
@@ -331,7 +347,7 @@ test("RGB LED independently displays its digital red, green, and blue channels",
 test("7-segment display shows digits from separate wired digital output pins", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /7-Segment Display.*8 outputs/ }).click();
 
@@ -357,7 +373,7 @@ test("7-segment display shows digits from separate wired digital output pins", a
 });
 
 test("beginner project dropdown loads each full circuit, configuration, and sketch", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
   await expect(selector.locator("option")).toHaveCount(19); // placeholder plus eighteen projects
@@ -518,7 +534,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
 test("slide switch latches and changes a pull-up button input", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /Slide Switch.*Latched/ }).click();
   await page.getByTitle("Slide switch terminal A").dispatchEvent("click");
@@ -544,7 +560,7 @@ test("slide switch latches and changes a pull-up button input", async ({ page })
 test("joystick axes and momentary button act as wired analog and digital inputs", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /Joystick Module.*3 inputs/ }).click();
 
@@ -591,7 +607,7 @@ test("joystick axes and momentary button act as wired analog and digital inputs"
 test("analogWrite provides smooth per-channel RGB LED PWM brightness", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   await page.getByRole("button", { name: /RGB LED.*3 channels/ }).click();
 
