@@ -1,6 +1,6 @@
 "use client";
 import { ComponentInstance, Wire } from "@/types/circuit";
-import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2 } from "lucide-react";
+import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2, Radio } from "lucide-react";
 
 interface Props {
   selectedComponent: ComponentInstance | null;
@@ -117,6 +117,7 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
   const isBuzzer = comp.type === "buzzer";
   const isPotentiometer = comp.type === "potentiometer";
   const isLdr = comp.type === "ldr";
+  const isPir = comp.type === "pir";
 
   return (
     <div className="w-[300px] shrink-0 bg-white border-l border-slate-200 flex flex-col h-full overflow-hidden">
@@ -136,6 +137,7 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
           {isBuzzer && <Volume2 className="w-3.5 h-3.5 text-amber-600" />}
           {isPotentiometer && <SlidersHorizontal className="w-3.5 h-3.5 text-teal-600" />}
           {isLdr && <Sun className="w-3.5 h-3.5 text-amber-600" />}
+          {isPir && <Radio className="w-3.5 h-3.5 text-violet-700" />}
           PROPERTIES
         </div>
         <div className="text-xs font-bold text-[#0F2142] mt-1">{comp.label}</div>
@@ -383,6 +385,25 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
               <p>Connect M+ and M− to the H-bridge OUT1 and OUT2 terminals. The motor animates only when a powered driver has a valid direction input and nonzero ENA duty.</p>
               <p className="p-2 bg-blue-50 border border-blue-200 rounded">The displayed speed percentage is the ENA PWM duty. Reversing the two motor leads reverses the displayed direction.</p>
               <p className="p-2 bg-amber-50 border border-amber-200 rounded">Use an H-bridge or motor driver in real circuits; a GPIO pin cannot safely supply motor current.</p>
+            </div>
+          </div>
+        )}
+
+        {isPir && (
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="px-2.5 py-1.5 bg-violet-50 border-b border-violet-100 flex items-center gap-1.5">
+              <Radio className="w-3 h-3 text-violet-700" /> <span className="text-[11px] font-bold text-violet-800">PIR MOTION SENSOR</span>
+            </div>
+            <div className="p-2.5 space-y-2 text-[11px]">
+              <button
+                type="button"
+                aria-label={`Toggle PIR motion, ${comp.properties.motionDetected === true ? "detected" : "clear"}`}
+                aria-pressed={comp.properties.motionDetected === true}
+                onClick={() => onUpdateComponent(comp.id, { properties: { ...comp.properties, motionDetected: comp.properties.motionDetected !== true } })}
+                className={`w-full rounded-md border px-2 py-1.5 font-bold ${comp.properties.motionDetected === true ? "bg-violet-100 border-violet-300 text-violet-800" : "bg-slate-50 border-slate-200 text-slate-700"}`}
+              >{comp.properties.motionDetected === true ? "Simulated motion detected · HIGH" : "Simulate motion · CLEAR / LOW"}</button>
+              <p className="p-2 bg-blue-50 border border-blue-200 rounded">Wire VCC→5V, GND→GND, and OUT→a digital input such as D2. Use `pinMode(2, INPUT)` and `digitalRead(2)`: simulated motion is HIGH; clear is LOW.</p>
+              <p className="p-2 bg-amber-50 border border-amber-200 rounded">This switchable model represents only a binary PIR output. It does not model range, field of view, warm-up, retrigger timing, ambient conditions, or real sensor electronics.</p>
             </div>
           </div>
         )}

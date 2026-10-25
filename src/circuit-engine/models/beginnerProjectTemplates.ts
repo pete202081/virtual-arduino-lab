@@ -6,6 +6,7 @@ import {
   createBuzzer,
   createPotentiometer,
   createLdrSensor,
+  createPirSensor,
   createRGBLED,
   createSevenSegmentDisplay,
   createResistor,
@@ -31,6 +32,7 @@ export const BEGINNER_PROJECTS = [
   { id: "switch-joystick-pwm", name: "11 · Switch + joystick PWM color mixer", description: "Use a slide switch to enable a joystick-controlled RGB LED; X/Y set color and the joystick button flashes white." },
   { id: "joystick-servo", name: "12 · Joystick Servo Controller", description: "Use joystick X thresholds to select servo angles and press SW to center the arm." },
   { id: "dc-motor-hbridge", name: "13 · DC Motor Speed + Direction Control", description: "Drive a brushed DC motor through an H-bridge using PWM speed and digital direction inputs." },
+  { id: "pir-motion-light", name: "14 · PIR Motion-Triggered Light", description: "Turn an LED on when the simulated PIR motion output goes HIGH." },
 ] as const;
 
 export type BeginnerProjectId = (typeof BEGINNER_PROJECTS)[number]["id"];
@@ -60,6 +62,7 @@ const SKETCHES: Record<BeginnerProjectId, string> = {
 
   "joystick-servo": `#include <Servo.h>\nServo arm;\nconst int joyX = A0;\nconst int joyY = A1;\nconst int joyButtonPin = 2;\nconst int servoPin = 9;\n\nvoid setup() {\n  pinMode(joyButtonPin, INPUT_PULLUP);\n  arm.attach(servoPin);\n}\n\nvoid loop() {\n  if (digitalRead(joyButtonPin) == LOW) {\n    arm.write(90);\n  } else {\n    if (analogRead(joyX) > 700) {\n      arm.write(180);\n    } else {\n      if (analogRead(joyX) < 300) {\n        arm.write(0);\n      } else {\n        if (analogRead(joyY) > 700) {\n          arm.write(135);\n        } else {\n          if (analogRead(joyY) < 300) {\n            arm.write(45);\n          } else {\n            arm.write(90);\n          }\n        }\n      }\n    }\n  }\n  delay(20);\n}`,
 
+  "pir-motion-light": `const int motionPin = 2;\nconst int lampPin = 8;\n\nvoid setup() {\n  pinMode(motionPin, INPUT);\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(motionPin) == HIGH) {\n    digitalWrite(lampPin, HIGH);\n  } else {\n    digitalWrite(lampPin, LOW);\n  }\n  delay(20);\n}`,
   "dc-motor-hbridge": `const int enablePin = 3;\nconst int in1Pin = 4;\nconst int in2Pin = 5;\n\nvoid setup() {\n  pinMode(in1Pin, OUTPUT);\n  pinMode(in2Pin, OUTPUT);\n}\n\nvoid loop() {\n  analogWrite(enablePin, 128);\n  digitalWrite(in1Pin, HIGH);\n  digitalWrite(in2Pin, LOW);\n  delay(1000);\n  digitalWrite(in1Pin, LOW);\n  digitalWrite(in2Pin, HIGH);\n  delay(1000);\n  analogWrite(enablePin, 0);\n  digitalWrite(in1Pin, LOW);\n  digitalWrite(in2Pin, LOW);\n  delay(500);\n}`,
 
 };
@@ -232,6 +235,15 @@ export function createBeginnerProject(id: BeginnerProjectId): BeginnerProjectTem
     createWire(wires, board, "GND-2", servo, "GND", "#1F2937");
     createWire(wires, servo, "SIG", board, "D9", "#F59E0B");
     focusComponentId = servo.id;
+  } else if (id === "pir-motion-light") {
+    const pir = createPirSensor(445, 235);
+    const branch = createLedBranch(board, 8, "green");
+    components.push(pir, branch.resistor, branch.led);
+    wires.push(...branch.wires);
+    createWire(wires, board, "5V", pir, "VCC", "#EF4444");
+    createWire(wires, board, "GND-1", pir, "GND", "#1F2937");
+    createWire(wires, pir, "OUT", board, "D2", "#8B5CF6");
+    focusComponentId = pir.id;
   } else if (id === "dc-motor-hbridge") {
     const driver = createHBridgeDriver(370, 210);
     const motor = createDcMotor(600, 230);

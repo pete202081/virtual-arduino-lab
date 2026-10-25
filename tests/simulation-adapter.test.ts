@@ -1,6 +1,6 @@
 /** M4 simulation adapter tests. Run: npx tsx tests/simulation-adapter.test.ts */
 import assert from "node:assert/strict";
-import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "../src/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor } from "../src/circuit-engine/models/componentTemplates";
 import { STARTER_CODE } from "../src/types/circuit";
 import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, getDcMotorStates, readDigitalPin, readAnalogPin, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
 import { buildCircuitGraph } from "../src/circuit-engine/graph/netGraph";
@@ -251,6 +251,28 @@ test("pushbutton opens and closes its circuit, and INPUT_PULLUP reads LOW only w
   assert.equal(readDigitalPin(2, modes, components, wires), "HIGH");
   assert.equal(buildCircuitGraph(components, wires, new Set([button.id])).hasConnection(d2.id, gnd.id), true);
   assert.equal(readDigitalPin(2, modes, components, wires, new Set([button.id])), "LOW");
+});
+
+test("PIR digital output follows simulated motion only when wired and powered", () => {
+  const board = createArduinoUno(0, 0);
+  const pir = createPirSensor(420, 200);
+  const d2 = board.terminals.find((terminal) => terminal.label === "D2")!;
+  const fiveVolt = board.terminals.find((terminal) => terminal.label === "5V")!;
+  const ground = board.terminals.find((terminal) => terminal.label === "GND-1")!;
+  const output = pir.terminals.find((terminal) => terminal.label === "OUT")!;
+  const vcc = pir.terminals.find((terminal) => terminal.label === "VCC")!;
+  const sensorGround = pir.terminals.find((terminal) => terminal.label === "GND")!;
+  const components = [board, pir];
+  const wire = (id: string, a: typeof d2, b: typeof d2) => ({ id, startTerminalId: a.id, endTerminalId: b.id, startComponentId: a.componentId, endComponentId: b.componentId, color: "#8B5CF6" });
+  const modes = new Map<number, PinMode>([[2, "INPUT"]]);
+  const wires = [wire("out", output, d2), wire("vcc", vcc, fiveVolt), wire("gnd", sensorGround, ground)];
+  assert.equal(readDigitalPin(2, modes, components, wires), "LOW");
+  pir.properties.motionDetected = true;
+  assert.equal(readDigitalPin(2, modes, components, wires), "HIGH");
+  assert.equal(readDigitalPin(2, modes, components, wires.slice(0, 2)), "LOW", "sensor output stays inactive without its ground connection");
+  assert.equal(readDigitalPin(2, modes, components, wires.slice(1)), "LOW", "sensor output stays inactive without its signal wire");
+  const sketch = compileSimulationProgram("const int motionPin = 2; const int lampPin = 8; void setup() { pinMode(motionPin, INPUT); pinMode(lampPin, OUTPUT); } void loop() { if (digitalRead(motionPin) == HIGH) { digitalWrite(lampPin, HIGH); } else { digitalWrite(lampPin, LOW); } delay(20); }");
+  assert.equal(sketch.success, true, JSON.stringify(sketch.errors));
 });
 
 test("bounded if/else digitalRead sketch responds to button presses at the next loop poll", () => {

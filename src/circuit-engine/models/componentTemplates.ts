@@ -371,6 +371,26 @@ export function createLdrSensor(x = 220, y = 360): ComponentInstance {
   };
 }
 
+export function createPirSensor(x = 420, y = 260): ComponentInstance {
+  const id = generateId("pir");
+  return {
+    id,
+    type: "pir",
+    x,
+    y,
+    rotation: 0,
+    width: 108,
+    height: 112,
+    label: "PIR Motion Sensor",
+    terminals: [
+      t(id, "VCC", "power", 18, 104),
+      t(id, "OUT", "digital", 54, 104),
+      t(id, "GND", "gnd", 90, 104),
+    ],
+    properties: { motionDetected: false },
+  };
+}
+
 export function createBuzzer(x = 200, y = 300, buzzerType: BuzzerType = "active"): ComponentInstance {
   const id = generateId("buzzer");
   const label = `${buzzerType === "active" ? "Active" : "Passive"} Buzzer`;
@@ -403,6 +423,7 @@ export const COMPONENT_META = {
   joystick: { name: "XY Joystick Module", category: "Sensors", color: "#2563EB", icon: "🎮" },
   potentiometer: { name: "Potentiometer 10kΩ", category: "Basic Components", color: "#0E9A8B", icon: "🎛️" },
   ldr: { name: "LDR Light Sensor", category: "Sensors", color: "#D97706", icon: "☀️" },
+  pir: { name: "PIR Motion Sensor", category: "Sensors", color: "#7C3AED", icon: "📡" },
   buzzer: { name: "Buzzer", category: "Basic Components", color: "#4B5563", icon: "🔊" },
   wire: { name: "Jumper Wire", category: "Wiring", color: "#3B82F6", icon: "〰" },
 };

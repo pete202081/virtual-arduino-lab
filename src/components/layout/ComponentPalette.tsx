@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Search, Cpu, Grid3x3, Lightbulb, Minus, Circle, Volume2, Cable, AlertTriangle, SlidersHorizontal, Sun, Hash, ToggleLeft, Gamepad2, RotateCw } from "lucide-react";
+import { Search, Cpu, Grid3x3, Lightbulb, Minus, Circle, Volume2, Cable, AlertTriangle, SlidersHorizontal, Sun, Hash, ToggleLeft, Gamepad2, RotateCw, Radio } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ComponentType } from "@/types/circuit";
 
@@ -25,6 +25,7 @@ const ITEMS: PaletteItem[] = [
   { type: "slide-switch", name: "Slide Switch", category: "Basic Components", description: "SPST • latched ON/OFF • digital input", color: "#0E7490", available: true, badge: "Latched" },
   { type: "potentiometer", name: "Potentiometer 10kΩ", category: "Basic Components", description: "3-pin • adjustable analog input", color: "#0E9A8B", available: true, badge: "Analog" },
   { type: "ldr", name: "LDR Light Sensor", category: "Sensors", description: "3-pin • light level • analog output", color: "#D97706", available: true, badge: "Sensor" },
+  { type: "pir", name: "PIR Motion Sensor", category: "Sensors", description: "3-pin • simulated motion • digital output", color: "#7C3AED", available: true, badge: "Digital" },
   { type: "joystick", name: "Joystick Module", category: "Sensors", description: "X/Y analog axes • momentary button", color: "#2563EB", available: true, badge: "3 inputs" },
   { type: "servo", name: "Servo Motor", category: "Actuators", description: "0–180° • pulse-width position control", color: "#0E7490", available: true, badge: "Servo" },
   { type: "h-bridge", name: "H-Bridge Driver", category: "Actuators", description: "L298N • direction inputs • PWM enable", color: "#334155", available: true, badge: "Driver" },
@@ -129,6 +130,7 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
                           {it.type === "slide-switch" && <ToggleLeft className="w-4 h-4" />}
                           {it.type === "potentiometer" && <SlidersHorizontal className="w-4 h-4" />}
                           {it.type === "ldr" && <Sun className="w-4 h-4" />}
+                          {it.type === "pir" && <Radio className="w-4 h-4" />}
                           {it.type === "joystick" && <Gamepad2 className="w-4 h-4" />}
                           {it.type === "servo" && <RotateCw className="w-4 h-4" />}
                           {it.type === "dc-motor" && <RotateCw className="w-4 h-4" />}
@@ -156,7 +158,7 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-[11px] leading-tight">
             <div className="font-bold text-amber-800">MVP Scope</div>
-            <div className="text-amber-700">Arduino, Breadboard, LED, RGB LED, 7-segment display, resistor, pushbutton, slide switch, potentiometer, LDR, joystick module, servo motor, DC motor, H-bridge driver, buzzer & wires are interactive.</div>
+            <div className="text-amber-700">Arduino, Breadboard, LED, RGB LED, 7-segment display, resistor, pushbutton, slide switch, potentiometer, LDR, PIR motion sensor, joystick module, servo motor, DC motor, H-bridge driver, buzzer & wires are interactive.</div>
           </div>
         </div>
       </div>
@@ -176,6 +178,7 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
             { t: "buzzer" as ComponentType, label: "BZ", col: "#4B5563" },
             { t: "potentiometer" as ComponentType, label: "POT", col: "#0E9A8B" },
             { t: "ldr" as ComponentType, label: "LDR", col: "#D97706" },
+            { t: "pir" as ComponentType, label: "PIR", col: "#7C3AED" },
             { t: "joystick" as ComponentType, label: "JOY", col: "#2563EB" },
             { t: "servo" as ComponentType, label: "SERVO", col: "#0E7490" },
             { t: "h-bridge" as ComponentType, label: "H-BRIDGE", col: "#334155" },

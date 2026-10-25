@@ -14,6 +14,7 @@ import { HBridgeDriver } from "./HBridgeDriver";
 import { Buzzer } from "./Buzzer";
 import { Potentiometer } from "./Potentiometer";
 import { LdrSensor } from "./LdrSensor";
+import { PirSensor } from "./PirSensor";
 import { RGBLED } from "./RGBLED";
 import { SevenSegmentDisplay } from "./SevenSegmentDisplay";
 import type { RGBLedState, SevenSegmentState, ServoState, DcMotorState } from "@/simulation/interfaces/simulationAdapter";
@@ -43,6 +44,7 @@ interface Props {
   buzzerFrequencies: Record<string, number>;
   onPotentiometerChange: (id: string, value: number) => void;
   onLdrLightLevelChange: (id: string, level: number) => void;
+  onPirMotionToggle: (id: string) => void;
   onJoystickAxisChange: (id: string, axis: "xValue" | "yValue", value: number) => void;
   rgbLedStates: Record<string, RGBLedState>;
   sevenSegmentStates: Record<string, SevenSegmentState>;
@@ -75,6 +77,7 @@ export function CircuitWorkspace({
   buzzerFrequencies,
   onPotentiometerChange,
   onLdrLightLevelChange,
+  onPirMotionToggle,
   onJoystickAxisChange,
   rgbLedStates,
   sevenSegmentStates,
@@ -410,6 +413,9 @@ export function CircuitWorkspace({
                 )}
                 {comp.type === "ldr" && (
                   <LdrSensor {...common} onLightLevelChange={(level) => onLdrLightLevelChange(comp.id, level)} />
+                )}
+                {comp.type === "pir" && (
+                  <PirSensor {...common} onMotionToggle={() => onPirMotionToggle(comp.id)} />
                 )}
                 {comp.type === "joystick" && (
                   <JoystickModule

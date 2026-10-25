@@ -1,7 +1,7 @@
 /** M5 project persistence validation tests. Run: npx tsx tests/project-persistence.test.ts */
 import assert from "node:assert/strict";
 import { createStarterCircuit } from "../src/circuit-engine/models/starterCircuit";
-import { createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "../src/circuit-engine/models/componentTemplates";
+import { createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor } from "../src/circuit-engine/models/componentTemplates";
 import { validateCircuit } from "../src/circuit-engine/validation/validator";
 import { createProjectFile, listSavedProjects, loadMostRecentProject, loadProjectById, makeProjectFilename, MAX_PROJECT_BYTES, parseProjectData, parseProjectFile, saveProjectFile } from "../src/lib/projectPersistence";
 
@@ -24,7 +24,7 @@ test("versioned export round-trips circuit, wires, sketch, and settings", () => 
   assert.equal(parsed.file.project.settings.wireColor, "#EF4444");
   assert.match(parsed.file.project.code, /digitalWrite\(ledPin, HIGH\)/);
 });
-test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joystick axes, servo position, and H-bridge/motor properties persist through project JSON", () => {
+test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joystick axes, servo position, H-bridge/motor, and PIR motion properties persist through project JSON", () => {
   const starter = createStarterCircuit();
   const pot = createPotentiometer(420, 260);
   pot.properties.value = 777;
@@ -41,8 +41,10 @@ test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joysti
   servo.properties.angle = 135;
   const motor = createDcMotor(830, 300);
   const driver = createHBridgeDriver(620, 270);
+  const pir = createPirSensor(880, 260);
+  pir.properties.motionDetected = true;
   const now = new Date().toISOString();
-  const file = createProjectFile({ id: "analog_project", name: "Additional Components Test", createdAt: now, updatedAt: now, components: [...starter.components, pot, ldr, rgb, sevenSegment, slideSwitch, joystick, servo, motor, driver], wires: starter.wires, code: starter.code, settings: { wireColor: "#EF4444" } });
+  const file = createProjectFile({ id: "analog_project", name: "Additional Components Test", createdAt: now, updatedAt: now, components: [...starter.components, pot, ldr, rgb, sevenSegment, slideSwitch, joystick, servo, motor, driver, pir], wires: starter.wires, code: starter.code, settings: { wireColor: "#EF4444" } });
   const parsed = parseProjectFile(JSON.stringify(file));
   assert.equal(parsed.success, true);
   if (!parsed.success) return;
@@ -55,6 +57,7 @@ test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joysti
   const restoredServo = parsed.file.project.components.find((component) => component.type === "servo");
   const restoredMotor = parsed.file.project.components.find((component) => component.type === "dc-motor");
   const restoredDriver = parsed.file.project.components.find((component) => component.type === "h-bridge");
+  const restoredPir = parsed.file.project.components.find((component) => component.type === "pir");
   assert.equal(restoredPot?.properties.value, 777);
   assert.equal(restoredPot?.terminals.length, 3);
   assert.equal(restoredLdr?.properties.lightLevel, 24);
@@ -74,6 +77,8 @@ test("potentiometer, LDR, RGB LED, 7-segment display, slide-switch state, joysti
   assert.equal(restoredMotor?.terminals.length, 2);
   assert.equal(restoredDriver?.type, "h-bridge");
   assert.deepEqual(restoredDriver?.terminals.map((terminal) => terminal.label), ["VCC", "VM", "GND", "ENA", "IN1", "IN2", "OUT1", "OUT2"]);
+  assert.equal(restoredPir?.properties.motionDetected, true);
+  assert.deepEqual(restoredPir?.terminals.map((terminal) => terminal.label), ["VCC", "OUT", "GND"]);
 });
 test("default Blink starter is pre-wired and passes circuit validation", () => {
   const starter = createStarterCircuit();

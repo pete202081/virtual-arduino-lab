@@ -15,6 +15,7 @@ export type ComponentType =
   | "h-bridge"
   | "potentiometer"
   | "ldr"
+  | "pir"
   | "buzzer"
   | "wire";
 

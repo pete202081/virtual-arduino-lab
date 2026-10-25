@@ -269,7 +269,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
   await page.goto("/");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
-  await expect(selector.locator("option")).toHaveCount(14); // placeholder plus thirteen projects
+  await expect(selector.locator("option")).toHaveCount(15); // placeholder plus fourteen projects
   const projects = [
     { id: "blink-led", name: "01 · Blink one LED", focus: "RED LED", code: "const int ledPin = 8;" },
     { id: "traffic-light", name: "02 · Traffic-light sequence", focus: "RED LED", code: "const int redPin = 8;" },
@@ -284,6 +284,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
     { id: "switch-joystick-pwm", name: "11 · Switch + joystick PWM color mixer", focus: "XY Joystick Module", code: "const int enablePin = 3;" },
     { id: "joystick-servo", name: "12 · Joystick Servo Controller", focus: "Micro Servo Motor", code: "#include <Servo.h>" },
     { id: "dc-motor-hbridge", name: "13 · DC Motor Speed + Direction Control", focus: "L298N H-Bridge Driver", code: "const int enablePin = 3;" },
+    { id: "pir-motion-light", name: "14 · PIR Motion-Triggered Light", focus: "PIR Motion Sensor", code: "const int motionPin = 2;" },
   ];
 
   for (const project of projects) {
@@ -323,6 +324,14 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
       await page.mouse.down();
       await expect(page.getByTitle("Servo motor: 90 degrees, 1500 microseconds at 50 Hz")).toBeVisible();
       await page.mouse.up();
+    }
+    if (project.id === "pir-motion-light") {
+      await expect(page.getByTitle("GREEN LED: 0% brightness")).toBeVisible();
+      await page.getByRole("button", { name: "PIR motion, clear", exact: true }).click();
+      await expect(page.getByRole("button", { name: "PIR motion, detected", exact: true })).toBeVisible();
+      await expect(page.getByTitle("GREEN LED: 100% brightness")).toBeVisible({ timeout: 2_000 });
+      await page.getByRole("button", { name: "PIR motion, detected", exact: true }).click();
+      await expect(page.getByTitle("GREEN LED: 0% brightness")).toBeVisible({ timeout: 2_000 });
     }
     if (project.id === "dc-motor-hbridge") {
       await expect(page.getByTitle("DC motor: clockwise at 50% PWM")).toBeVisible();

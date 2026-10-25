@@ -502,7 +502,18 @@ export function readDigitalPin(
   for (const board of boards) {
     const input = board.terminals.find((terminal) => terminal.label === `D${pin}`);
     if (!input) continue;
-    const grounded = board.terminals.some((terminal) => terminal.type === "gnd" && graph.hasConnection(input.id, terminal.id));
+    const fiveVolt = board.terminals.find((terminal) => terminal.label === "5V");
+    const grounds = board.terminals.filter((terminal) => terminal.type === "gnd");
+    for (const pir of components.filter((component) => component.type === "pir")) {
+      const output = pir.terminals.find((terminal) => terminal.label === "OUT");
+      const sensorVcc = pir.terminals.find((terminal) => terminal.label === "VCC");
+      const sensorGround = pir.terminals.find((terminal) => terminal.label === "GND");
+      if (!output || !sensorVcc || !sensorGround || !fiveVolt || !graph.hasConnection(output.id, input.id)) continue;
+      const powered = graph.hasConnection(sensorVcc.id, fiveVolt.id) && grounds.some((terminal) => graph.hasConnection(sensorGround.id, terminal.id));
+      if (powered) return pir.properties.motionDetected === true ? "HIGH" : "LOW";
+      return mode === "INPUT_PULLUP" ? "HIGH" : "LOW";
+    }
+    const grounded = grounds.some((terminal) => terminal.type === "gnd" && graph.hasConnection(input.id, terminal.id));
     const powered = board.terminals.some((terminal) => terminal.label === "5V" && graph.hasConnection(input.id, terminal.id));
     if (grounded) return "LOW";
     if (powered) return "HIGH";

@@ -32,7 +32,7 @@ export type StorageLocation = "IndexedDB" | "localStorage";
 export interface SavedProjectSummary { id: string; name: string; updatedAt: string; componentCount: number; wireCount: number }
 export type ParseResult = { success: true; file: ProjectFile; migrated: boolean } | { success: false; error: string };
 
-const componentTypes = new Set(["arduino-uno", "breadboard", "led", "rgb-led", "seven-segment", "resistor", "pushbutton", "slide-switch", "joystick", "servo", "dc-motor", "h-bridge", "potentiometer", "ldr", "buzzer", "wire"]);
+const componentTypes = new Set(["arduino-uno", "breadboard", "led", "rgb-led", "seven-segment", "resistor", "pushbutton", "slide-switch", "joystick", "servo", "dc-motor", "h-bridge", "potentiometer", "ldr", "pir", "buzzer", "wire"]);
 const terminalTypes = new Set(["digital", "analog", "power", "gnd", "led-anode", "led-cathode", "resistor", "breadboard-hole", "generic", "other"]);
 const safeId = /^[a-zA-Z0-9_+.:\-]{1,160}$/;
 const hexColor = /^#[0-9a-fA-F]{6}$/;

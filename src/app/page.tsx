@@ -7,7 +7,7 @@ import { PropertiesPanel } from "@/components/layout/PropertiesPanel";
 import { Console } from "@/components/layout/Console";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { ComponentInstance, ComponentType, Wire, ConsoleTab, SimulationState, SimulationEvent, STARTER_CODE } from "@/types/circuit";
-import { createArduinoUno, createBreadboard, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "@/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createBreadboard, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createPirSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver } from "@/circuit-engine/models/componentTemplates";
 import { generateId, formatTime } from "@/lib/utils";
 import { validateCircuit } from "@/circuit-engine/validation/validator";
 import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
@@ -350,8 +350,8 @@ export default function Home() {
 
   const handleAddComponent = (type: ComponentType, extra?: string) => {
     let comp: ComponentInstance | null = null;
-    const randX = type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "potentiometer" || type === "ldr" || type === "joystick" || type === "servo" || type === "dc-motor" || type === "h-bridge" || type === "rgb-led" || type === "seven-segment" ? 440 + Math.random() * 60 : 80 + Math.random() * 200;
-    const randY = type === "potentiometer" || type === "ldr" || type === "joystick" ? 250 + Math.random() * 60 : type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "servo" || type === "dc-motor" || type === "h-bridge" ? 130 + Math.random() * 100 : 80 + Math.random() * 120;
+    const randX = type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "potentiometer" || type === "ldr" || type === "pir" || type === "joystick" || type === "servo" || type === "dc-motor" || type === "h-bridge" || type === "rgb-led" || type === "seven-segment" ? 440 + Math.random() * 60 : 80 + Math.random() * 200;
+    const randY = type === "potentiometer" || type === "ldr" || type === "pir" || type === "joystick" ? 250 + Math.random() * 60 : type === "pushbutton" || type === "slide-switch" || type === "buzzer" || type === "servo" || type === "dc-motor" || type === "h-bridge" ? 130 + Math.random() * 100 : 80 + Math.random() * 120;
     if (type === "arduino-uno") comp = createArduinoUno(randX, randY);
     if (type === "breadboard") comp = createBreadboard(randX, randY + 80);
     if (type === "led") comp = createLED(randX, randY, extra || "red");
@@ -363,6 +363,7 @@ export default function Home() {
     if (type === "buzzer") comp = createBuzzer(randX, randY, extra === "passive" ? "passive" : "active");
     if (type === "potentiometer") comp = createPotentiometer(randX, randY);
     if (type === "ldr") comp = createLdrSensor(randX, randY);
+    if (type === "pir") comp = createPirSensor(randX, randY);
     if (type === "joystick") comp = createJoystickModule(randX, randY);
     if (type === "servo") comp = createServoMotor(randX, randY);
     if (type === "dc-motor") comp = createDcMotor(randX, randY);
@@ -424,6 +425,12 @@ export default function Home() {
   const handleLdrLightLevelChange = (id: string, level: number) => {
     setComponents((current) => current.map((component) => component.id === id
       ? { ...component, properties: { ...component.properties, lightLevel: Math.max(0, Math.min(100, Math.round(level))) } }
+      : component));
+  };
+
+  const handlePirMotionToggle = (id: string) => {
+    setComponents((current) => current.map((component) => component.id === id
+      ? { ...component, properties: { ...component.properties, motionDetected: component.properties.motionDetected !== true } }
       : component));
   };
 
@@ -795,6 +802,7 @@ export default function Home() {
             buzzerFrequencies={simulationState === "RUNNING" ? buzzerFrequencies : {}}
             onPotentiometerChange={handlePotentiometerChange}
             onLdrLightLevelChange={handleLdrLightLevelChange}
+            onPirMotionToggle={handlePirMotionToggle}
             onJoystickAxisChange={handleJoystickAxisChange}
             rgbLedStates={simulationState === "RUNNING" ? rgbLedStates : {}}
             sevenSegmentStates={simulationState === "RUNNING" ? sevenSegmentStates : {}}
