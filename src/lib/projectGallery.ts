@@ -40,4 +40,5 @@ export const PROJECT_GALLERY_DETAILS: Record<BeginnerProjectId, ProjectGalleryDe
   "breadboard-blink": { difficulty: "Starter", concepts: ["Getting started", "Breadboards", "Outputs & displays"], takeaway: "Trace five-hole strips and wired rails" },
   "pwm-dimmer": { difficulty: "Starter", concepts: ["Inputs", "Outputs & displays"], takeaway: "Convert knob thresholds into PWM brightness levels" },
   "two-branch-breadboard": { difficulty: "Starter", concepts: ["Breadboards", "Inputs", "Outputs & displays"], takeaway: "Keep two LED branches independent while sharing a ground rail" },
+  "armed-pir-alarm": { difficulty: "Builder", concepts: ["Inputs", "Sensors", "Sound & serial", "Outputs & displays"], takeaway: "Gate motion-triggered light and sound with an arm switch" },
 };

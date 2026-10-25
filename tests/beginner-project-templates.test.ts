@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BEGINNER_PROJECTS, createBeginnerProject } from "../src/circuit-engine/models/beginnerProjectTemplates";
 import { compileSimulationProgram } from "../src/simulation/interfaces/simulationAdapter";
 
-assert.equal(BEGINNER_PROJECTS.length, 20, "the dropdown should offer all twenty catalog projects");
+assert.equal(BEGINNER_PROJECTS.length, 21, "the dropdown should offer all twenty-one catalog projects");
 for (const item of BEGINNER_PROJECTS) {
   const project = createBeginnerProject(item.id);
   const compiled = compileSimulationProgram(project.code);
@@ -22,6 +22,17 @@ for (const item of BEGINNER_PROJECTS) {
     assert.equal(project.components.filter((component) => component.type === "resistor").length, 2);
     assert.match(project.code, /digitalRead\(buttonPin\)/);
     assert.match(project.code, /digitalWrite\(blinkLedPin, HIGH\)/);
+  }
+  if (item.id === "armed-pir-alarm") {
+    assert.equal(project.components.filter((component) => component.type === "slide-switch").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "pir").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "buzzer").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "led").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "resistor").length, 1);
+    assert.match(project.code, /digitalRead\(armPin\)/);
+    assert.match(project.code, /digitalRead\(motionPin\)/);
+    assert.match(project.code, /tone\(buzzerPin, 880\)/);
+    assert.match(project.code, /noTone\(buzzerPin\)/);
   }
   const secondCopy = createBeginnerProject(item.id);
   assert.notEqual(project.components[0].id, secondCopy.components[0].id, `${item.name} should create fresh component IDs for each selection`);

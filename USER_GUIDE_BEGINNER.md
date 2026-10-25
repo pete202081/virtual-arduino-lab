@@ -1,6 +1,6 @@
 # Virtual Arduino Lab — Beginner’s User Guide
 
-Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. Browse the [Project Gallery](/projects) to choose from all 20 guided builds by concept and difficulty; for wiring maps, copy-ready sketches, and extension challenges, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md).
+Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. Browse the [Project Gallery](/projects) to choose from all 21 guided builds by concept and difficulty; for wiring maps, copy-ready sketches, and extension challenges, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md).
 
 > **What this is:** a local, browser-based learning simulator. It does not connect to a physical Arduino and does not compile a real AVR binary.
 
@@ -44,7 +44,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 ### Top bar
 
 - **Project title:** click its name to rename it; press Enter or click elsewhere to finish.
-- **Beginner projects…:** loads any of twenty complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choose **Project gallery** on the landing page to browse them by concept and difficulty. Choosing a project replaces the current workspace; duplicate or save work first if you want to keep it.
+- **Beginner projects…:** loads any of twenty-one complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choose **Project gallery** on the landing page to browse them by concept and difficulty. Choosing a project replaces the current workspace; duplicate or save work first if you want to keep it.
 - **Quick Add:** opens a compact top-bar picker for frequently used parts. Selecting an item adds it directly to the canvas.
 - **New:** creates a blank project after confirmation. It starts with the Blink sketch but no circuit components.
 - **Open:** opens a picker for projects saved in this browser.
@@ -708,6 +708,10 @@ Load **19 · Three-Level LED Dimmer** from the project selector or gallery. It u
 ### Project 20: Two-Branch Breadboard Challenge
 
 Load **20 · Two-Branch Breadboard Challenge** from the selector or gallery. Two LEDs use separate five-hole strips and their own 220 Ω resistors, while the bottom ground rail is explicitly shared. The red LED blinks independently from D8; a pushbutton connects the D2 `INPUT_PULLUP` input to ground and controls the green LED on D9. Hold the red button cap to light green, then release it. Hover over the D8 and D9 breadboard strips to see that each branch is electrically separate; nearby columns are not automatically connected.
+
+### Project 21: Armed PIR Alarm
+
+Load **21 · Armed PIR Alarm** from the project selector or gallery. Turn the slide switch ON to arm it; the switch connects D2 to GND, so `INPUT_PULLUP` reads LOW. When the PIR's simulated motion state is HIGH while armed, the red LED lights and the passive buzzer sounds. Switch OFF to silence and disarm, even if motion remains detected. This extends the PIR light example by adding an arm condition and sound. The PIR control is a manually toggled binary model, not a real security sensor or alarm system.
 
 ### Try these safe learning changes
 

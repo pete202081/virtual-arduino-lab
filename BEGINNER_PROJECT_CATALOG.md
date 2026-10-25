@@ -1,10 +1,10 @@
 # Beginner Arduino Project Catalog
 
-A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one across twenty guided builds. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
+A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one across twenty-one guided builds. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the twenty entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the twenty-one entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
@@ -41,6 +41,7 @@ A step-by-step project path using the components already available in Virtual Ar
 | 18 | Breadboard Basics: Blink an LED | Trace shared strips and explicit power rails | Uno, breadboard, LED, resistor |
 | 19 | Three-Level LED Dimmer | Convert analog thresholds into three PWM brightness levels | Uno, breadboard, potentiometer, green LED, resistor |
 | 20 | Two-Branch Breadboard Challenge | Keep separate LED strips and a button-controlled branch independent | Uno, breadboard, pushbutton, 2 LEDs, 2 resistors |
+| 21 | Armed PIR Alarm | Gate motion-triggered sound and light with an arm switch | Uno, slide switch, PIR, passive buzzer, LED, resistor |
 
 ---
 
@@ -779,7 +780,46 @@ void loop() {
 
 **Try it:** Load **20 · Two-Branch Breadboard Challenge** and run it. The red LED blinks whether or not the button is pressed. Hold the button cap: the green LED should light without changing the red branch's blink behavior. Release it to turn green off. Hover over T-4-0 and T-6-0 to confirm that each highlights only its own five-hole strip. Every real LED still needs its own current-limiting resistor.
 
-## Bonus exercise (not in the twenty-project dropdown): joystick-controlled LED
+## 21. Armed PIR Alarm
+
+**Learn:** Combine an independent arm switch with a simulated motion input. The alarm turns on both the LED and passive buzzer only when the switch is armed **and** motion is detected; disarming overrides the PIR signal and silences both outputs.
+
+**Parts:** Arduino Uno, slide switch, PIR motion sensor, passive buzzer, red LED, 220 Ω resistor.
+
+**Wire:** Switch **A→D2**, **B→GND**; the ON position closes the switch so `INPUT_PULLUP` reads LOW (armed). PIR **VCC→5V**, **GND→GND**, and **OUT→D3**. Connect **D8→220 Ω resistor→LED ANODE**, then **LED CATHODE→GND**. Connect **D9→passive buzzer +** and buzzer **−→GND**.
+
+```cpp
+const int armPin = 2;
+const int motionPin = 3;
+const int lampPin = 8;
+const int buzzerPin = 9;
+
+void setup() {
+  pinMode(armPin, INPUT_PULLUP);
+  pinMode(motionPin, INPUT);
+  pinMode(lampPin, OUTPUT);
+}
+
+void loop() {
+  if (digitalRead(armPin) == LOW) {
+    if (digitalRead(motionPin) == HIGH) {
+      digitalWrite(lampPin, HIGH);
+      tone(buzzerPin, 880);
+    } else {
+      digitalWrite(lampPin, LOW);
+      noTone(buzzerPin);
+    }
+  } else {
+    digitalWrite(lampPin, LOW);
+    noTone(buzzerPin);
+  }
+  delay(20);
+}
+```
+
+**Try it:** Load **21 · Armed PIR Alarm**. With the switch OFF, simulate motion; the LED and buzzer should stay off. Turn the switch ON, then simulate motion to activate both. Clear motion to silence them, or switch OFF while motion is still detected to disarm immediately. This is a learning model, not a security alarm: PIR motion is binary and manually toggled, and physical range, field of view, warm-up, retrigger behavior, and sensor electronics are not modeled.
+
+## Bonus exercise (not in the twenty-one-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 
