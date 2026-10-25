@@ -375,6 +375,13 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
       const sameStripHole = page.locator('[data-terminal-id$="-T-4-4"]');
       const separateStripHole = page.locator('[data-terminal-id$="-T-5-0"]');
       await firstHole.hover();
+      await expect(page.getByTestId("active-hole-tooltip")).toContainText("T-4-0");
+      await expect(page.getByTestId("active-hole-tooltip")).toContainText("A5");
+      await expect(page.getByTestId("active-hole-tooltip")).toContainText("Column 5 · Row A");
+      await expect(page.getByTestId("breadboard-column-1")).toHaveText("1");
+      await expect(page.getByTestId("breadboard-column-30")).toHaveText("30");
+      await expect(page.getByTestId("breadboard-row-A")).toHaveText("A");
+      await expect(page.getByTestId("breadboard-row-J")).toHaveText("J");
       await expect(firstHole).toHaveClass(/net-highlighted-terminal/);
       await expect(sameStripHole).toHaveClass(/net-highlighted-terminal/);
       await expect(separateStripHole).not.toHaveClass(/net-highlighted-terminal/);

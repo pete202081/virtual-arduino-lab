@@ -688,7 +688,7 @@ void loop() {
 2. Uno **D8→T-4-0**. The five holes **T-4-0 through T-4-4** form one strip, so the resistor can start from **T-4-4**.
 3. Wire **T-4-4→resistor A**, then **resistor B→LED ANODE**.
 4. Wire **LED CATHODE→R_BOT-_15**. The bottom ground rail connects that point back to Uno GND.
-5. The wire traces are shown on the front surface of the breadboard, with each endpoint centered on its destination hole. Hover a hole or terminal to highlight its connected net. Confirm T-4-0 and T-4-4 highlight together, while a hole in another column does not.
+5. Column numbers and A–J row letters help locate holes. Hover a hole to enlarge it and show its simulator ID and common coordinate (for example, `T-4-0` / `A5`); its connected net highlights too. The wire trace is drawn on the front surface with its endpoint centered on the hole. Confirm T-4-0 and T-4-4 highlight together, while a hole in another column does not.
 
 ```cpp
 const int ledPin = 8;
