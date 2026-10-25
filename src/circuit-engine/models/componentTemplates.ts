@@ -412,6 +412,26 @@ export function createHcSr04Sensor(x = 400, y = 230): ComponentInstance {
   };
 }
 
+export function createTmp36Sensor(x = 420, y = 260): ComponentInstance {
+  const id = generateId("tmp36");
+  return {
+    id,
+    type: "tmp36",
+    x,
+    y,
+    rotation: 0,
+    width: 104,
+    height: 100,
+    label: "TMP36 Temperature Sensor",
+    terminals: [
+      t(id, "VCC", "power", 16, 92),
+      t(id, "VOUT", "analog", 52, 92),
+      t(id, "GND", "gnd", 88, 92),
+    ],
+    properties: { temperatureC: 25 },
+  };
+}
+
 export function createBuzzer(x = 200, y = 300, buzzerType: BuzzerType = "active"): ComponentInstance {
   const id = generateId("buzzer");
   const label = `${buzzerType === "active" ? "Active" : "Passive"} Buzzer`;
@@ -446,6 +466,7 @@ export const COMPONENT_META = {
   ldr: { name: "LDR Light Sensor", category: "Sensors", color: "#D97706", icon: "☀️" },
   pir: { name: "PIR Motion Sensor", category: "Sensors", color: "#7C3AED", icon: "📡" },
   "hc-sr04": { name: "HC-SR04 Ultrasonic Sensor", category: "Sensors", color: "#0284C7", icon: "📏" },
+  tmp36: { name: "TMP36 Temperature Sensor", category: "Sensors", color: "#EA580C", icon: "🌡️" },
   buzzer: { name: "Buzzer", category: "Basic Components", color: "#4B5563", icon: "🔊" },
   wire: { name: "Jumper Wire", category: "Wiring", color: "#3B82F6", icon: "〰" },
 };

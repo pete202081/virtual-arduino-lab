@@ -17,6 +17,7 @@ export type ComponentType =
   | "ldr"
   | "pir"
   | "hc-sr04"
+  | "tmp36"
   | "buzzer"
   | "wire";
 

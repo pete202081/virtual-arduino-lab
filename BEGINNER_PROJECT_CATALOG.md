@@ -4,14 +4,14 @@ A step-by-step project path using the components already available in Virtual Ar
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the fifteen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the sixteen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
 
 ### Important simulator and hardware notes
 
-- This lab uses a bounded, safe Arduino-like interpreter; it does not run arbitrary C++. The examples intentionally use only supported calls and braced `if` conditions. `for`/`while` loops, arrays, variables that change at runtime, and general C++ are not supported. Bounded `analogWrite(pin, value)` is supported only for Uno PWM pins D3, D5, D6, D9, D10, and D11 with constant duty values from 0 to 255. The PIR example supplies a binary, manually toggled HIGH/LOW digital output and does not model range, field of view, warm-up, retrigger timing, or ambient behavior. The HC-SR04 example supports only a bounded `pulseIn(echoPin, HIGH[, timeout])` numeric threshold condition after a modeled trigger pulse; it maps the distance slider to about 58 µs/cm and does not model acoustic propagation or real echo waveforms. The H-bridge motor example models direction and PWM speed visually only; it does not calculate motor current, torque, stall, voltage drop, heating, or external-supply behavior. Never drive a physical motor from an Uno GPIO. The limited Servo API supports declared Servo objects, `attach()` on D2–D13, and fixed `write()` angles from 0° to 180°; it renders position/pulse metadata but not a physical waveform.
+- This lab uses a bounded, safe Arduino-like interpreter; it does not run arbitrary C++. The examples intentionally use only supported calls and braced `if` conditions. `for`/`while` loops, arrays, variables that change at runtime, and general C++ are not supported. Bounded `analogWrite(pin, value)` is supported only for Uno PWM pins D3, D5, D6, D9, D10, and D11 with constant duty values from 0 to 255. The PIR example supplies a binary, manually toggled HIGH/LOW digital output and does not model range, field of view, warm-up, retrigger timing, or ambient behavior. The TMP36 example models an idealized analog output from 500 mV at 0 °C plus 10 mV/°C, without calibration or thermal effects. The HC-SR04 example supports only a bounded `pulseIn(echoPin, HIGH[, timeout])` numeric threshold condition after a modeled trigger pulse; it maps the distance slider to about 58 µs/cm and does not model acoustic propagation or real echo waveforms. The H-bridge motor example models direction and PWM speed visually only; it does not calculate motor current, torque, stall, voltage drop, heating, or external-supply behavior. Never drive a physical motor from an Uno GPIO. The limited Servo API supports declared Servo objects, `attach()` on D2–D13, and fixed `write()` angles from 0° to 180°; it renders position/pulse metadata but not a physical waveform.
 - The circuit view models digital HIGH/LOW paths, not electrical current or voltage. Resistors are ideal conductive connections in the simulator; **use real current-limiting resistors in physical circuits**.
 - Every ordinary LED needs a series resistor. For an RGB LED, use one resistor per color channel. For a 7-segment display, use one resistor per used segment.
 - The RGB LED and 7-segment display in the lab are common-cathode. RGB COMMON goes to GND; for the 7-segment display, connect both COM1 and COM2 to GND.
@@ -615,7 +615,35 @@ void loop() {
 
 **Try it:** Run the project and move the target-distance slider. Under roughly 20 cm, the echo duration is less than 1,160 µs and the LED turns on; farther away, it turns off. The model uses approximately 58 µs/cm, requires the sensor to be powered and wired, and expects a TRIG HIGH-to-LOW sequence. `pulseIn()` is limited to threshold conditions in `if` blocks (with a fixed timeout); assignments, arithmetic distance calculations, and arbitrary code are not supported. This is not acoustic simulation: beam width, propagation, reflections, temperature, sensor tolerances, and physical echo waveforms are not modeled. Check real hardware voltage compatibility and its datasheet.
 
-## Bonus exercise (not in the fifteen-project dropdown): joystick-controlled LED
+## 16. TMP36 Temperature Alarm
+
+**Learn:** Read an analog TMP36-style output and switch an LED when the temperature crosses a fixed threshold.
+
+**Parts:** Arduino Uno, TMP36 temperature sensor, red LED, 220 Ω resistor.
+
+**Wire:** Sensor VCC→5V, GND→GND, VOUT→A0. Connect Uno D8→220 Ω resistor→LED anode and LED cathode→GND. Adjust the TMP36 simulated temperature slider (−40 to 125 °C).
+
+```cpp
+const int tempPin = A0;
+const int lampPin = 8;
+
+void setup() {
+  pinMode(lampPin, OUTPUT);
+}
+
+void loop() {
+  if (analogRead(tempPin) > 164) {
+    digitalWrite(lampPin, HIGH);
+  } else {
+    digitalWrite(lampPin, LOW);
+  }
+  delay(100);
+}
+```
+
+**Try it:** Run the project and move the temperature slider above and below about 30 °C. The idealized model uses VOUT ≈ 500 mV + (10 mV × temperature in °C); 30 °C is about 800 mV or ADC 164 on a 5 V, 10-bit Uno. The sensor must be powered and VOUT must connect to A0. No conversion arithmetic, runtime variables, calibration, noise, thermal lag, self-heating, or ambient heat transfer is modeled; the example uses a fixed ADC threshold rather than computing a temperature value. Check real sensor pinout and voltage before wiring hardware.
+
+## Bonus exercise (not in the sixteen-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 

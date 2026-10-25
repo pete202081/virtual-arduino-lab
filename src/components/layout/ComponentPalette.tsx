@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Search, Cpu, Grid3x3, Lightbulb, Minus, Circle, Volume2, Cable, AlertTriangle, SlidersHorizontal, Sun, Hash, ToggleLeft, Gamepad2, RotateCw, Radio, Waves } from "lucide-react";
+import { Search, Cpu, Grid3x3, Lightbulb, Minus, Circle, Volume2, Cable, AlertTriangle, SlidersHorizontal, Sun, Hash, ToggleLeft, Gamepad2, RotateCw, Radio, Waves, Thermometer } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ComponentType } from "@/types/circuit";
 
@@ -27,6 +27,7 @@ const ITEMS: PaletteItem[] = [
   { type: "ldr", name: "LDR Light Sensor", category: "Sensors", description: "3-pin • light level • analog output", color: "#D97706", available: true, badge: "Sensor" },
   { type: "pir", name: "PIR Motion Sensor", category: "Sensors", description: "3-pin • simulated motion • digital output", color: "#7C3AED", available: true, badge: "Digital" },
   { type: "hc-sr04", name: "HC-SR04 Ultrasonic", category: "Sensors", description: "4-pin • distance slider • trigger/echo", color: "#0284C7", available: true, badge: "Range" },
+  { type: "tmp36", name: "TMP36 Temperature", category: "Sensors", description: "3-pin • analog temperature output", color: "#EA580C", available: true, badge: "Analog" },
   { type: "joystick", name: "Joystick Module", category: "Sensors", description: "X/Y analog axes • momentary button", color: "#2563EB", available: true, badge: "3 inputs" },
   { type: "servo", name: "Servo Motor", category: "Actuators", description: "0–180° • pulse-width position control", color: "#0E7490", available: true, badge: "Servo" },
   { type: "h-bridge", name: "H-Bridge Driver", category: "Actuators", description: "L298N • direction inputs • PWM enable", color: "#334155", available: true, badge: "Driver" },
@@ -133,6 +134,7 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
                           {it.type === "ldr" && <Sun className="w-4 h-4" />}
                           {it.type === "pir" && <Radio className="w-4 h-4" />}
                           {it.type === "hc-sr04" && <Waves className="w-4 h-4" />}
+                          {it.type === "tmp36" && <Thermometer className="w-4 h-4" />}
                           {it.type === "joystick" && <Gamepad2 className="w-4 h-4" />}
                           {it.type === "servo" && <RotateCw className="w-4 h-4" />}
                           {it.type === "dc-motor" && <RotateCw className="w-4 h-4" />}
@@ -160,7 +162,7 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-[11px] leading-tight">
             <div className="font-bold text-amber-800">MVP Scope</div>
-            <div className="text-amber-700">Arduino, Breadboard, LED, RGB LED, 7-segment display, resistor, pushbutton, slide switch, potentiometer, LDR, PIR motion sensor, HC-SR04 ultrasonic sensor, joystick module, servo motor, DC motor, H-bridge driver, buzzer & wires are interactive.</div>
+            <div className="text-amber-700">Arduino, Breadboard, LED, RGB LED, 7-segment display, resistor, pushbutton, slide switch, potentiometer, LDR, PIR motion sensor, HC-SR04 ultrasonic sensor, TMP36 temperature sensor, joystick module, servo motor, DC motor, H-bridge driver, buzzer & wires are interactive.</div>
           </div>
         </div>
       </div>
@@ -182,6 +184,7 @@ export function ComponentPalette({ onAddComponent, onSelectWireTool, wireToolAct
             { t: "ldr" as ComponentType, label: "LDR", col: "#D97706" },
             { t: "pir" as ComponentType, label: "PIR", col: "#7C3AED" },
             { t: "hc-sr04" as ComponentType, label: "SONAR", col: "#0284C7" },
+            { t: "tmp36" as ComponentType, label: "TMP36", col: "#EA580C" },
             { t: "joystick" as ComponentType, label: "JOY", col: "#2563EB" },
             { t: "servo" as ComponentType, label: "SERVO", col: "#0E7490" },
             { t: "h-bridge" as ComponentType, label: "H-BRIDGE", col: "#334155" },

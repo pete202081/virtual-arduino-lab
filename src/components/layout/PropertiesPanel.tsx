@@ -1,6 +1,6 @@
 "use client";
 import { ComponentInstance, Wire } from "@/types/circuit";
-import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2, Radio, Waves } from "lucide-react";
+import { Settings, Cpu, Lightbulb, Minus, Cable, Trash2, RotateCw, Circle, Volume2, SlidersHorizontal, Sun, Hash, ToggleRight, Gamepad2, Radio, Waves, Thermometer } from "lucide-react";
 
 interface Props {
   selectedComponent: ComponentInstance | null;
@@ -119,6 +119,7 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
   const isLdr = comp.type === "ldr";
   const isPir = comp.type === "pir";
   const isHcSr04 = comp.type === "hc-sr04";
+  const isTmp36 = comp.type === "tmp36";
 
   return (
     <div className="w-[300px] shrink-0 bg-white border-l border-slate-200 flex flex-col h-full overflow-hidden">
@@ -140,6 +141,7 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
           {isLdr && <Sun className="w-3.5 h-3.5 text-amber-600" />}
           {isPir && <Radio className="w-3.5 h-3.5 text-violet-700" />}
           {isHcSr04 && <Waves className="w-3.5 h-3.5 text-sky-700" />}
+          {isTmp36 && <Thermometer className="w-3.5 h-3.5 text-orange-700" />}
           PROPERTIES
         </div>
         <div className="text-xs font-bold text-[#0F2142] mt-1">{comp.label}</div>
@@ -387,6 +389,31 @@ export function PropertiesPanel({ selectedComponent, selectedWire, onUpdateCompo
               <p>Connect M+ and M− to the H-bridge OUT1 and OUT2 terminals. The motor animates only when a powered driver has a valid direction input and nonzero ENA duty.</p>
               <p className="p-2 bg-blue-50 border border-blue-200 rounded">The displayed speed percentage is the ENA PWM duty. Reversing the two motor leads reverses the displayed direction.</p>
               <p className="p-2 bg-amber-50 border border-amber-200 rounded">Use an H-bridge or motor driver in real circuits; a GPIO pin cannot safely supply motor current.</p>
+            </div>
+          </div>
+        )}
+
+        {isTmp36 && (
+          <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div className="px-2.5 py-1.5 bg-orange-50 border-b border-orange-100 flex items-center gap-1.5">
+              <Thermometer className="w-3 h-3 text-orange-700" /> <span className="text-[11px] font-bold text-orange-800">TMP36 TEMPERATURE SENSOR</span>
+            </div>
+            <div className="p-2.5 space-y-2 text-[11px]">
+              <label htmlFor="tmp36-temperature" className="font-bold text-slate-600">Simulated temperature: {Number(comp.properties.temperatureC ?? 25)} °C</label>
+              <input
+                id="tmp36-temperature"
+                aria-label="TMP36 simulated temperature (°C)"
+                type="range"
+                min={-40}
+                max={125}
+                step={1}
+                value={Math.max(-40, Math.min(125, Number(comp.properties.temperatureC ?? 25)))}
+                onChange={(event) => onUpdateComponent(comp.id, { properties: { ...comp.properties, temperatureC: Number(event.target.value) } })}
+                className="w-full accent-orange-600"
+              />
+              <div className="flex justify-between text-[10px] text-slate-500"><span>−40 °C</span><span>125 °C</span></div>
+              <p className="p-2 bg-blue-50 border border-blue-200 rounded">Wire VCC→5V, GND→GND, and VOUT→A0–A5. The idealized TMP36 model uses 500 mV at 0 °C and rises 10 mV/°C. At 25 °C, VOUT is about 750 mV (ADC ≈153 on a 5 V, 10-bit Uno).</p>
+              <p className="p-2 bg-amber-50 border border-amber-200 rounded">This is a slider-driven analog model, not a voltage, calibration, noise, thermal-response, or ambient-temperature simulation. Use `analogRead()` threshold conditions; general arithmetic and variable assignments are not executed.</p>
             </div>
           </div>
         )}

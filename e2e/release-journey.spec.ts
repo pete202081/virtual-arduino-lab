@@ -269,7 +269,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
   await page.goto("/");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
-  await expect(selector.locator("option")).toHaveCount(16); // placeholder plus fifteen projects
+  await expect(selector.locator("option")).toHaveCount(17); // placeholder plus sixteen projects
   const projects = [
     { id: "blink-led", name: "01 · Blink one LED", focus: "RED LED", code: "const int ledPin = 8;" },
     { id: "traffic-light", name: "02 · Traffic-light sequence", focus: "RED LED", code: "const int redPin = 8;" },
@@ -286,6 +286,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
     { id: "dc-motor-hbridge", name: "13 · DC Motor Speed + Direction Control", focus: "L298N H-Bridge Driver", code: "const int enablePin = 3;" },
     { id: "pir-motion-light", name: "14 · PIR Motion-Triggered Light", focus: "PIR Motion Sensor", code: "const int motionPin = 2;" },
     { id: "ultrasonic-distance-alarm", name: "15 · Ultrasonic Distance Alarm", focus: "HC-SR04 Ultrasonic Sensor", code: "const int trigPin = 3;" },
+    { id: "tmp36-temperature-alarm", name: "16 · TMP36 Temperature Alarm", focus: "TMP36 Temperature Sensor", code: "const int tempPin = A0;" },
   ];
 
   for (const project of projects) {
@@ -325,6 +326,16 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
       await page.mouse.down();
       await expect(page.getByTitle("Servo motor: 90 degrees, 1500 microseconds at 50 Hz")).toBeVisible();
       await page.mouse.up();
+    }
+    if (project.id === "tmp36-temperature-alarm") {
+      const temperature = page.getByRole("slider", { name: "TMP36 simulated temperature (°C)" });
+      await expect(page.getByTitle("RED LED: 0% brightness")).toBeVisible();
+      await temperature.press("End");
+      await expect(page.getByText(/Simulated temperature: 125 °C/)).toBeVisible();
+      await expect(page.getByTitle("RED LED: 100% brightness")).toBeVisible({ timeout: 2_000 });
+      await temperature.press("Home");
+      await expect(page.getByText(/Simulated temperature: -40 °C/)).toBeVisible();
+      await expect(page.getByTitle("RED LED: 0% brightness")).toBeVisible({ timeout: 2_000 });
     }
     if (project.id === "ultrasonic-distance-alarm") {
       const distance = page.getByRole("slider", { name: "Ultrasonic simulated distance (cm)" });

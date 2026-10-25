@@ -1,6 +1,6 @@
 /** M4 simulation adapter tests. Run: npx tsx tests/simulation-adapter.test.ts */
 import assert from "node:assert/strict";
-import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor, createHcSr04Sensor } from "../src/circuit-engine/models/componentTemplates";
+import { createArduinoUno, createLED, createResistor, createPushButton, createBuzzer, createPotentiometer, createLdrSensor, createRGBLED, createSevenSegmentDisplay, createSlideSwitch, createJoystickModule, createServoMotor, createDcMotor, createHBridgeDriver, createPirSensor, createHcSr04Sensor, createTmp36Sensor } from "../src/circuit-engine/models/componentTemplates";
 import { STARTER_CODE } from "../src/types/circuit";
 import { compileSimulationProgram, getLitLedIds, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, servoPulseWidthMicroseconds, getDcMotorStates, readDigitalPin, readAnalogPin, readUltrasonicPulseDuration, PinMode, PinLevel, RuntimeSnapshot, SimulationRuntime } from "../src/simulation/interfaces/simulationAdapter";
 import { buildCircuitGraph } from "../src/circuit-engine/graph/netGraph";
@@ -490,6 +490,29 @@ test("wired LDR maps dark/bright slider positions to an analog ADC reading", () 
   ldr.properties.lightLevel = 100;
   assert.equal(readAnalogPin(0, components, wires), 1023);
   assert.equal(readAnalogPin(0, components, wires.slice(0, 2)), 0);
+});
+
+test("TMP36 analog output maps powered temperature to the wired ADC input", () => {
+  const board = createArduinoUno(0, 0);
+  const sensor = createTmp36Sensor(100, 100);
+  const analog = board.terminals.find((terminal) => terminal.label === "A0")!;
+  const fiveVolt = board.terminals.find((terminal) => terminal.label === "5V")!;
+  const ground = board.terminals.find((terminal) => terminal.label === "GND-1")!;
+  const vcc = sensor.terminals.find((terminal) => terminal.label === "VCC")!;
+  const output = sensor.terminals.find((terminal) => terminal.label === "VOUT")!;
+  const sensorGround = sensor.terminals.find((terminal) => terminal.label === "GND")!;
+  const components = [board, sensor];
+  const wire = (id: string, a: typeof analog, b: typeof analog) => ({ id, startTerminalId: a.id, endTerminalId: b.id, startComponentId: a.componentId, endComponentId: b.componentId, color: "#F97316" });
+  const wires = [wire("tmp-vcc", vcc, fiveVolt), wire("tmp-gnd", sensorGround, ground), wire("tmp-vout", output, analog)];
+  sensor.properties.temperatureC = -40;
+  assert.equal(readAnalogPin(0, components, wires), 20, "−40 °C maps to about 100 mV");
+  sensor.properties.temperatureC = 25;
+  assert.equal(readAnalogPin(0, components, wires), 153, "25 °C maps to about 750 mV");
+  sensor.properties.temperatureC = 30;
+  assert.equal(readAnalogPin(0, components, wires), 164, "30 °C maps to about 800 mV");
+  sensor.properties.temperatureC = 125;
+  assert.equal(readAnalogPin(0, components, wires), 358, "125 °C maps to about 1.75 V");
+  assert.equal(readAnalogPin(0, components, wires.slice(0, 2)), 0, "VOUT must be wired to the analog input");
 });
 
 test("RGB LED channels follow independent digital outputs with common cathode grounded", () => {

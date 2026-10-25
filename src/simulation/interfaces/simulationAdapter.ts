@@ -549,7 +549,7 @@ export function readDigitalPin(
   return mode === "INPUT_PULLUP" ? "HIGH" : "LOW";
 }
 
-/** Read a modeled Uno analog input from a wired potentiometer, joystick axis, or LDR output. */
+/** Read a modeled Uno analog input from a wired potentiometer, joystick axis, LDR, or TMP36 output. */
 export function readAnalogPin(pin: number, components: ComponentInstance[], wires: Wire[]): number {
   if (!Number.isInteger(pin) || pin < 0 || pin > 5) return 0;
   const graph = buildCircuitGraph(components, wires);
@@ -597,6 +597,20 @@ export function readAnalogPin(pin: number, components: ComponentInstance[], wire
       const lightLevel = Number(ldr.properties.lightLevel);
       const boundedLightLevel = Math.max(0, Math.min(100, Number.isFinite(lightLevel) ? lightLevel : 0));
       return Math.round((boundedLightLevel / 100) * 1023);
+    }
+    for (const sensor of components.filter((component) => component.type === "tmp36")) {
+      const output = sensor.terminals.find((terminal) => terminal.label === "VOUT");
+      const sensorVcc = sensor.terminals.find((terminal) => terminal.label === "VCC");
+      const sensorGround = sensor.terminals.find((terminal) => terminal.label === "GND");
+      if (!output || !sensorVcc || !sensorGround || !fiveVolt) continue;
+      const outputConnected = graph.hasConnection(output.id, input.id);
+      const vccConnected = graph.hasConnection(sensorVcc.id, fiveVolt.id);
+      const groundConnected = grounds.some((ground) => graph.hasConnection(sensorGround.id, ground.id));
+      if (!outputConnected || !vccConnected || !groundConnected) continue;
+      const rawTemperature = Number(sensor.properties.temperatureC ?? 25);
+      const temperatureC = Math.max(-40, Math.min(125, Number.isFinite(rawTemperature) ? rawTemperature : 25));
+      const outputMillivolts = Math.max(0, 500 + temperatureC * 10);
+      return Math.round((outputMillivolts / 5000) * 1023);
     }
   }
   return 0;

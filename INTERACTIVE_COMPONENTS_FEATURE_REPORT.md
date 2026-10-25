@@ -73,18 +73,25 @@
 - Added the Ultrasonic Distance Alarm project (TRIG D3, ECHO D2, LED D8), demonstrating a near-object threshold.
 - The simulator does not run arbitrary C++; it does not model acoustic propagation, beam angle, reflections, temperature, sensor tolerances, or physical echo waveforms. `pulseIn()` is not supported as a general statement or variable assignment.
 
+## TMP36 temperature sensor
+
+- Added a three-terminal VCC/VOUT/GND analog sensor with an adjustable −40 to 125 °C control and visible temperature, output voltage, and ADC estimate.
+- A powered and wired VOUT maps through the idealized TMP36 relation: 500 mV at 0 °C and 10 mV/°C, converted to the Uno’s 5 V, 10-bit analogRead range.
+- Added the TMP36 Temperature Alarm project, which uses an A0 threshold to switch an LED on above about 30 °C.
+- The model does not simulate thermal response, calibration, noise, self-heating, or ambient heat transfer; only bounded analogRead threshold conditions are executable.
+
 ## Beginner project selector
 
-- Added a top-bar dropdown with fifteen ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, and Ultrasonic Distance Alarm.
+- Added a top-bar dropdown with sixteen ready-to-run projects: Blink, traffic-light sequence, button lamp, potentiometer threshold, LDR night light, RGB signal, 7-segment digits, button buzzer, Serial heartbeat, room-status capstone, slide-switch/joystick/PWM color mixer, Joystick Servo Controller, DC Motor Speed + Direction Control, PIR Motion-Triggered Light, Ultrasonic Distance Alarm, and TMP36 Temperature Alarm.
 - Selecting one replaces the current screen with its prewired component layout, working wires, project sketch, title, and a relevant selected component in Properties. The canvas auto-fits the loaded circuit; the user can then edit, duplicate, and save it.
-- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all fifteen projects, checking the code, properties, and circuit counts.
+- Added unit coverage for every template and an E2E journey that selects, inspects, and runs all sixteen projects, checking the code, properties, and circuit counts.
 
 ## Verification
 
-- 79 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic component state, and all fifteen template compile/wiring-reference/fresh-ID checks.
-- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far threshold behavior, plus all fifteen ready-made projects.
+- 81 unit checks pass, including PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36 component state, and all sixteen template compile/wiring-reference/fresh-ID checks.
+- 12 Playwright end-to-end tests pass, including analogWrite-driven RGB brightness, joystick analog/digital input behavior, the latched switch journey, servo position control, DC motor clockwise/counterclockwise states, PIR-driven LED on/off and HC-SR04 near/far and TMP36 temperature-threshold behavior, plus all sixteen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits
 
-The interpreter remains bounded and safe, not a general C++/AVR compiler. It supports documented digital inputs from momentary buttons, joystick SW, and the latched slide switch; analog threshold conditions from modeled sensors; `tone`/`noTone`; bounded 0–255 PWM duty on the six Uno PWM pins for LEDs; and on/off-only 7-segment outputs. PWM waveform generation, Servo-library features beyond the restricted attach/write visual model, general `for`/`while`, arbitrary code execution, physical analog/SPICE voltage/current analysis, H-bridge motor current/torque/stall/thermal behavior, PIR sensing/range/timing/ambient effects, ultrasonic propagation/echo waveforms/beam physics, general `pulseIn()` use, and interrupts are not modeled. Never connect a physical motor directly to an Uno GPIO. Resistors remain ideal conductive pass-throughs in the graph model.
+The interpreter remains bounded and safe, not a general C++/AVR compiler. It supports documented digital inputs from momentary buttons, joystick SW, and the latched slide switch; analog threshold conditions from modeled sensors; `tone`/`noTone`; bounded 0–255 PWM duty on the six Uno PWM pins for LEDs; and on/off-only 7-segment outputs. PWM waveform generation, Servo-library features beyond the restricted attach/write visual model, general `for`/`while`, arbitrary code execution, physical analog/SPICE voltage/current analysis, H-bridge motor current/torque/stall/thermal behavior, PIR sensing/range/timing/ambient effects, ultrasonic propagation/echo waveforms/beam physics, TMP36 thermal response/calibration/noise, general `pulseIn()` use, and interrupts are not modeled. Never connect a physical motor directly to an Uno GPIO. Resistors remain ideal conductive pass-throughs in the graph model.
