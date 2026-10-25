@@ -38,4 +38,6 @@ export const PROJECT_GALLERY_DETAILS: Record<BeginnerProjectId, ProjectGalleryDe
   "tmp36-temperature-alarm": { difficulty: "Builder", concepts: ["Sensors", "Inputs", "Outputs & displays"], takeaway: "Compare a temperature sensor reading" },
   "relay-controlled-lamp": { difficulty: "Challenge", concepts: ["Actuators", "Outputs & displays"], takeaway: "Switch a low-voltage modeled load" },
   "breadboard-blink": { difficulty: "Starter", concepts: ["Getting started", "Breadboards", "Outputs & displays"], takeaway: "Trace five-hole strips and wired rails" },
+  "pwm-dimmer": { difficulty: "Starter", concepts: ["Inputs", "Outputs & displays"], takeaway: "Convert knob thresholds into PWM brightness levels" },
+  "two-branch-breadboard": { difficulty: "Starter", concepts: ["Breadboards", "Inputs", "Outputs & displays"], takeaway: "Keep two LED branches independent while sharing a ground rail" },
 };

@@ -41,6 +41,8 @@ export const BEGINNER_PROJECTS = [
   { id: "tmp36-temperature-alarm", name: "16 · TMP36 Temperature Alarm", description: "Read an analog TMP36 model and turn on an LED above a warm-temperature threshold." },
   { id: "relay-controlled-lamp", name: "17 · Relay-Controlled Lamp", description: "Switch a low-voltage LED load through the modeled relay COM/NO contacts." },
   { id: "breadboard-blink", name: "18 · Breadboard Basics: Blink an LED", description: "Trace a blinking LED through a shared 5-hole strip and explicitly wired power rails." },
+  { id: "pwm-dimmer", name: "19 · Three-Level LED Dimmer", description: "Use a potentiometer to select off, medium, or full visual PWM brightness." },
+  { id: "two-branch-breadboard", name: "20 · Two-Branch Breadboard Challenge", description: "Trace two LED branches on separate five-hole strips with shared ground and a pushbutton-controlled output." },
 ] as const;
 
 export type BeginnerProjectId = (typeof BEGINNER_PROJECTS)[number]["id"];
@@ -60,6 +62,8 @@ const SKETCHES: Record<BeginnerProjectId, string> = {
   "traffic-light": `const int redPin = 8;\nconst int yellowPin = 9;\nconst int greenPin = 10;\n\nvoid setup() {\n  pinMode(redPin, OUTPUT);\n  pinMode(yellowPin, OUTPUT);\n  pinMode(greenPin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(redPin, HIGH);\n  digitalWrite(yellowPin, LOW);\n  digitalWrite(greenPin, LOW);\n  delay(1000);\n  digitalWrite(redPin, LOW);\n  digitalWrite(yellowPin, HIGH);\n  digitalWrite(greenPin, LOW);\n  delay(300);\n  digitalWrite(redPin, LOW);\n  digitalWrite(yellowPin, LOW);\n  digitalWrite(greenPin, HIGH);\n  delay(1000);\n}`,
   "button-lamp": `const int buttonPin = 2;\nconst int ledPin = 8;\n\nvoid setup() {\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(buttonPin) == LOW) {\n    digitalWrite(ledPin, HIGH);\n  } else {\n    digitalWrite(ledPin, LOW);\n  }\n  delay(20);\n}`,
   "pot-threshold": `const int knobPin = A0;\nconst int ledPin = 8;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  if (analogRead(knobPin) > 512) {\n    digitalWrite(ledPin, HIGH);\n  } else {\n    digitalWrite(ledPin, LOW);\n  }\n  delay(20);\n}`,
+  "pwm-dimmer": `const int knobPin = A0;\nconst int ledPin = 9;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  if (analogRead(knobPin) > 700) {\n    analogWrite(ledPin, 255);\n  } else {\n    if (analogRead(knobPin) > 350) {\n      analogWrite(ledPin, 128);\n    } else {\n      analogWrite(ledPin, 0);\n    }\n  }\n  delay(20);\n}`,
+  "two-branch-breadboard": `const int blinkLedPin = 8;\nconst int buttonPin = 2;\nconst int buttonLedPin = 9;\n\nvoid setup() {\n  pinMode(blinkLedPin, OUTPUT);\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(buttonLedPin, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(buttonPin) == LOW) {\n    digitalWrite(buttonLedPin, HIGH);\n  } else {\n    digitalWrite(buttonLedPin, LOW);\n  }\n  digitalWrite(blinkLedPin, HIGH);\n  delay(500);\n  digitalWrite(blinkLedPin, LOW);\n  delay(500);\n}`,
   "night-light": `const int lightPin = A0;\nconst int lampPin = 8;\n\nvoid setup() {\n  pinMode(lampPin, OUTPUT);\n}\n\nvoid loop() {\n  if (analogRead(lightPin) < 400) {\n    digitalWrite(lampPin, HIGH);\n  } else {\n    digitalWrite(lampPin, LOW);\n  }\n  delay(20);\n}`,
   "rgb-signal": `const int redPin = 9;\nconst int greenPin = 10;\nconst int bluePin = 11;\n\nvoid setup() {\n  pinMode(redPin, OUTPUT);\n  pinMode(greenPin, OUTPUT);\n  pinMode(bluePin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(redPin, HIGH);\n  digitalWrite(greenPin, LOW);\n  digitalWrite(bluePin, LOW);\n  delay(500);\n  digitalWrite(redPin, LOW);\n  digitalWrite(greenPin, HIGH);\n  digitalWrite(bluePin, LOW);\n  delay(500);\n  digitalWrite(redPin, LOW);\n  digitalWrite(greenPin, LOW);\n  digitalWrite(bluePin, HIGH);\n  delay(500);\n  digitalWrite(redPin, HIGH);\n  digitalWrite(greenPin, HIGH);\n  digitalWrite(bluePin, HIGH);\n  delay(500);\n}`,
   "seven-segment": `const int segA = 2;\nconst int segB = 3;\nconst int segC = 4;\nconst int segD = 5;\nconst int segE = 6;\nconst int segF = 7;\nconst int segG = 8;\nconst int segDP = 9;\n\nvoid setup() {\n  pinMode(segA, OUTPUT);\n  pinMode(segB, OUTPUT);\n  pinMode(segC, OUTPUT);\n  pinMode(segD, OUTPUT);\n  pinMode(segE, OUTPUT);\n  pinMode(segF, OUTPUT);\n  pinMode(segG, OUTPUT);\n  pinMode(segDP, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(segA, HIGH);\n  digitalWrite(segB, HIGH);\n  digitalWrite(segC, LOW);\n  digitalWrite(segD, HIGH);\n  digitalWrite(segE, HIGH);\n  digitalWrite(segF, LOW);\n  digitalWrite(segG, HIGH);\n  digitalWrite(segDP, LOW);\n  delay(1000);\n  digitalWrite(segA, HIGH);\n  digitalWrite(segB, HIGH);\n  digitalWrite(segC, HIGH);\n  digitalWrite(segD, HIGH);\n  digitalWrite(segE, LOW);\n  digitalWrite(segF, LOW);\n  digitalWrite(segG, HIGH);\n  digitalWrite(segDP, LOW);\n  delay(1000);\n}`,
@@ -163,6 +167,42 @@ export function createBeginnerProject(id: BeginnerProjectId): BeginnerProjectTem
     createWire(wires, board, "5V", pot, "5V", "#EF4444");
     createWire(wires, pot, "WIPER", board, "A0", "#2563EB");
     focusComponentId = pot.id;
+  } else if (id === "pwm-dimmer") {
+    const breadboard = createBreadboard(35, 265);
+    const pot = createPotentiometer(465, 240);
+    const resistor = createResistor(430, 320, 220);
+    const led = createLED(520, 310, "green");
+    components.push(breadboard, pot, resistor, led);
+    createWire(wires, board, "GND-1", breadboard, "R_BOT-_0", "#1F2937");
+    createWire(wires, board, "D9", breadboard, "T-4-0", "#10B981");
+    createWire(wires, breadboard, "T-4-4", resistor, "A", "#F59E0B");
+    createWire(wires, resistor, "B", led, "ANODE", "#10B981");
+    createWire(wires, led, "CATHODE", breadboard, "R_BOT-_15", "#1F2937");
+    createWire(wires, board, "GND-2", pot, "GND", "#1F2937");
+    createWire(wires, board, "5V", pot, "5V", "#EF4444");
+    createWire(wires, pot, "WIPER", board, "A0", "#2563EB");
+    focusComponentId = pot.id;
+  } else if (id === "two-branch-breadboard") {
+    const breadboard = createBreadboard(35, 265);
+    const button = createPushButton(455, 195);
+    const blinkResistor = createResistor(430, 320, 220);
+    const blinkLed = createLED(520, 310, "red");
+    const buttonResistor = createResistor(430, 385, 220);
+    const buttonLed = createLED(520, 375, "green");
+    components.push(breadboard, button, blinkResistor, blinkLed, buttonResistor, buttonLed);
+    createWire(wires, board, "GND-1", breadboard, "R_BOT-_0", "#1F2937");
+    createWire(wires, board, "D8", breadboard, "T-4-0", "#EF4444");
+    createWire(wires, breadboard, "T-4-4", blinkResistor, "A", "#F59E0B");
+    createWire(wires, blinkResistor, "B", blinkLed, "ANODE", "#EF4444");
+    createWire(wires, blinkLed, "CATHODE", breadboard, "R_BOT-_10", "#1F2937");
+    createWire(wires, board, "D9", breadboard, "T-6-0", "#10B981");
+    createWire(wires, breadboard, "T-6-4", buttonResistor, "A", "#F59E0B");
+    createWire(wires, buttonResistor, "B", buttonLed, "ANODE", "#10B981");
+    createWire(wires, buttonLed, "CATHODE", breadboard, "R_BOT-_20", "#1F2937");
+    createWire(wires, board, "D2", breadboard, "T-10-0", "#2563EB");
+    createWire(wires, breadboard, "T-10-4", button, "1A", "#2563EB");
+    createWire(wires, button, "2A", breadboard, "R_BOT-_0", "#1F2937");
+    focusComponentId = breadboard.id;
   } else if (id === "night-light") {
     const ldr = createLdrSensor(465, 240);
     const branch = createLedBranch(board, 8, "yellow");

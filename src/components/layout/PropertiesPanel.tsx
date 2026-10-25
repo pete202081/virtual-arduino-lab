@@ -592,12 +592,12 @@ void loop() {
               <div className="p-2 bg-blue-50 border border-blue-200 rounded text-[11px]">
                 <div className="font-bold text-blue-900">Breadboard LED walkthrough</div>
                 <ol className="mt-1 list-decimal list-inside space-y-0.5 text-blue-900">
-                  <li>Connect Arduino 5V and GND to separate power rails.</li>
-                  <li>Connect D8 to one hole in a five-hole strip.</li>
-                  <li>Put the resistor’s A terminal on another hole in that same strip.</li>
-                  <li>Connect resistor B to LED ANODE; connect LED CATHODE to the GND rail.</li>
+                  <li>Connect Uno GND to a negative power rail. Rails remain separate from each other and from the five-hole strips unless wired.</li>
+                  <li>For each LED branch, connect its output pin and resistor A to the same five-hole strip; use a different strip for a separate branch.</li>
+                  <li>Connect resistor B to LED ANODE, then LED CATHODE to the shared GND rail. Give every LED its own series resistor.</li>
+                  <li>For a pull-up button branch, wire D2 through the pushbutton to GND; the input reads HIGH released and LOW while pressed.</li>
                 </ol>
-                <div className="mt-1 text-blue-800">Try project 18, Breadboard Basics: Blink an LED, to see this path already wired.</div>
+                <div className="mt-1 text-blue-800">Projects 18 and 20 show this step by step: one breadboard LED path, then two separate LED strips with an independent button-controlled branch.</div>
               </div>
             </div>
           </div>

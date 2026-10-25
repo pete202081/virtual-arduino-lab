@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BEGINNER_PROJECTS, createBeginnerProject } from "../src/circuit-engine/models/beginnerProjectTemplates";
 import { compileSimulationProgram } from "../src/simulation/interfaces/simulationAdapter";
 
-assert.equal(BEGINNER_PROJECTS.length, 18, "the dropdown should offer all eighteen catalog projects");
+assert.equal(BEGINNER_PROJECTS.length, 20, "the dropdown should offer all twenty catalog projects");
 for (const item of BEGINNER_PROJECTS) {
   const project = createBeginnerProject(item.id);
   const compiled = compileSimulationProgram(project.code);
@@ -14,6 +14,14 @@ for (const item of BEGINNER_PROJECTS) {
   for (const wire of project.wires) {
     assert.ok(terminalIds.has(wire.startTerminalId), `${item.name} wire start must exist`);
     assert.ok(terminalIds.has(wire.endTerminalId), `${item.name} wire end must exist`);
+  }
+  if (item.id === "two-branch-breadboard") {
+    assert.equal(project.components.filter((component) => component.type === "breadboard").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "pushbutton").length, 1);
+    assert.equal(project.components.filter((component) => component.type === "led").length, 2);
+    assert.equal(project.components.filter((component) => component.type === "resistor").length, 2);
+    assert.match(project.code, /digitalRead\(buttonPin\)/);
+    assert.match(project.code, /digitalWrite\(blinkLedPin, HIGH\)/);
   }
   const secondCopy = createBeginnerProject(item.id);
   assert.notEqual(project.components[0].id, secondCopy.components[0].id, `${item.name} should create fresh component IDs for each selection`);

@@ -1,8 +1,8 @@
 # Virtual Arduino Lab
 
-A local-first beginner circuit learning studio built with Next.js, TypeScript, Tailwind CSS, and Monaco. The landing page at `/` introduces the features and workflow; the project gallery at `/projects` filters all 18 guided builds by concept and difficulty; open the interactive workbench at `/lab`. Inside the simulator, the default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of eighteen complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches. Collapse the left component library whenever you want more room for circuit design.
+A local-first beginner circuit learning studio built with Next.js, TypeScript, Tailwind CSS, and Monaco. The landing page at `/` introduces the features and workflow; the project gallery at `/projects` filters all 20 guided builds by concept and difficulty; open the interactive workbench at `/lab`. Inside the simulator, the default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of twenty complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches. Collapse the left component library whenever you want more room for circuit design.
 
-**New to the lab?** Follow the [Beginner User Guide](USER_GUIDE_BEGINNER.md) for workspace and wiring basics, then build the sequenced projects in the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md). The catalog includes components, wiring maps, copy-ready sketches, and extension challenges for all eighteen projects.
+**New to the lab?** Follow the [Beginner User Guide](USER_GUIDE_BEGINNER.md) for workspace and wiring basics, then build the sequenced projects in the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md). The catalog includes components, wiring maps, copy-ready sketches, and extension challenges for all twenty projects.
 
 ## Requirements
 
@@ -32,7 +32,7 @@ npm run test:e2e
 npm audit
 ```
 
-`npm run test:e2e` builds the production app, starts it on port 3100, and runs Playwright Chromium journeys for project management, components, sensors, inputs, and all eighteen beginner presets, including component-library/editor collapse, canvas panning, and connected-net highlighting. On Linux CI machines, install Playwright’s OS libraries with `npx playwright install-deps chromium` before the first run. The app itself does not require Chromium specifically.
+`npm run test:e2e` builds the production app, starts it on port 3100, and runs Playwright Chromium journeys for project management, components, sensors, inputs, and all twenty beginner presets, including component-library/editor collapse, canvas panning, and connected-net highlighting. On Linux CI machines, install Playwright’s OS libraries with `npx playwright install-deps chromium` before the first run. The app itself does not require Chromium specifically.
 
 ## Project actions
 
@@ -48,12 +48,12 @@ npm audit
 - `tests/sketch-validator.test.ts` — 12 editor/compile-diagnostic tests
 - `tests/simulation-adapter.test.ts` — 29 interpreter, timing, stop, PWM, Servo, DC motor/H-bridge, PIR, HC-SR04, TMP36, relay, LED-path, pushbutton, slide-switch, joystick, buzzer, analog sensor, RGB LED, and 7-segment tests
 - `tests/project-persistence.test.ts` — 12 schema, migration, safety, route-coordinate, and fallback tests
-- `tests/beginner-project-templates.test.ts` — 18 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
+- `tests/beginner-project-templates.test.ts` — 20 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
 - `tests/wire-routing.test.ts` — six endpoint, obstacle-detour, right-angle, crossing-penalty, and manual-bend checks
 - `tests/circuit-history.test.ts` — bounded undo/redo, route snapshot, branch invalidation, and clearing checks
 - `e2e/release-journey.spec.ts` — 16 browser journeys covering the landing page and lab entry, concept/difficulty project-gallery filtering and loading, core components, sensors, guided projects, manual wire-route editing, and undo/redo
 
-Current verified status: all 92 unit checks pass, all 16 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
+Current verified status: all 94 unit checks pass, all 16 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
 
 ## Implemented simulation subset and limitations
 

@@ -1,10 +1,10 @@
 # Beginner Arduino Project Catalog
 
-A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
+A step-by-step project path using the components already available in Virtual Arduino Lab. Each project introduces one new idea, then reuses it in the next one across twenty guided builds. The wiring notes and sketches below are designed for this lab's **currently supported simulator subset**.
 
 ## How to start and customize a project
 
-1. In the app's top bar, open **Beginner projects…** and select one of the eighteen entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
+1. In the app's top bar, open **Beginner projects…** and select one of the twenty entries. The circuit, wires, component configuration, and matching sketch load together; the relevant component is selected so its Properties guidance is visible.
 2. Press **Run** to try the starter project, or inspect its wiring and compare the code with the matching sketch below.
 3. To make your own version, choose **More → Duplicate project**, rename it, then change the wiring, component values, pins, timing, or behavior. You can also create a blank workspace with **New**.
 4. Use **Stop** to end a simulation and **Save** to keep your copy. Try the suggested challenge only after the starter sketch works.
@@ -39,6 +39,8 @@ A step-by-step project path using the components already available in Virtual Ar
 | 16 | TMP36 Temperature Alarm | Compare a modeled temperature reading | Uno, TMP36, LED, resistor |
 | 17 | Relay-Controlled Lamp | Switch a low-voltage load through relay contacts | Uno, relay, LED, resistor |
 | 18 | Breadboard Basics: Blink an LED | Trace shared strips and explicit power rails | Uno, breadboard, LED, resistor |
+| 19 | Three-Level LED Dimmer | Convert analog thresholds into three PWM brightness levels | Uno, breadboard, potentiometer, green LED, resistor |
+| 20 | Two-Branch Breadboard Challenge | Keep separate LED strips and a button-controlled branch independent | Uno, breadboard, pushbutton, 2 LEDs, 2 resistors |
 
 ---
 
@@ -707,7 +709,77 @@ void loop() {
 
 **Try it:** Load **18 · Breadboard Basics: Blink an LED**, select the breadboard, and trace each wire against the checklist above. Run the sketch to see the LED blink. The lab models five-hole strips, isolated rails, and the center trench; it does not calculate resistance, voltage drop, or current. The 220 Ω resistor is still essential in a real circuit.
 
-## Bonus exercise (not in the eighteen-project dropdown): joystick-controlled LED
+## 19. Three-Level LED Dimmer
+
+**Learn:** A potentiometer produces an analog input value; the sketch compares it with two thresholds and selects one of three visual PWM duty levels. Unlike project 4, which only switches an LED on or off, this project demonstrates distinct brightness levels.
+
+**Parts:** Arduino Uno, breadboard, 10 kΩ potentiometer, green LED, 220 Ω resistor.
+
+**Wire:** Connect Uno **GND→breadboard R_BOT-_0** and **D9→T-4-0**. The five-hole strip connects **T-4-0** to **T-4-4**; wire **T-4-4→220 Ω resistor A**, resistor **B→LED ANODE**, and **LED CATHODE→R_BOT-_15**. The bottom ground rail returns to Uno GND. Connect potentiometer **5V→Uno 5V**, **GND→Uno GND**, and **WIPER→A0**. D9 is one of the Uno's modeled PWM-capable pins.
+
+```cpp
+const int knobPin = A0;
+const int ledPin = 9;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  if (analogRead(knobPin) > 700) {
+    analogWrite(ledPin, 255);
+  } else {
+    if (analogRead(knobPin) > 350) {
+      analogWrite(ledPin, 128);
+    } else {
+      analogWrite(ledPin, 0);
+    }
+  }
+  delay(20);
+}
+```
+
+**Try it:** Load **19 · Three-Level LED Dimmer**. Start the knob near the middle: the LED should show medium visual brightness. Move it below or to 350 for off; move it above 700 for full brightness. Try changing the threshold values or the medium duty from 128 to 64. The lab represents PWM duty as average visual brightness; it does not produce an electrical PWM waveform. Keep the series resistor in any real LED circuit.
+
+## 20. Two-Branch Breadboard Challenge
+
+**Learn:** Two five-hole strips are separate electrical nodes even when they are next to each other. Each LED is its own branch with its own series resistor, while both branches share the explicitly wired ground rail. The red LED blinks from D8 independently; a pushbutton controls the green LED from D9.
+
+**Parts:** Arduino Uno, 830-point breadboard, momentary pushbutton, red LED, green LED, two 220 Ω resistors.
+
+**Wire the shared rail:** Uno **GND→breadboard R_BOT-_0**. The bottom negative rail is a shared return for both LEDs and the pushbutton; rail-to-strip connections are not automatic.
+
+**Branch 1 — independent blinking LED:** Uno **D8→T-4-0**. Since **T-4-0 through T-4-4** are one five-hole strip, connect **T-4-4→220 Ω resistor A**, resistor **B→red LED ANODE**, and red LED **CATHODE→R_BOT-_10**.
+
+**Branch 2 — button-controlled LED:** Uno **D9→T-6-0**; connect **T-6-4→second 220 Ω resistor A**, resistor **B→green LED ANODE**, and green LED **CATHODE→R_BOT-_20**. For the button input, connect Uno **D2→T-10-0**, **T-10-4→pushbutton 1A**, and pushbutton **2A→R_BOT-_0**. The sketch uses `INPUT_PULLUP`, so D2 reads HIGH while released and LOW while pressed.
+
+```cpp
+const int blinkLedPin = 8;
+const int buttonPin = 2;
+const int buttonLedPin = 9;
+
+void setup() {
+  pinMode(blinkLedPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(buttonLedPin, OUTPUT);
+}
+
+void loop() {
+  if (digitalRead(buttonPin) == LOW) {
+    digitalWrite(buttonLedPin, HIGH);
+  } else {
+    digitalWrite(buttonLedPin, LOW);
+  }
+  digitalWrite(blinkLedPin, HIGH);
+  delay(500);
+  digitalWrite(blinkLedPin, LOW);
+  delay(500);
+}
+```
+
+**Try it:** Load **20 · Two-Branch Breadboard Challenge** and run it. The red LED blinks whether or not the button is pressed. Hold the button cap: the green LED should light without changing the red branch's blink behavior. Release it to turn green off. Hover over T-4-0 and T-6-0 to confirm that each highlights only its own five-hole strip. Every real LED still needs its own current-limiting resistor.
+
+## Bonus exercise (not in the twenty-project dropdown): joystick-controlled LED
 
 **Learn:** Use the joystick's X analog axis as an input threshold, then use the SW terminal as a momentary digital input.
 

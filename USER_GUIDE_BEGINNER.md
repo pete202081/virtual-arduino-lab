@@ -1,6 +1,6 @@
 # Virtual Arduino Lab — Beginner’s User Guide
 
-Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. Browse the [Project Gallery](/projects) to choose from all 18 guided builds by concept and difficulty; for wiring maps, copy-ready sketches, and extension challenges, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md).
+Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. Browse the [Project Gallery](/projects) to choose from all 20 guided builds by concept and difficulty; for wiring maps, copy-ready sketches, and extension challenges, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md).
 
 > **What this is:** a local, browser-based learning simulator. It does not connect to a physical Arduino and does not compile a real AVR binary.
 
@@ -44,7 +44,7 @@ A digital output pin can be set **HIGH** or **LOW**. In the Blink sketch, D8 alt
 ### Top bar
 
 - **Project title:** click its name to rename it; press Enter or click elsewhere to finish.
-- **Beginner projects…:** loads any of eighteen complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choosing one replaces the current workspace; duplicate or save work first if you want to keep it.
+- **Beginner projects…:** loads any of twenty complete beginner projects, including their components, wiring, sketch, and selected component guidance. Choose **Project gallery** on the landing page to browse them by concept and difficulty. Choosing a project replaces the current workspace; duplicate or save work first if you want to keep it.
 - **Quick Add:** opens a compact top-bar picker for frequently used parts. Selecting an item adds it directly to the canvas.
 - **New:** creates a blank project after confirmation. It starts with the Blink sketch but no circuit components.
 - **Open:** opens a picker for projects saved in this browser.
@@ -700,6 +700,14 @@ It is not a native compiler, full Arduino board emulator, or SPICE engine. Delay
 - **Breadboard strip:** a group of five holes internally connected on one side of the trench.
 - **Sketch:** the Arduino program shown in the editor.
 - **Baud rate:** the configured serial communication rate shown by the Serial Monitor.
+
+### Project 19: Three-Level LED Dimmer
+
+Load **19 · Three-Level LED Dimmer** from the project selector or gallery. It uses an Uno, breadboard, potentiometer, green LED, and a 220 Ω series resistor. The potentiometer’s 5V, GND, and WIPER connect to Uno 5V, GND, and A0. The LED branch runs from D9 through one five-hole breadboard strip, the resistor, and LED anode; the cathode returns through the breadboard ground rail. Move the knob to see three modeled output levels: off at values up to 350, medium brightness (PWM duty 128) above 350 through 700, and full brightness (255) above 700. This introduces analog input thresholds and a PWM output together; the lab displays duty as visual brightness, not an electrical PWM waveform.
+
+### Project 20: Two-Branch Breadboard Challenge
+
+Load **20 · Two-Branch Breadboard Challenge** from the selector or gallery. Two LEDs use separate five-hole strips and their own 220 Ω resistors, while the bottom ground rail is explicitly shared. The red LED blinks independently from D8; a pushbutton connects the D2 `INPUT_PULLUP` input to ground and controls the green LED on D9. Hold the red button cap to light green, then release it. Hover over the D8 and D9 breadboard strips to see that each branch is electrically separate; nearby columns are not automatically connected.
 
 ### Try these safe learning changes
 

@@ -56,7 +56,7 @@ const featureCards = [
   {
     icon: BookOpen,
     eyebrow: "LEARN",
-    title: "18 guided starter projects",
+    title: "20 guided starter projects",
     text: "Browse by concept and difficulty, then open a ready-wired example—from Blink and breadboard basics to sensors, joystick control, and actuators.",
     accent: "rose",
   },
@@ -217,7 +217,7 @@ export default function LandingPage() {
 
       <section className="border-y border-slate-200/80 bg-white/80">
         <div className="mx-auto grid max-w-[1080px] grid-cols-2 gap-y-6 px-5 py-7 text-center sm:grid-cols-4 lg:px-8">
-          <div><div className="text-2xl font-black tracking-tight text-[#102142]">18</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">guided projects</div></div>
+          <div><div className="text-2xl font-black tracking-tight text-[#102142]">20</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">guided projects</div></div>
           <div><div className="text-2xl font-black tracking-tight text-[#102142]">20</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">parts & tools</div></div>
           <div><div className="text-2xl font-black tracking-tight text-[#102142]">100</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">undo history steps</div></div>
           <div><div className="text-2xl font-black tracking-tight text-[#102142]">Local</div><div className="mt-1 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500">project storage</div></div>

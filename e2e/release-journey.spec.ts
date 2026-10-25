@@ -6,7 +6,7 @@ test("default landing page explains the lab and opens the simulator", async ({ p
   await expect(page.getByRole("heading", { name: "From first wire to working idea" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How the lab works" })).toBeVisible();
   await expect(page.getByText(/never executes arbitrary user code/)).toBeVisible();
-  await expect(page.getByText("18", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("20", { exact: true }).first()).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("link", { name: /Start building/ })).toBeVisible();
@@ -19,12 +19,17 @@ test("default landing page explains the lab and opens the simulator", async ({ p
 test("project gallery filters by concept and difficulty, then opens the selected build", async ({ page }) => {
   await page.goto("/projects");
   await expect(page.getByRole("heading", { name: /A project for every next step/ })).toBeVisible();
-  await expect(page.getByText("18 of 18")).toBeVisible();
+  await expect(page.getByText("20 of 20")).toBeVisible();
+  const search = page.getByRole("textbox", { name: "Search projects" });
+  await search.fill("Two-Branch Breadboard Challenge");
+  await expect(page.getByText("1 of 20")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Two-Branch Breadboard Challenge" })).toBeVisible();
+  await search.fill("");
   await page.getByRole("button", { name: "Sensors", exact: true }).click();
   await page.getByRole("button", { name: "Builder", exact: true }).click();
-  await expect(page.getByText("3 of 18")).toBeVisible();
-  await page.getByRole("textbox", { name: "Search projects" }).fill("TMP36");
-  await expect(page.getByText("1 of 18")).toBeVisible();
+  await expect(page.getByText("3 of 20")).toBeVisible();
+  await search.fill("TMP36");
+  await expect(page.getByText("1 of 20")).toBeVisible();
   await expect(page.getByRole("heading", { name: "TMP36 Temperature Alarm" })).toBeVisible();
   await page.getByRole("link", { name: "Open", exact: true }).click();
   await expect(page).toHaveURL(/\/lab$/);
@@ -393,7 +398,7 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
   await page.goto("/lab");
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
   const selector = page.getByRole("combobox", { name: "Choose a beginner project" });
-  await expect(selector.locator("option")).toHaveCount(19); // placeholder plus eighteen projects
+  await expect(selector.locator("option")).toHaveCount(21); // placeholder plus twenty projects
   await page.getByRole("button", { name: "Quick Add" }).click();
   await page.getByRole("button", { name: "Quick add LED" }).click();
   await expect(page.getByText("5 components • 3 wires").first()).toBeVisible();
@@ -425,6 +430,8 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
     { id: "tmp36-temperature-alarm", name: "16 · TMP36 Temperature Alarm", focus: "TMP36 Temperature Sensor", code: "const int tempPin = A0;" },
     { id: "relay-controlled-lamp", name: "17 · Relay-Controlled Lamp", focus: "5V Single-Channel Relay Module", code: "const int relayPin = 7;" },
     { id: "breadboard-blink", name: "18 · Breadboard Basics: Blink an LED", focus: "830-Point Breadboard", code: "const int ledPin = 8;" },
+    { id: "pwm-dimmer", name: "19 · Three-Level LED Dimmer", focus: "10kΩ Potentiometer", code: "const int ledPin = 9;" },
+    { id: "two-branch-breadboard", name: "20 · Two-Branch Breadboard Challenge", focus: "830-Point Breadboard", code: "const int blinkLedPin = 8;" },
   ];
 
   for (const project of projects) {
@@ -435,6 +442,39 @@ test("beginner project dropdown loads each full circuit, configuration, and sket
     await expect(page.getByText(/\d+ components • \d+ wires/).first()).toBeVisible();
     await page.getByRole("button", { name: "Run", exact: false }).click();
     await expect(page.getByText("RUNNING", { exact: true })).toBeVisible();
+    if (project.id === "pwm-dimmer") {
+      const knob = page.getByRole("slider", { name: "Potentiometer position" });
+      await expect(page.getByTitle("GREEN LED: 50% brightness")).toBeVisible();
+      await knob.press("Home");
+      await expect(page.getByTitle("GREEN LED: 0% brightness")).toBeVisible();
+      await knob.press("End");
+      await expect(page.getByTitle("GREEN LED: 100% brightness")).toBeVisible();
+      await knob.press("Home");
+    }
+    if (project.id === "two-branch-breadboard") {
+      await expect(page.getByText("Breadboard LED walkthrough", { exact: true })).toBeVisible();
+      const firstBranchHole = page.locator('[data-terminal-id$="-T-4-0"]');
+      const firstBranchStrip = page.locator('[data-terminal-id$="-T-4-4"]');
+      const secondBranchHole = page.locator('[data-terminal-id$="-T-6-0"]');
+      const secondBranchStrip = page.locator('[data-terminal-id$="-T-6-4"]');
+      await firstBranchHole.hover();
+      await expect(firstBranchStrip).toHaveClass(/net-highlighted-terminal/);
+      await expect(secondBranchHole).not.toHaveClass(/net-highlighted-terminal/);
+      await secondBranchHole.hover();
+      await expect(secondBranchStrip).toHaveClass(/net-highlighted-terminal/);
+      await expect(firstBranchHole).not.toHaveClass(/net-highlighted-terminal/);
+      await expect(page.getByTitle("GREEN LED: 0% brightness")).toBeVisible();
+      const pushbutton = page.getByRole("button", { name: "Pushbutton, released" });
+      await pushbutton.hover();
+      await page.mouse.down();
+      await expect(page.getByRole("button", { name: "Pushbutton, pressed" })).toBeVisible();
+      await expect(page.getByTitle("GREEN LED: 100% brightness")).toBeVisible({ timeout: 1_500 });
+      await expect(page.getByTitle("RED LED: 0% brightness")).toBeVisible({ timeout: 1_500 });
+      await expect(page.getByTitle("RED LED: 100% brightness")).toBeVisible({ timeout: 1_500 });
+      await page.mouse.up();
+      await expect(page.getByRole("button", { name: "Pushbutton, released" })).toBeVisible();
+      await expect(page.getByTitle("GREEN LED: 0% brightness")).toBeVisible({ timeout: 1_500 });
+    }
     if (project.id === "switch-joystick-pwm") {
       await expect(page.getByTitle("RGB LED: OFF")).toBeVisible();
       await page.getByRole("button", { name: "Slide switch, OFF" }).click();
