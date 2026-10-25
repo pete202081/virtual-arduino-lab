@@ -3,7 +3,8 @@
 ## Landing page and lab entry
 
 - The default route `/` is now a responsive landing page that explains the product, workflow, component families, guided projects, and honest simulation limits; its primary calls to action open the simulator at `/lab`.
-- The simulator’s top-bar brand returns to the landing page. Landing-page E2E coverage checks mobile layout, safety messaging, and navigation into the lab.
+- Added `/projects`, a curated gallery of all 18 templates with concept/difficulty filters, search, a suggested learning progression, and direct links that load the chosen circuit in the lab.
+- The simulator’s top-bar brand returns to the landing page. E2E coverage checks mobile layout, safety messaging, gallery filtering, direct project loading, and navigation into the lab.
 
 ## Pushbutton
 
@@ -110,7 +111,7 @@
 ## Verification
 
 - 92 unit checks pass, including obstacle-aware and manual orthogonal wire routing, route-coordinate persistence/validation, bounded circuit undo/redo history, PWM validation/runtime, single/RGB LED brightness, joystick behavior, persistence of motor/driver/PIR/ultrasonic/TMP36/relay component state, and all eighteen template compile/wiring-reference/fresh-ID checks.
-- 15 Playwright end-to-end tests pass, including the responsive landing page and lab entry, manual wire-route dragging, save/open persistence, route reset and undo/redo, toolbar/keyboard history controls, analogWrite-driven RGB brightness, joystick analog/digital input behavior, servo/motor controls, sensor behaviors, relay switching, and all eighteen ready-made projects.
+- 16 Playwright end-to-end tests pass, including the responsive landing page, concept/difficulty gallery filters and project loading, manual wire-route dragging and persistence, undo/redo, component interactions, sensors, actuator controls, and all eighteen ready-made projects.
 - ESLint and the production Next.js build pass; `npm audit` found zero vulnerabilities.
 
 ## Scope limits

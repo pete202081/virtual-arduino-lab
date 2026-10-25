@@ -57,7 +57,7 @@ const featureCards = [
     icon: BookOpen,
     eyebrow: "LEARN",
     title: "18 guided starter projects",
-    text: "Explore ready-wired examples from Blink and traffic lights to joystick control, sensors, a motor driver, and breadboard basics.",
+    text: "Browse by concept and difficulty, then open a ready-wired example—from Blink and breadboard basics to sensors, joystick control, and actuators.",
     accent: "rose",
   },
   {
@@ -115,6 +115,7 @@ export default function LandingPage() {
           </Link>
           <nav aria-label="Main navigation" className="hidden items-center gap-8 text-[13px] font-semibold text-slate-600 md:flex">
             <a className="transition hover:text-[#0E9A8B]" href="#features">Features</a>
+            <Link className="transition hover:text-[#0E9A8B]" href="/projects">Project gallery</Link>
             <a className="transition hover:text-[#0E9A8B]" href="#how-it-works">How it works</a>
             <a className="transition hover:text-[#0E9A8B]" href="#components">Components</a>
             <a className="transition hover:text-[#0E9A8B]" href="#simulation">Simulation scope</a>
@@ -149,7 +150,8 @@ export default function LandingPage() {
                 See how it works <ArrowDownRight className="h-4 w-4" />
               </a>
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold text-slate-500">
+            <Link href="/projects" className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-extrabold text-teal-800 transition hover:text-teal-950">Browse the project gallery <ArrowRight className="h-3.5 w-3.5" /></Link>
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold text-slate-500">
               <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-teal-700" /> Safe, bounded sketch interpreter</span>
               <span className="inline-flex items-center gap-1.5"><Save className="h-3.5 w-3.5 text-teal-700" /> Local project saves</span>
               <span className="inline-flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-teal-700" /> No hardware required to explore</span>

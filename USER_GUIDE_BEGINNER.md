@@ -1,6 +1,6 @@
 # Virtual Arduino Lab — Beginner’s User Guide
 
-Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. For hands-on practice after the Blink walkthrough, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md), an eighteen-project path with wiring maps, copy-ready sketches, and challenges.
+Welcome! This guide walks you through the Virtual Arduino Lab from first opening the app to building, running, saving, and troubleshooting a simple Arduino Blink circuit. You do not need previous electronics or programming experience. Browse the [Project Gallery](/projects) to choose from all 18 guided builds by concept and difficulty; for wiring maps, copy-ready sketches, and extension challenges, follow the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md).
 
 > **What this is:** a local, browser-based learning simulator. It does not connect to a physical Arduino and does not compile a real AVR binary.
 

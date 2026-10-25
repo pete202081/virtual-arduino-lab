@@ -14,7 +14,7 @@ import { buildCircuitGraph } from "@/circuit-engine/graph/netGraph";
 import { validateSketch, CompileResult } from "@/simulation/interfaces/compileAdapter";
 import { compileSimulationProgram, getLedBrightnesses, getBuzzerSignals, getRGBLedStates, getSevenSegmentStates, getServoStates, getDcMotorStates, getRelayStates, readDigitalPin, readAnalogPin, readUltrasonicPulseDuration, RuntimeSnapshot, RGBLedState, SevenSegmentState, ServoState, DcMotorState, SimulationRuntime } from "@/simulation/interfaces/simulationAdapter";
 import { createStarterCircuit } from "@/circuit-engine/models/starterCircuit";
-import { createBeginnerProject } from "@/circuit-engine/models/beginnerProjectTemplates";
+import { BEGINNER_PROJECTS, createBeginnerProject } from "@/circuit-engine/models/beginnerProjectTemplates";
 import type { BeginnerProjectId } from "@/circuit-engine/models/beginnerProjectTemplates";
 import { createProjectFile, listSavedProjects, loadMostRecentProject, loadProjectById, makeProjectFilename, MAX_PROJECT_BYTES, parseProjectFile, ProjectFile, SavedProjectSummary, saveProjectFile } from "@/lib/projectPersistence";
 import { CircuitHistory, type CircuitHistorySnapshot } from "@/lib/circuitHistory";
@@ -303,6 +303,35 @@ export default function Home() {
       { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Virtual Arduino Lab ready. Projects are saved locally in this browser." },
       { id: generateId("log"), timestamp: formatTime(), type: "info", message: "Use Save, Export JSON, or Import JSON from the project menu." },
     ]);
+    const requestedProjectId = new URLSearchParams(window.location.search).get("project");
+    const requestedProject = BEGINNER_PROJECTS.find((project) => project.id === requestedProjectId);
+    if (requestedProject) {
+      const template = createBeginnerProject(requestedProject.id);
+      const now = new Date().toISOString();
+      window.history.replaceState(null, "", "/lab");
+      setProjectId(generateId("project"));
+      setProjectCreatedAt(now);
+      setProjectName(template.name);
+      setActiveBeginnerProjectId(template.id);
+      setComponents(template.components);
+      syncSlideSwitches(template.components);
+      setWires(template.wires);
+      setCode(template.code);
+      setWireColor("#EF4444");
+      setSelectedId(template.focusComponentId);
+      setPendingWire(null);
+      setWireToolActive(false);
+      setLitLedIds([]);
+      setLedBrightnesses({});
+      setRgbLedStates({});
+      setSevenSegmentStates({});
+      setServoStates({});
+      setMotorStates({});
+      setSimulationState("IDLE");
+      setLogs([{ id: generateId("log"), timestamp: formatTime(), type: "info", message: `Opened “${template.name}” from the project gallery. Inspect the wiring, edit the sketch, or press Run.` }]);
+      setActiveTab("logs");
+      return () => { active = false; };
+    }
     loadMostRecentProject().then((saved) => {
       if (!active) return;
       if (saved?.success) {
@@ -332,7 +361,7 @@ export default function Home() {
       setWires(starter.wires);
     });
     return () => { active = false; };
-  }, [applyProjectFile]);
+  }, [applyProjectFile, syncSlideSwitches]);
 
   useEffect(() => () => {
     runtimeRef.current?.stop();

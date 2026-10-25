@@ -16,6 +16,23 @@ test("default landing page explains the lab and opens the simulator", async ({ p
   await expect(page.getByText("Arduino Sketch")).toBeVisible();
 });
 
+test("project gallery filters by concept and difficulty, then opens the selected build", async ({ page }) => {
+  await page.goto("/projects");
+  await expect(page.getByRole("heading", { name: /A project for every next step/ })).toBeVisible();
+  await expect(page.getByText("18 of 18")).toBeVisible();
+  await page.getByRole("button", { name: "Sensors", exact: true }).click();
+  await page.getByRole("button", { name: "Builder", exact: true }).click();
+  await expect(page.getByText("3 of 18")).toBeVisible();
+  await page.getByRole("textbox", { name: "Search projects" }).fill("TMP36");
+  await expect(page.getByText("1 of 18")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "TMP36 Temperature Alarm" })).toBeVisible();
+  await page.getByRole("link", { name: "Open", exact: true }).click();
+  await expect(page).toHaveURL(/\/lab$/);
+  await expect(page.getByRole("button", { name: /TMP36 Temperature Alarm/ })).toBeVisible();
+  await expect(page.getByText("Arduino Sketch")).toBeVisible();
+  await expect(page.getByText(/Opened .*from the project gallery/)).toBeVisible();
+});
+
 test("pre-wired Blink starter runs from circuit graph and stops/resets", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));

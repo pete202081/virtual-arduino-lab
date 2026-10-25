@@ -1,6 +1,6 @@
 # Virtual Arduino Lab
 
-A local-first beginner circuit learning studio built with Next.js, TypeScript, Tailwind CSS, and Monaco. The landing page at `/` introduces the features and workflow; open the interactive workbench at `/lab`. Inside the simulator, the default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of eighteen complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches. Collapse the left component library whenever you want more room for circuit design.
+A local-first beginner circuit learning studio built with Next.js, TypeScript, Tailwind CSS, and Monaco. The landing page at `/` introduces the features and workflow; the project gallery at `/projects` filters all 18 guided builds by concept and difficulty; open the interactive workbench at `/lab`. Inside the simulator, the default project is a **pre-wired Blink LED** circuit: Arduino D8 → 220 Ω resistor → LED anode → LED cathode → Arduino GND. The Blink sketch executes through a bounded, safe browser-side simulation adapter. Use the top-bar **Beginner projects…** dropdown to load any of eighteen complete, ready-to-run learning circuits with their wiring, components, properties, and matching sketches. Collapse the left component library whenever you want more room for circuit design.
 
 **New to the lab?** Follow the [Beginner User Guide](USER_GUIDE_BEGINNER.md) for workspace and wiring basics, then build the sequenced projects in the [Beginner Project Catalog](BEGINNER_PROJECT_CATALOG.md). The catalog includes components, wiring maps, copy-ready sketches, and extension challenges for all eighteen projects.
 
@@ -51,9 +51,9 @@ npm audit
 - `tests/beginner-project-templates.test.ts` — 18 ready-to-load project compile, wiring-reference, focus, and fresh-ID checks
 - `tests/wire-routing.test.ts` — six endpoint, obstacle-detour, right-angle, crossing-penalty, and manual-bend checks
 - `tests/circuit-history.test.ts` — bounded undo/redo, route snapshot, branch invalidation, and clearing checks
-- `e2e/release-journey.spec.ts` — 15 browser journeys covering the landing page and lab entry, core components, PWM RGB brightness, joystick and slide-switch behavior, sensor thresholds, relay switching, all eighteen projects, breadboard alignment, manual wire-route editing, and undo/redo
+- `e2e/release-journey.spec.ts` — 16 browser journeys covering the landing page and lab entry, concept/difficulty project-gallery filtering and loading, core components, sensors, guided projects, manual wire-route editing, and undo/redo
 
-Current verified status: all 92 unit checks pass, all 15 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
+Current verified status: all 92 unit checks pass, all 16 end-to-end tests pass, ESLint passes, and the Next.js production build passes. The dependency audit found zero vulnerabilities; no dependencies were added for the interactive components, sensors, PWM, Servo, DC motor/H-bridge, HC-SR04, TMP36, relay, or breadboard learning/highlighting features.
 
 ## Implemented simulation subset and limitations
 
